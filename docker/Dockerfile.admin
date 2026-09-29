@@ -1,0 +1,41 @@
+# syntax=docker/dockerfile:1.7
+
+# The admin, built to plain files and served by nginx.
+#
+# At runtime the image reads MANAGEMENT_API_URL (default http://api:3000), the management
+# API it proxies (rpc, auth, media, uploads, transfers, realtime, plugins).
+#
+# Only the admin and the workspace packages it depends on are installed: `turbo prune`
+# cuts the workspace and the lockfile down to them, so an edit elsewhere leaves the
+# install layer cached.
+FROM node:24-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
+RUN corepack enable
+WORKDIR /app
+# `CI` keeps pnpm non-interactive: without it, an install that wants to replace a
+# `node_modules` directory aborts rather than prompting.
+ENV CI=true
+
+FROM base AS prune
+COPY . .
+# Turbo at the catalog version, so the prune matches the one the workspace runs.
+RUN TURBO_VERSION=$(sed -nE 's/^  turbo: *//p' pnpm-workspace.yaml) \
+ && pnpm dlx "turbo@$TURBO_VERSION" prune @manablox/admin --docker \
+ && mkdir -p out/json/scripts \
+ && cp scripts/git-hooks.mjs out/json/scripts/
+
+FROM base AS build
+# The root `prepare` script runs during install; it finds no git and leaves the hooks alone.
+COPY --from=prune /app/out/json/ .
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
+COPY --from=prune /app/out/full/ .
+RUN pnpm --filter @manablox/admin build
+
+FROM nginx:1.27-alpine AS runtime
+COPY --from=build /app/apps/admin/dist /usr/share/nginx/html
+# nginx fills in `${VAR}` from the environment when it starts (its templates folder).
+COPY docker/nginx.admin.conf /etc/nginx/templates/default.conf.template
+ENV MANAGEMENT_API_URL=http://api:3000
+EXPOSE 80
+HEALTHCHECK --interval=15s --timeout=3s CMD wget -qO- http://127.0.0.1/ >/dev/null || exit 1

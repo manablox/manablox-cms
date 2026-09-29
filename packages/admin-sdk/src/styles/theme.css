@@ -1,0 +1,184 @@
+/* Design tokens (Tailwind 4 CSS-first theme). Imported first by `index.css`. */
+
+/* `dark:` keys on the class the theme store sets on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * oklch: a step has one lightness across hues, so re-hueing keeps contrast. `static` emits
+ * every token, since plugin sheets reference them (`@manablox/admin-plugin/tokens.css`).
+ */
+@theme static {
+  /* Only the admin's own palette. */
+  --color-*: initial;
+  --color-white: #fff;
+  --color-black: #000;
+
+  --font-sans: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    "Bricolage Grotesque Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+  /* --- density ------------------------------------------------------------------- */
+
+  /* Base for all spacing utilities; 0.2rem instead of the stock 0.25rem. */
+  --spacing: 0.2rem;
+
+  /* Containers scaled to match; `.mb-page` uses absolute widths. */
+  --container-3xs: 12.8rem;
+  --container-2xs: 14.4rem;
+  --container-xs: 16rem;
+  --container-sm: 19.2rem;
+  --container-md: 22.4rem;
+  --container-lg: 25.6rem;
+  --container-xl: 28.8rem;
+  --container-2xl: 33.6rem;
+  --container-3xl: 38.4rem;
+  --container-4xl: 44.8rem;
+  --container-5xl: 51.2rem;
+  --container-6xl: 57.6rem;
+  --container-7xl: 64rem;
+
+  /* Compressed progressively to an 11px floor, not a flat 20%, to stay readable. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 0.9375rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.0625rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.1875rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.3125rem;
+  --text-lg: 1rem;
+  --text-lg--line-height: 1.4375rem;
+  --text-xl: 1.125rem;
+  --text-xl--line-height: 1.5625rem;
+  --text-2xl: 1.25rem;
+  --text-2xl--line-height: 1.6875rem;
+  --text-3xl: 1.5rem;
+  --text-3xl--line-height: 1.9375rem;
+
+  /* The three control heights, shared by inputs, selects, buttons and switches. */
+  --mb-control-h-sm: 1.5rem;
+  --mb-control-h: 1.75rem;
+  --mb-control-h-lg: 2.125rem;
+  --mb-control-px: 0.625rem;
+  --mb-control-px-sm: 0.4375rem;
+  --mb-control-gap: 0.375rem;
+
+  /* Icon sizes follow the type, not the spacing scale. */
+  --mb-icon-sm: 0.75rem;
+  --mb-icon: 0.875rem;
+  --mb-icon-lg: 1.125rem;
+
+  /* --- shape --------------------------------------------------------------------- */
+
+  /* Controls and list rows share a radius; floating things are rounder. */
+  --radius-control: 0.4375rem;
+  --radius-popover: 0.625rem;
+  --radius-card: 0.75rem;
+  --radius-pill: 9999px;
+
+  /* `pop` for anchored panels, `modal` for centred ones; cards use `shadow-xs`. */
+  --shadow-pop: 0 6px 20px -6px oklch(30% 0.012 265 / 0.16);
+  --shadow-modal: 0 18px 50px -12px oklch(22% 0.015 265 / 0.32);
+
+  /* Stacking order. */
+  --mb-z-sticky: 20;
+  --mb-z-panel: 30;
+  --mb-z-drawer: 40;
+  --mb-z-overlay: 50;
+  --mb-z-popover: 60;
+  --mb-z-toast: 70;
+  --mb-z-tooltip: 80;
+  /* Inside a component's own stacking context: a drag overlay, a selection marquee. */
+  --mb-z-local: 10;
+
+  /* --- motion -------------------------------------------------------------------- */
+
+  --mb-dur-fast: 110ms;
+  --mb-dur: 160ms;
+  --mb-dur-slow: 220ms;
+  --mb-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --mb-ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  /* --- neutrals: cool grey -------------------------------------------------------- */
+
+  /* Chroma just high enough to keep the greys from going flat next to the orange. */
+  --color-surface-0: oklch(100% 0 0);
+  --color-surface-50: oklch(98.4% 0.002 265);
+  --color-surface-100: oklch(96.5% 0.003 265);
+  --color-surface-200: oklch(92.5% 0.004 265);
+  --color-surface-300: oklch(86% 0.005 265);
+  --color-surface-400: oklch(73% 0.006 265);
+  --color-surface-500: oklch(59% 0.007 265);
+  --color-surface-600: oklch(48% 0.008 265);
+  --color-surface-700: oklch(37% 0.008 265);
+  --color-surface-800: oklch(27% 0.008 265);
+  --color-surface-900: oklch(20% 0.007 265);
+  --color-surface-950: oklch(14.5% 0.006 265);
+
+  /* --- brand: vibrant warm orange ------------------------------------------------- */
+
+  /*
+   * Hue drifts from 72 to 42 so the dark end does not turn brown. `-600` carries white
+   * text, which fixes its lightness.
+   */
+  --color-brand-50: oklch(96.5% 0.026 72);
+  --color-brand-100: oklch(93% 0.048 68);
+  --color-brand-200: oklch(87% 0.088 64);
+  --color-brand-300: oklch(80% 0.132 58);
+  --color-brand-400: oklch(74% 0.175 54);
+  --color-brand-500: oklch(68% 0.175 50);
+  --color-brand-600: oklch(58% 0.156 47);
+  --color-brand-700: oklch(49% 0.137 45);
+  --color-brand-800: oklch(40% 0.117 43);
+  --color-brand-900: oklch(32% 0.097 42);
+
+  /*
+   * Accents for tiles and highlights, never text on white. Never put iris on the solid
+   * brand panel: `iris-500` on `brand-600` is 1.01:1.
+   */
+  --color-iris-50: oklch(94% 0.033 300);
+  --color-iris-100: oklch(86% 0.079 300);
+  --color-iris-200: oklch(77% 0.136 301);
+  --color-iris-300: oklch(70% 0.185 302);
+  --color-iris-400: oklch(68% 0.201 303);
+  --color-iris-500: oklch(60% 0.26 303);
+  --color-iris-700: oklch(48% 0.245 304);
+  --color-iris-900: oklch(32% 0.165 305);
+  --color-ochre-50: oklch(96.5% 0.035 95);
+  --color-ochre-100: oklch(92% 0.08 95);
+  --color-ochre-500: oklch(76% 0.14 92);
+  --color-ochre-700: oklch(52% 0.105 90);
+  --color-ochre-900: oklch(34% 0.07 88);
+
+  /* The overlay behind dialogs and drawers. */
+  --color-ink: oklch(19% 0.012 265);
+
+  --color-ok-500: oklch(66% 0.15 150);
+  --color-ok-700: oklch(45% 0.12 150);
+
+  /* Danger at hue 18, kept apart from the brand at 47. */
+  --color-danger-50: oklch(97% 0.015 18);
+  --color-danger-100: oklch(93% 0.045 18);
+  --color-danger-200: oklch(87% 0.09 18);
+  --color-danger-300: oklch(79% 0.14 18);
+  --color-danger-400: oklch(70% 0.19 18);
+  --color-danger-500: oklch(62% 0.22 18);
+  --color-danger-600: oklch(55% 0.22 18);
+  --color-danger-700: oklch(47% 0.19 18);
+  --color-danger-800: oklch(39% 0.15 20);
+  --color-danger-900: oklch(30% 0.11 22);
+
+  /* Warn at hue 78, between the brand (47) and ochre (92). */
+  --color-warn-50: oklch(97.5% 0.025 78);
+  --color-warn-100: oklch(94% 0.07 78);
+  --color-warn-200: oklch(89% 0.115 78);
+  --color-warn-300: oklch(84% 0.15 78);
+  --color-warn-400: oklch(78% 0.16 74);
+  --color-warn-500: oklch(72% 0.16 70);
+  --color-warn-600: oklch(62% 0.15 65);
+  --color-warn-700: oklch(52% 0.13 60);
+  --color-warn-800: oklch(43% 0.1 60);
+  --color-warn-900: oklch(34% 0.08 60);
+  --color-warn-950: oklch(24% 0.05 60);
+}

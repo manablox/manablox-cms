@@ -1,0 +1,106 @@
+---
+import { blocksOf, gridOf, ManabloxError, type MenuItem } from '@manablox/public-sdk';
+import Blocks from '../components/Blocks.astro';
+import { contentRenderers } from '../components/content/index';
+import Site from '../layouts/Site.astro';
+import { manablox } from '../lib/manablox';
+
+/**
+ * The catch-all route: one request resolves a URL path to a document, blocks included.
+ * `pnpm types` writes `src/manablox.d.ts` from the space's content model, which is what
+ * to type `byPermalink` with once the model has settled.
+ */
+const client = manablox();
+const path = Astro.url.pathname;
+
+let page: Record<string, unknown> | null = null;
+let menu: MenuItem[] = [];
+let failure: string | null = null;
+
+try {
+  [page, menu] = await Promise.all([
+    // `expand` inlines the relations the components show, which would otherwise be ids.
+    client.byPermalink(path, { expand: __EXPAND__ }),
+    // The "main" menu is edited in the admin under Menus; every entry carries an `href`.
+    client.menu('main').then((found) => found?.items ?? []),
+  ]);
+} catch (error) {
+  // "The CMS is down" and "this page does not exist" are different answers; a transport
+  // failure must not be served as a 404.
+  failure = error instanceof ManabloxError ? error.message : String(error);
+}
+
+if (!failure && !page) {
+  return new Response(null, { status: 404, statusText: 'Not found' });
+}
+
+const fields = (page?.fields ?? {}) as Record<string, unknown>;
+// A block field arrives as `{ grid, blocks }`: the grid this page lays its blocks out
+// on, and the blocks themselves.
+const blocks = blocksOf(fields.components) as Record<string, unknown>[];
+const grid = gridOf(fields.components);
+const summary = typeof fields.summary === 'string' ? fields.summary : null;
+// A content type with a component of its own renders through it; any other as the
+// generic article below.
+const Content = page ? contentRenderers[String(page.type)] : undefined;
+
+// A CMS that cannot be reached is a 503, not a page; a cache in front must not keep it.
+Astro.response.status = failure ? 503 : 200;
+Astro.response.headers.set(
+  'cache-control',
+  failure ? 'no-store' : 'public, max-age=0, s-maxage=300',
+);
+---
+
+<Site title={failure ? 'Something went wrong' : String(page?.title ?? '__NAME__')}>
+  <nav>
+    {
+      menu.map((item) => (
+        <a
+          href={item.href ?? '#'}
+          aria-current={item.href === path ? 'page' : undefined}
+          target={item.target === '_blank' ? '_blank' : undefined}
+          rel={item.target === '_blank' ? 'noreferrer' : undefined}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  {
+    failure ? (
+      <div class="state">
+        <h1>Something went wrong</h1>
+        <p>{failure}</p>
+      </div>
+    ) : Content ? (
+      <Content node={{ title: String(page?.title ?? ''), fields }} />
+    ) : (
+      <article>
+        <h1>{String(page?.title || 'Untitled')}</h1>
+        {summary && <p class="lead">{summary}</p>}
+        <Blocks blocks={blocks} path={['components']} grid={grid} />
+      </article>
+    )
+  }
+</Site>
+
+<style>
+  nav {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+  }
+  nav a {
+    color: inherit;
+  }
+  nav a[aria-current='page'] {
+    font-weight: 600;
+  }
+  .state {
+    color: var(--muted);
+  }
+</style>

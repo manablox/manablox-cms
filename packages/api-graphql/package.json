@@ -1,0 +1,63 @@
+{
+  "name": "@manablox/api-graphql",
+  "version": "0.50.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "packages/api-graphql"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@manablox/cache": "workspace:*",
+    "@manablox/core": "workspace:*",
+    "@manablox/db": "workspace:*",
+    "@manablox/fields": "workspace:*",
+    "@manablox/media": "workspace:*",
+    "@manablox/services": "workspace:*",
+    "@pothos/core": "catalog:",
+    "graphql": "catalog:",
+    "graphql-scalars": "catalog:",
+    "graphql-yoga": "catalog:"
+  },
+  "devDependencies": {
+    "@manablox/config-typescript": "workspace:*",
+    "@manablox/config-vitest": "workspace:*",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  }
+}

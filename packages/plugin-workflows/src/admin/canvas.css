@@ -1,0 +1,144 @@
+/*
+ * Vue Flow styles plus the admin skin, imported only by `WorkflowCanvas.vue`. `@import`
+ * must precede other rules; `@reference` supplies `@apply` with the bundle's `wf:` utilities.
+ */
+@import "@vue-flow/core/dist/style.css";
+@import "@vue-flow/core/dist/theme-default.css";
+@import "@vue-flow/controls/dist/style.css";
+@import "@vue-flow/minimap/dist/style.css";
+
+@reference "./style.css";
+
+@layer components {
+  .wf-canvas {
+    /* Edge colours, read by the node components. */
+    --canvas-edge: var(--color-surface-400);
+    --canvas-edge-ok: var(--color-ok-500);
+    --canvas-edge-warn: var(--color-warn-500);
+    --canvas-edge-error: var(--color-danger-500);
+    --canvas-dot: var(--color-surface-300);
+    @apply wf:bg-surface-50;
+  }
+
+  :root.dark .wf-canvas {
+    --canvas-edge: var(--color-surface-600);
+    --canvas-dot: var(--color-surface-800);
+    @apply wf:bg-surface-950;
+  }
+
+  /* Small socket; the `::after` is its larger hit area. */
+  .wf-canvas .vue-flow__handle {
+    @apply wf:h-3 wf:w-3 wf:rounded-full wf:border-2 wf:border-surface-0 wf:bg-surface-400 wf:transition wf:dark:border-surface-900;
+  }
+  .wf-canvas .vue-flow__handle::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 9999px;
+  }
+  .wf-canvas .vue-flow__handle:hover {
+    @apply wf:scale-125 wf:bg-brand-500;
+  }
+  .wf-canvas .vue-flow__handle-top {
+    @apply wf:bg-surface-300 wf:dark:bg-surface-600;
+  }
+  .wf-port-ok {
+    @apply wf:!bg-ok-500;
+  }
+  .wf-port-warn {
+    @apply wf:!bg-warn-500;
+  }
+  .wf-port-error {
+    @apply wf:!bg-danger-500;
+  }
+
+  /* The node component draws the card; the wrapper adds nothing. */
+  .wf-canvas .vue-flow__node {
+    @apply wf:border-0 wf:bg-transparent wf:p-0 wf:text-inherit wf:shadow-none;
+    width: auto;
+  }
+  .wf-canvas .vue-flow__node-graph,
+  .wf-canvas .vue-flow__node-trigger {
+    @apply wf:relative;
+  }
+  /* Lift while dragged. */
+  .wf-canvas .vue-flow__node.dragging .wf-node {
+    @apply wf:shadow-xl;
+  }
+
+  /* Alignment guide, drawn over the pane in screen pixels. */
+  .wf-canvas-guide {
+    @apply wf:pointer-events-none wf:absolute wf:z-10 wf:bg-brand-500/70;
+  }
+
+  .wf-canvas .vue-flow__edge-path {
+    stroke: var(--canvas-edge);
+  }
+  /* Dashes march source to target, since paths are drawn source-first. */
+  .wf-canvas .vue-flow__edge.animated .vue-flow__edge-path {
+    stroke-dasharray: 8 6;
+    animation: wf-edge-flow 0.7s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wf-canvas .vue-flow__edge.animated .vue-flow__edge-path {
+      animation: none;
+      stroke-dasharray: none;
+    }
+  }
+  .wf-canvas .vue-flow__edge.selected .vue-flow__edge-path,
+  .wf-canvas .vue-flow__edge:hover .vue-flow__edge-path {
+    stroke: var(--color-brand-500);
+  }
+  .wf-canvas .vue-flow__edge-text {
+    @apply wf:fill-surface-500 wf:text-2xs;
+  }
+  .wf-canvas .vue-flow__edge-textbg {
+    @apply wf:fill-surface-50 wf:dark:fill-surface-950;
+  }
+  .wf-canvas .vue-flow__connectionline path {
+    stroke: var(--color-brand-500);
+  }
+
+  .wf-canvas .vue-flow__controls {
+    @apply wf:overflow-hidden wf:rounded-card wf:border wf:border-surface-200 wf:shadow-sm wf:dark:border-surface-800;
+  }
+  .wf-canvas .vue-flow__controls-button {
+    @apply wf:border-0 wf:border-b wf:border-surface-200 wf:bg-surface-0 wf:fill-surface-600 wf:last:border-b-0 wf:hover:bg-surface-100 wf:dark:border-surface-800 wf:dark:bg-surface-900 wf:dark:fill-surface-300 wf:dark:hover:bg-surface-800;
+  }
+  .wf-canvas .vue-flow__minimap {
+    @apply wf:rounded-popover wf:border wf:border-surface-200 wf:bg-surface-0/80 wf:dark:border-surface-800 wf:dark:bg-surface-900/80;
+    width: 150px;
+    height: 100px;
+  }
+  .wf-canvas .vue-flow__minimap-node {
+    @apply wf:fill-surface-300 wf:stroke-none wf:dark:fill-surface-700;
+  }
+  .wf-canvas .vue-flow__minimap-mask {
+    @apply wf:fill-surface-500/20;
+  }
+
+  /* A palette entry is being dragged over the pane. */
+  .wf-canvas-dropping {
+    @apply wf:outline-2 wf:-outline-offset-2 wf:outline-brand-400 wf:outline-dashed;
+  }
+
+  /* One row of the node palette. */
+  .wf-palette-item {
+    @apply wf:flex wf:w-full wf:cursor-grab wf:items-center wf:gap-2.5 wf:rounded-control wf:px-1.5 wf:py-1.5 wf:text-left wf:transition wf:hover:bg-surface-100 wf:active:cursor-grabbing wf:dark:hover:bg-surface-800;
+  }
+
+  /* One dash period (8 + 6), so the loop is seamless. */
+  @keyframes wf-edge-flow {
+    to {
+      stroke-dashoffset: -14;
+    }
+  }
+}
+
+/*
+ * Beside the zoom controls, which share the corner: their column plus a gap. Unlayered,
+ * like Vue Flow's own panel margin it overrides.
+ */
+.wf-canvas .vue-flow__minimap.right {
+  margin-right: 3.5rem;
+}

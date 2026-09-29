@@ -1,0 +1,88 @@
+{
+  "name": "@manablox/admin-plugin",
+  "version": "0.50.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "packages/admin-plugin"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./vite": {
+      "types": "./src/vite.ts",
+      "default": "./src/vite.ts"
+    },
+    "./tailwind.css": "./tailwind.css"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "bin": {
+    "manablox-vue-check": "./bin/manablox-vue-check.mjs"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "tokens": "node scripts/tokens.mjs",
+    "typecheck:vue": "node bin/manablox-vue-check.mjs --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@manablox/core": "workspace:*",
+    "typescript": "catalog:vue",
+    "vue-tsc": "catalog:"
+  },
+  "devDependencies": {
+    "@manablox/admin-sdk": "workspace:*",
+    "@manablox/config-typescript": "workspace:*",
+    "@manablox/config-vitest": "workspace:*",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "bin",
+    "tailwind.css",
+    "tokens.css",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./vite": {
+        "types": "./dist/vite.d.ts",
+        "default": "./dist/vite.js"
+      },
+      "./tailwind.css": "./tailwind.css"
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  },
+  "peerDependencies": {
+    "@manablox/admin-sdk": "workspace:*",
+    "tailwindcss": ">=4",
+    "vite": ">=6"
+  },
+  "peerDependenciesMeta": {
+    "tailwindcss": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    }
+  }
+}

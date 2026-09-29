@@ -1,0 +1,38 @@
+{
+  "name": "__NAME__",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "{{#if docker}}A Manablox CMS instance run from the published packages: one config file, one image, one compose stack.{{#else}}{{#if sqlite}}A Manablox CMS instance run from the published packages, on SQLite with Valkey in Docker.{{#else}}A Manablox CMS instance run from the published packages, with Postgres and Valkey in Docker.{{/if}}{{/if}}",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "manablox start",
+{{#if publicApi}}
+    "start:public": "manablox start --config manablox.public.config.ts",
+{{/if}}
+{{slot package.start}}
+    "dev": "manablox start --watch",
+{{#if publicApi}}
+{{#if local}}
+    "dev:public": "manablox start --watch --config manablox.public.config.ts",
+{{/if}}
+{{/if}}
+{{slot package.dev}}
+    "migrate": "manablox migrate",
+    "push-keys": "manablox push-keys",
+{{#if local}}
+    "services:up": "docker compose up -d",
+    "services:down": "docker compose down",
+{{/if}}
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+__DEPENDENCIES__
+  },
+  "devDependencies": {
+    "@types/node": "__TYPES_NODE_VERSION__",
+    "typescript": "__TYPESCRIPT_VERSION__"
+  }
+}

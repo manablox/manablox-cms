@@ -1,0 +1,27 @@
+# The build context is the whole workspace, so everything that a container must build
+# for itself is excluded here. Without this, the host's node_modules - macOS or Windows
+# binaries, in the worst case - would be copied over the image's own install.
+
+node_modules
+**/node_modules
+.pnpm-store
+dist
+**/dist
+.output
+**/.output
+.nuxt
+**/.nuxt
+.turbo
+**/.turbo
+coverage
+**/coverage
+*.tsbuildinfo
+
+.git
+.github
+.remember
+docker/data
+**/*.log
+.env
+.env.*
+!.env.example

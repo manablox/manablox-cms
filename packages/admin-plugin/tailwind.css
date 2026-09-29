@@ -1,0 +1,12 @@
+/*
+ * Tailwind for an admin plugin bundle: the utilities the plugin uses, on the admin's live
+ * tokens. No base styles; the admin's sheet already sets them. Import it with the plugin's
+ * own prefix, `@import "@manablox/admin-plugin/tailwind.css" prefix(xy);`: utilities read
+ * `xy:flex`, and `--xy-color-brand-500` is `var(--color-brand-500)`, the admin's variable.
+ */
+@layer theme, base, components, utilities;
+@import "./tokens.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* `dark:` keys on the class the admin's theme store sets on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));

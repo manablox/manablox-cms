@@ -1,0 +1,51 @@
+# The local npm registry of the development stack (http://localhost:4873).
+#
+# `pnpm dev:publish` publishes this repository's packages here, and the other Manablox
+# repositories install `@manablox/*` from it in development. It is a development tool
+# only: anyone who can reach the port may publish and unpublish `@manablox/*`, so it
+# never listens anywhere but the developer's own machine.
+
+storage: /verdaccio/storage
+plugins: /verdaccio/plugins
+
+# The file is created empty on the first start; nobody has to sign up, since publishing
+# is open (below).
+auth:
+  htpasswd:
+    file: /verdaccio/storage/htpasswd
+    max_users: -1
+
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/
+
+packages:
+  # Only what `pnpm dev:publish` put here: no uplink, so a consumer never mixes a local
+  # build with a version from npmjs, and a package that was not published locally is a 404
+  # rather than a silent download of the released one.
+  '@manablox/*':
+    access: $all
+    publish: $all
+    unpublish: $all
+
+  # Everything else is proxied, so a consumer may point its whole registry here.
+  '**':
+    access: $all
+    publish: $authenticated
+    unpublish: $authenticated
+    proxy: npmjs
+
+server:
+  keepAliveTimeout: 60
+
+# A republish of the same version replaces the tarball once the old one is unpublished;
+# the dev publish script does that. Big tarballs (the prebuilt admin) need the headroom.
+max_body_size: 200mb
+
+web:
+  title: Manablox dev registry
+
+log:
+  type: stdout
+  format: pretty
+  level: warn

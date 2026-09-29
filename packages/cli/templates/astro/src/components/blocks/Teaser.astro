@@ -1,0 +1,36 @@
+---
+import { fieldAttribute } from '@manablox/live-preview';
+import { isRichTextEmpty, richTextToHtml } from '@manablox/public-sdk';
+
+/**
+ * A `teaser` block. `data-manablox-field` is what makes click-to-edit work: the editor
+ * reads it to map a click back to a field. Set through the helper, so the path cannot drift.
+ */
+interface Props {
+  block: Record<string, unknown>;
+  path: (string | number)[];
+}
+
+const { block, path } = Astro.props;
+const headline = typeof block.headline === 'string' ? block.headline : null;
+// The SDK escapes every string and emits a fixed set of tags, which is what makes
+// `set:html` acceptable here.
+const body = isRichTextEmpty(block.body) ? null : richTextToHtml(block.body);
+---
+
+<section class="teaser" {...fieldAttribute(path)}>
+  {headline && <h2 {...fieldAttribute([...path, 'headline'])}>{headline}</h2>}
+  {body && <div class="body" {...fieldAttribute([...path, 'body'])} set:html={body} />}
+</section>
+
+<style>
+  .teaser {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .teaser h2 {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem;
+  }
+</style>

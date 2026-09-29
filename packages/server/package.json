@@ -1,0 +1,77 @@
+{
+  "name": "@manablox/server",
+  "version": "0.50.0",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "description": "The Manablox CMS server: boots the runtime, mounts the APIs, and serves the admin.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "packages/server"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/busboy": "catalog:",
+    "@hono/node-server": "catalog:",
+    "@manablox/api-graphql": "workspace:*",
+    "@manablox/api-public": "workspace:*",
+    "@manablox/api-rpc": "workspace:*",
+    "@manablox/auth": "workspace:*",
+    "@manablox/cache": "workspace:*",
+    "@manablox/core": "workspace:*",
+    "@manablox/db": "workspace:*",
+    "@manablox/fields": "workspace:*",
+    "@manablox/jobs": "workspace:*",
+    "@manablox/media": "workspace:*",
+    "@manablox/services": "workspace:*",
+    "@manablox/storage": "workspace:*",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "fflate": "catalog:",
+    "hono": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@manablox/config-typescript": "workspace:*",
+    "@manablox/config-vitest": "workspace:*",
+    "@orpc/client": "catalog:",
+    "@types/node": "catalog:",
+    "drizzle-orm": "catalog:",
+    "samlify": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  }
+}

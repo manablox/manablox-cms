@@ -1,0 +1,89 @@
+{
+  "name": "@manablox/cli",
+  "version": "0.50.0",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "description": "The manablox CLI: boots an instance, migrates its database, and scaffolds instances and frontends.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "packages/cli"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/main.ts",
+      "default": "./src/main.ts"
+    }
+  },
+  "main": "./src/main.ts",
+  "types": "./src/main.ts",
+  "bin": {
+    "manablox": "./bin/manablox.mjs"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "bin",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clack/prompts": "catalog:",
+    "@manablox/api-public": "workspace:*",
+    "@manablox/api-rpc": "workspace:*",
+    "@manablox/auth": "workspace:*",
+    "@manablox/core": "workspace:*",
+    "@manablox/db": "workspace:*",
+    "@manablox/public-sdk": "workspace:*",
+    "@manablox/server": "workspace:*",
+    "@manablox/services": "workspace:*",
+    "picocolors": "catalog:",
+    "tsx": "catalog:"
+  },
+  "devDependencies": {
+    "@manablox/config-typescript": "workspace:*",
+    "@manablox/config-vitest": "workspace:*",
+    "@manablox/plugin-license": "workspace:*",
+    "@manablox/plugin-webhooks": "workspace:*",
+    "@manablox/plugin-workflows": "workspace:*",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@manablox/plugin-license": "workspace:*",
+    "@manablox/plugin-webhooks": "workspace:*",
+    "@manablox/plugin-workflows": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@manablox/plugin-license": {
+      "optional": true
+    },
+    "@manablox/plugin-webhooks": {
+      "optional": true
+    },
+    "@manablox/plugin-workflows": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "name": "@manablox/plugin-webhooks",
+  "version": "0.50.0",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "description": "Webhooks for Manablox: outgoing calls when content changes, incoming endpoints that start and stop workflows.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "packages/plugin-webhooks"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./define": {
+      "types": "./src/define.ts",
+      "default": "./src/define.ts"
+    },
+    "./sdk": {
+      "types": "./src/sdk.ts",
+      "default": "./src/sdk.ts"
+    },
+    "./cli": {
+      "types": "./src/cli/index.ts",
+      "default": "./src/cli/index.ts"
+    },
+    "./admin-src": {
+      "types": "./src/admin/index.ts",
+      "default": "./src/admin/index.ts"
+    }
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "manablox": {
+    "plugin": "webhooks",
+    "cli": "@manablox/plugin-webhooks/cli"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "migrations",
+    "migrations-sqlite",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsdown && pnpm build:admin",
+    "build:admin": "vite build --config vite.admin.config.ts",
+    "generate": "drizzle-kit generate && drizzle-kit generate --config drizzle.sqlite.config.ts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:vue": "manablox-vue-check --noEmit -p tsconfig.admin.json",
+    "test": "vitest run && vitest run --config vitest.admin.config.ts"
+  },
+  "dependencies": {
+    "@manablox/api-rpc": "workspace:*",
+    "@manablox/cache": "workspace:*",
+    "@manablox/core": "workspace:*",
+    "@manablox/db": "workspace:*",
+    "@manablox/server": "workspace:*",
+    "@manablox/services": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "hono": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@manablox/admin-plugin": "workspace:*",
+    "@manablox/admin-sdk": "workspace:*",
+    "@manablox/config-typescript": "workspace:*",
+    "@manablox/config-vitest": "workspace:*",
+    "@manablox/plugin-workflows": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@types/node": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "@vue/test-utils": "catalog:",
+    "drizzle-kit": "catalog:",
+    "happy-dom": "catalog:",
+    "postgres": "catalog:",
+    "tailwindcss": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:vue",
+    "vite": "catalog:",
+    "vitest": "catalog:",
+    "vue": "catalog:"
+  },
+  "peerDependencies": {
+    "@manablox/plugin-workflows": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@manablox/plugin-workflows": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./define": {
+        "types": "./dist/define.d.ts",
+        "default": "./dist/define.js"
+      },
+      "./sdk": {
+        "types": "./dist/sdk.d.ts",
+        "default": "./dist/sdk.js"
+      },
+      "./cli": {
+        "types": "./dist/cli.d.ts",
+        "default": "./dist/cli.js"
+      }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  }
+}

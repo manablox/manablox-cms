@@ -1,0 +1,146 @@
+{
+  "name": "@manablox/plugin-workflows",
+  "version": "0.50.0",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "description": "Workflows for Manablox: automations editors build in the admin, started by content changes, schedules, calls and other plugins.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "packages/plugin-workflows"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./define": {
+      "types": "./src/define.ts",
+      "default": "./src/define.ts"
+    },
+    "./schema": {
+      "types": "./src/schema.ts",
+      "default": "./src/schema.ts"
+    },
+    "./sdk": {
+      "types": "./src/sdk.ts",
+      "default": "./src/sdk.ts"
+    },
+    "./cli": {
+      "types": "./src/cli/index.ts",
+      "default": "./src/cli/index.ts"
+    },
+    "./admin-src": {
+      "types": "./src/admin/index.ts",
+      "default": "./src/admin/index.ts"
+    },
+    "./admin-slots": {
+      "types": "./src/admin/slots.ts",
+      "default": "./src/admin/slots.ts"
+    },
+    "./admin-api": {
+      "types": "./src/admin/admin-api.ts",
+      "default": "./src/admin/admin-api.ts"
+    }
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "manablox": {
+    "plugin": "workflows",
+    "cli": "@manablox/plugin-workflows/cli"
+  },
+  "files": [
+    "dist",
+    "src/admin/admin-api.ts",
+    "src/admin/slots.ts",
+    "!dist/**/*.map",
+    "migrations",
+    "migrations-sqlite",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsdown && pnpm build:admin",
+    "build:admin": "vite build --config vite.admin.config.ts",
+    "generate": "drizzle-kit generate && drizzle-kit generate --config drizzle.sqlite.config.ts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:vue": "manablox-vue-check --noEmit -p tsconfig.admin.json",
+    "test": "vitest run && vitest run --config vitest.admin.config.ts"
+  },
+  "dependencies": {
+    "@manablox/api-rpc": "workspace:*",
+    "@manablox/auth": "workspace:*",
+    "@manablox/core": "workspace:*",
+    "@manablox/db": "workspace:*",
+    "@manablox/server": "workspace:*",
+    "@manablox/services": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "nodemailer": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@manablox/admin-plugin": "workspace:*",
+    "@manablox/admin-sdk": "workspace:*",
+    "@manablox/config-typescript": "workspace:*",
+    "@manablox/config-vitest": "workspace:*",
+    "@manablox/fields": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@types/node": "catalog:",
+    "@types/nodemailer": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "@vue-flow/background": "catalog:",
+    "@vue-flow/controls": "catalog:",
+    "@vue-flow/core": "catalog:",
+    "@vue-flow/minimap": "catalog:",
+    "@vue/test-utils": "catalog:",
+    "drizzle-kit": "catalog:",
+    "happy-dom": "catalog:",
+    "hono": "catalog:",
+    "pinia": "catalog:",
+    "postgres": "catalog:",
+    "tailwindcss": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:vue",
+    "vite": "catalog:",
+    "vitest": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./define": {
+        "types": "./dist/define.d.ts",
+        "default": "./dist/define.js"
+      },
+      "./schema": {
+        "types": "./dist/schema.d.ts",
+        "default": "./dist/schema.js"
+      },
+      "./sdk": {
+        "types": "./dist/sdk.d.ts",
+        "default": "./dist/sdk.js"
+      },
+      "./cli": {
+        "types": "./dist/cli.d.ts",
+        "default": "./dist/cli.js"
+      },
+      "./admin-slots": {
+        "types": "./src/admin/slots.ts",
+        "default": "./src/admin/slots.ts"
+      },
+      "./admin-api": {
+        "types": "./src/admin/admin-api.ts",
+        "default": "./src/admin/admin-api.ts"
+      }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  }
+}

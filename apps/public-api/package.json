@@ -1,0 +1,29 @@
+{
+  "name": "@manablox/public-api",
+  "version": "0.50.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "apps/public-api"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@manablox/core": "workspace:*",
+    "@manablox/fields": "workspace:*",
+    "@manablox/server": "workspace:*"
+  },
+  "devDependencies": {
+    "@manablox/config-typescript": "workspace:*",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  }
+}

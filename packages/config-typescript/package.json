@@ -1,0 +1,68 @@
+{
+  "name": "@manablox/config-typescript",
+  "version": "0.50.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "packages/config-typescript"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "base.json",
+    "library.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    "./base.json": "./base.json",
+    "./library.json": "./library.json",
+    "./drizzle": {
+      "types": "./src/drizzle.ts",
+      "default": "./src/drizzle.ts"
+    },
+    "./tsdown": {
+      "types": "./src/tsdown.ts",
+      "default": "./src/tsdown.ts"
+    }
+  },
+  "peerDependencies": {
+    "drizzle-kit": "catalog:",
+    "tsdown": "catalog:"
+  },
+  "peerDependenciesMeta": {
+    "drizzle-kit": {
+      "optional": true
+    },
+    "tsdown": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "drizzle-kit": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  },
+  "publishConfig": {
+    "exports": {
+      "./base.json": "./base.json",
+      "./library.json": "./library.json",
+      "./drizzle": {
+        "types": "./dist/drizzle.d.ts",
+        "default": "./dist/drizzle.js"
+      },
+      "./tsdown": {
+        "types": "./dist/tsdown.d.ts",
+        "default": "./dist/tsdown.js"
+      }
+    }
+  }
+}

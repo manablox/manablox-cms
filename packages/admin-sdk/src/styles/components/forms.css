@@ -1,0 +1,238 @@
+/* The control contract, inputs, labels, hints, errors, and the checkbox and radio. */
+
+@layer components {
+  /* --- the control contract ------------------------------------------------------- */
+
+  /*
+   * Every control is one of three token heights, so controls in a row line up. Grouped
+   * by selector because Tailwind 4 cannot `@apply` a class from the same layer.
+   * `.mb-control` is for components that build their own box; `.mb-input` adds field colours.
+   */
+  .mb-control,
+  .mb-input {
+    @apply w-full rounded-control border border-surface-300 bg-surface-0 text-sm text-surface-900 outline-none transition placeholder:text-surface-400 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100;
+    height: var(--mb-control-h);
+    padding-inline: var(--mb-control-px);
+    padding-block: 0;
+  }
+  .mb-control {
+    @apply inline-flex items-center;
+    gap: var(--mb-control-gap);
+  }
+
+  /* One focus style for every control. */
+  .mb-control:focus,
+  .mb-control:focus-visible,
+  .mb-control[data-state="open"],
+  .mb-input:focus {
+    @apply border-brand-500 ring-2 ring-brand-500/30 outline-none;
+  }
+
+  .mb-control:disabled,
+  .mb-input:disabled,
+  .mb-control[data-disabled] {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  /* After the base so source order settles the padding. */
+  .mb-control-sm,
+  .mb-input-sm {
+    @apply text-xs;
+    height: var(--mb-control-h-sm);
+    padding-inline: var(--mb-control-px-sm);
+  }
+  .mb-control-lg,
+  .mb-input-lg {
+    height: var(--mb-control-h-lg);
+    padding-inline: calc(var(--mb-control-px) * 1.4);
+  }
+
+  /* Identifiers, keys, slugs. */
+  .mb-input-mono {
+    @apply font-mono text-xs;
+  }
+
+  /* --- inputs --------------------------------------------------------------------- */
+
+  /* No fixed height; grows from the caller's `min-h-*`. */
+  textarea.mb-input {
+    @apply leading-normal;
+    height: auto;
+    padding-block: 0.3125rem;
+  }
+
+  select.mb-input {
+    @apply cursor-pointer appearance-none bg-no-repeat;
+    padding-right: calc(var(--mb-control-px) * 2 + var(--mb-icon));
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1978a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right var(--mb-control-px) center;
+    background-size: var(--mb-icon);
+  }
+
+  /* `.mb-input-leading` on the field, `.mb-input-icon` in the same `relative` label. */
+  .mb-input-leading {
+    padding-left: calc(var(--mb-control-px) * 2 + var(--mb-icon));
+  }
+  .mb-input-sm.mb-input-leading {
+    padding-left: calc(var(--mb-control-px-sm) * 2 + var(--mb-icon));
+  }
+  .mb-input-icon {
+    @apply pointer-events-none absolute top-1/2 -translate-y-1/2 text-surface-400;
+    left: var(--mb-control-px);
+    width: var(--mb-icon);
+    height: var(--mb-icon);
+  }
+  .mb-input-sm ~ .mb-input-icon,
+  .mb-input-icon:has(~ .mb-input-sm) {
+    left: var(--mb-control-px-sm);
+  }
+
+  .mb-label {
+    @apply mb-1 block text-xs font-medium text-surface-700 dark:text-surface-300;
+  }
+  .mb-hint {
+    @apply mt-1 text-2xs text-surface-500;
+  }
+  /* Secondary text beside or under a row: dates, counts, ids. */
+  .mb-meta {
+    @apply text-xs text-surface-500;
+  }
+  /* A link in running text or a list. */
+  .mb-link {
+    @apply font-medium text-brand-700 hover:underline dark:text-brand-300;
+  }
+  .mb-error {
+    @apply mt-1 text-2xs text-danger-600 dark:text-danger-400;
+  }
+  /*
+   * A field or block the save was refused over. `outline` so nothing shifts, and the
+   * field's own input is outlined too when it is a direct child.
+   */
+  .mb-invalid {
+    @apply rounded-control outline-2 outline-offset-2 outline-danger-400 dark:outline-danger-500;
+  }
+  .mb-invalid > :is(.mb-input, .mb-control) {
+    @apply border-danger-500 dark:border-danger-500;
+  }
+  /* Vertical rhythm between fields. */
+  .mb-field + .mb-field {
+    @apply mt-3;
+  }
+
+  /* --- the switch ------------------------------------------------------------------ */
+
+  /* Applies immediately; form values use a checkbox. Sized by `--mb-switch-h`. */
+  .mb-switch {
+    --mb-switch-h: var(--mb-control-h-sm);
+    @apply relative shrink-0 rounded-pill bg-surface-300 transition disabled:cursor-not-allowed disabled:opacity-50 dark:bg-surface-700;
+    height: var(--mb-switch-h);
+    width: calc(var(--mb-switch-h) * 1.75);
+    transition-duration: var(--mb-dur);
+  }
+  .mb-switch-sm {
+    --mb-switch-h: 1.125rem;
+  }
+  .mb-switch[aria-checked="true"] {
+    @apply bg-ok-500;
+  }
+  .mb-switch-thumb {
+    @apply absolute top-1/2 -translate-y-1/2 rounded-pill bg-white shadow;
+    height: calc(var(--mb-switch-h) - 0.25rem);
+    width: calc(var(--mb-switch-h) - 0.25rem);
+    left: 0.125rem;
+    transition: left var(--mb-dur) var(--mb-ease-out);
+  }
+  .mb-switch[aria-checked="true"] .mb-switch-thumb {
+    left: calc(100% - var(--mb-switch-h) + 0.125rem);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mb-switch-thumb {
+      transition: none;
+    }
+  }
+
+  /* --- checkboxes and radios ------------------------------------------------------ */
+
+  /* Custom checkbox and radio; the mark is a mask so it takes any colour. */
+  input[type="checkbox"],
+  input[type="radio"] {
+    @apply inline-block shrink-0 cursor-pointer appearance-none border border-surface-400 bg-surface-0 align-[-0.15em] transition dark:border-surface-600 dark:bg-surface-900;
+    width: 0.875rem;
+    height: 0.875rem;
+    background-origin: border-box;
+  }
+  input[type="checkbox"] {
+    @apply rounded-[0.25rem];
+  }
+  input[type="radio"] {
+    @apply rounded-full;
+  }
+  input[type="checkbox"]:hover,
+  input[type="radio"]:hover {
+    @apply border-surface-500 dark:border-surface-500;
+  }
+  input[type="checkbox"]:checked,
+  input[type="radio"]:checked,
+  input[type="checkbox"]:indeterminate {
+    @apply border-brand-600 bg-brand-600 dark:border-brand-500 dark:bg-brand-500;
+  }
+  input[type="checkbox"]:checked,
+  input[type="checkbox"]:indeterminate,
+  input[type="radio"]:checked {
+    background-color: var(--color-brand-600);
+    background-image: none;
+  }
+  input[type="checkbox"]:checked::before,
+  input[type="checkbox"]:indeterminate::before,
+  input[type="radio"]:checked::before {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: 100% 100%;
+  }
+  input[type="checkbox"]:checked::before {
+    mask-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M4 8.5l2.5 2.5L12 5.5' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+  }
+  input[type="checkbox"]:indeterminate::before {
+    mask-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M4.5 8h7' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3e%3c/svg%3e");
+  }
+  input[type="radio"]:checked::before {
+    mask-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3' fill='black'/%3e%3c/svg%3e");
+  }
+  input[type="checkbox"]:focus-visible,
+  input[type="radio"]:focus-visible {
+    @apply border-brand-500 ring-2 ring-brand-500/30 outline-none;
+  }
+  input[type="checkbox"]:disabled,
+  input[type="radio"]:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  /* Slider. Each engine's pseudo-elements need their own rule. */
+  .mb-range {
+    @apply h-4 w-full cursor-pointer appearance-none bg-transparent;
+  }
+  .mb-range::-webkit-slider-runnable-track {
+    @apply h-1 rounded-pill bg-surface-200 dark:bg-surface-700;
+  }
+  .mb-range::-moz-range-track {
+    @apply h-1 rounded-pill bg-surface-200 dark:bg-surface-700;
+  }
+  .mb-range::-webkit-slider-thumb {
+    @apply h-3.5 w-3.5 appearance-none rounded-pill border-2 border-surface-0 bg-brand-500 shadow-sm dark:border-surface-900;
+    margin-top: -0.3125rem;
+  }
+  .mb-range::-moz-range-thumb {
+    @apply h-3.5 w-3.5 rounded-pill border-2 border-surface-0 bg-brand-500 shadow-sm dark:border-surface-900;
+  }
+  .mb-range:focus-visible::-webkit-slider-thumb {
+    @apply ring-2 ring-brand-500/30 outline-none;
+  }
+  .mb-range:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+}

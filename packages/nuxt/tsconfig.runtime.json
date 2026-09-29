@@ -1,0 +1,5 @@
+{
+  "extends": "@manablox/config-typescript/base.json",
+  "compilerOptions": { "noEmit": true, "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": [] },
+  "include": ["src/runtime/**/*.ts", "src/runtime/**/*.vue", "src/module.ts", "nuxt-imports.d.ts"]
+}

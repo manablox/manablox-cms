@@ -1,0 +1,135 @@
+/* Rows for lists, trees, menus and accordions. */
+
+@layer components {
+  /* --- lists ---------------------------------------------------------------------- */
+
+  /* One row for every list. Hover is neutral, selection is brand. */
+  .mb-list {
+    @apply flex flex-col gap-px;
+    list-style: none;
+  }
+  .mb-list-divided > * + * {
+    @apply border-t border-surface-200 dark:border-surface-800;
+  }
+
+  .mb-list-item,
+  .mb-menu-item,
+  .mb-accordion-trigger {
+    @apply flex w-full items-center rounded-control text-left text-sm text-surface-800 transition dark:text-surface-200;
+    min-height: var(--mb-control-h);
+    padding-inline: var(--mb-control-px-sm);
+    padding-block: 0.125rem;
+    gap: var(--mb-control-gap);
+  }
+
+  .mb-list-item:hover,
+  .mb-menu-item:hover,
+  .mb-accordion-trigger:hover,
+  .mb-menu-item[data-highlighted] {
+    @apply bg-surface-200/70 text-surface-900 dark:bg-surface-700/60 dark:text-surface-100;
+  }
+
+  /* Inset ring so it does not overflow a scrolling list. */
+  .mb-list-item:focus-visible,
+  .mb-menu-item:focus-visible,
+  .mb-accordion-trigger:focus-visible {
+    @apply ring-2 ring-brand-500/40 outline-none;
+  }
+
+  .mb-list-item-active,
+  .mb-menu-item[data-state="checked"],
+  .mb-menu-item[aria-selected="true"] {
+    @apply bg-brand-50 text-brand-800 dark:bg-brand-600/20 dark:text-brand-50;
+  }
+  .mb-list-item-active:hover {
+    @apply bg-brand-100 text-brand-900 dark:bg-brand-600/30 dark:text-brand-50;
+  }
+
+  .mb-list-item-sm,
+  .mb-menu-item-sm {
+    @apply text-xs;
+    min-height: var(--mb-control-h-sm);
+  }
+  .mb-list-item-lg {
+    min-height: var(--mb-control-h-lg);
+    padding-inline: var(--mb-control-px);
+  }
+
+  .mb-list-item-danger:hover {
+    @apply bg-danger-50 text-danger-700 dark:bg-danger-500/15 dark:text-danger-300;
+  }
+
+  .mb-list-item[aria-disabled="true"],
+  .mb-menu-item[data-disabled] {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  /* Label between groups of rows. */
+  .mb-list-label {
+    @apply px-2 pt-2 pb-1 text-2xs font-semibold tracking-[0.1em] text-surface-500 uppercase;
+  }
+  /* One-line empty message. */
+  .mb-list-empty {
+    @apply px-2 py-2 text-xs text-surface-500;
+  }
+
+  /* --- accordions ------------------------------------------------------------------ */
+
+  /* The trigger is a row; the body animates from the height reka-ui measures. */
+  .mb-accordion {
+    @apply flex flex-col;
+  }
+  .mb-accordion-trigger {
+    @apply font-medium;
+  }
+  .mb-accordion-chevron {
+    @apply shrink-0 text-surface-400 transition-transform;
+    width: var(--mb-icon);
+    height: var(--mb-icon);
+    transition-duration: var(--mb-dur);
+  }
+  .mb-accordion-trigger[data-state="open"] .mb-accordion-chevron {
+    transform: rotate(90deg);
+  }
+  .mb-accordion-content {
+    @apply overflow-hidden;
+  }
+  .mb-accordion-content[data-state="open"] {
+    animation: mb-accordion-open var(--mb-dur) var(--mb-ease-out);
+  }
+  .mb-accordion-content[data-state="closed"] {
+    animation: mb-accordion-close var(--mb-dur-fast) var(--mb-ease-in);
+  }
+  .mb-accordion-body {
+    @apply px-2 pt-1 pb-3 text-xs text-surface-600 dark:text-surface-400;
+  }
+
+  /* Accordion framed as a card, for sections that are whole forms. */
+  .mb-accordion-cards {
+    @apply overflow-hidden rounded-card border border-surface-200 bg-surface-0 shadow-xs shadow-surface-900/3 dark:border-surface-800 dark:bg-surface-900 dark:shadow-none;
+  }
+  .mb-accordion-cards > * + * {
+    @apply border-t border-surface-200 dark:border-surface-800;
+  }
+  .mb-accordion-cards > * > h3 > .mb-accordion-trigger {
+    @apply rounded-none px-4 py-3;
+    gap: 0.75rem;
+  }
+  .mb-accordion-cards > * > h3 > .mb-accordion-trigger[data-state="open"] {
+    @apply bg-surface-50 dark:bg-surface-800/40;
+  }
+  .mb-accordion-cards > * > .mb-accordion-content > .mb-accordion-body {
+    @apply border-t border-surface-200 px-4 py-4 text-sm text-surface-800 dark:border-surface-800 dark:text-surface-200;
+  }
+}
+
+/*
+ * A row action (inside a `group` row) that shows on row hover or focus where a mouse and
+ * room exist, and always on touch and narrow screens. Unlayered so it beats display
+ * utilities.
+ */
+@media (hover: hover) and (min-width: 48rem) {
+  .group:not(:hover, :focus-within) .mb-row-action {
+    display: none;
+  }
+}

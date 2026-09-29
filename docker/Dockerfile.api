@@ -1,0 +1,72 @@
+# syntax=docker/dockerfile:1.7
+
+# The management and public APIs, built to `dist` and run with plain
+# `node`. The runtime image carries production dependencies and built code only: no
+# sources, no pnpm store, no tsx or other build tooling.
+#
+#   management  node apps/api/dist/main.js (the default command)
+#   public      node apps/public-api/dist/main.js
+#   migrations  node apps/api/dist/migrate.js
+FROM node:24-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
+RUN corepack enable
+WORKDIR /app
+# `CI` keeps pnpm non-interactive: without it, an install that wants to replace a
+# `node_modules` directory aborts rather than prompting.
+ENV CI=true
+
+# Cuts the workspace and the lockfile down to the two apps and the packages they use,
+# so an edit elsewhere leaves the install layer cached.
+FROM base AS prune
+COPY . .
+RUN TURBO_VERSION=$(sed -nE 's/^  turbo: *//p' pnpm-workspace.yaml) \
+ && pnpm dlx "turbo@$TURBO_VERSION" prune @manablox/api @manablox/public-api --docker \
+ && mkdir -p out/json/scripts \
+ && cp scripts/git-hooks.mjs out/json/scripts/
+
+FROM base AS build
+# The root `prepare` script runs during install; it finds no git and leaves the hooks alone.
+COPY --from=prune /app/out/json/ .
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
+COPY --from=prune /app/out/full/ .
+# Each package's own `build`, dependencies first, then the apps.
+RUN pnpm turbo run build --filter=@manablox/api --filter=@manablox/public-api
+# Workspace packages resolve to their `dist` from here on, as they do from npm.
+COPY docker/dist-exports.mjs /tmp/
+RUN node /tmp/dist-exports.mjs
+
+# A fresh production-only install (no tsx, tsdown, typescript, turbo, ...), then the built
+# code on top: manifests, `dist` and the migrations.
+FROM base AS prod
+COPY --from=prune /app/out/json/ .
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile --prod
+RUN --mount=type=bind,from=build,source=/app,target=/build \
+    for dir in apps/* packages/*; do \
+      cp /build/$dir/package.json $dir/; \
+      for part in dist migrations migrations-sqlite; do \
+        if [ -e "/build/$dir/$part" ]; then cp -r "/build/$dir/$part" "$dir/"; fi; \
+      done; \
+    done \
+ && find apps packages -path '*/node_modules' -prune -o -name '*.d.ts' -type f -exec rm {} + \
+ && rm -rf scripts
+# better-auth's optional peers (vitest, drizzle-kit) resolve against the workspace's dev
+# tooling and so stay in a production install; none of it runs here.
+RUN cd node_modules/.pnpm \
+ && rm -rf tsx@* typescript@* @typescript+* vitest@* @vitest+* vite@* rolldown@* @rolldown+* \
+      esbuild@* @esbuild+* @esbuild-kit+* drizzle-kit@* happy-dom@* lightningcss*
+
+FROM node:24-bookworm-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+# Non-root, and no shell-writable application directory.
+RUN groupadd --system --gid 1001 manablox \
+ && useradd --system --uid 1001 --gid manablox manablox
+COPY --from=prod --chown=manablox:manablox /app /app
+USER manablox
+ENV MANABLOX_PORT=3000
+EXPOSE 3000
+HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.MANABLOX_PORT||3000)+'/readyz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "apps/api/dist/main.js"]

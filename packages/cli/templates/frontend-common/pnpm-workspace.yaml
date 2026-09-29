@@ -1,0 +1,7 @@
+packages: []
+
+allowBuilds:
+  esbuild: true
+{{#if astro}}
+  sharp: true
+{{/if}}

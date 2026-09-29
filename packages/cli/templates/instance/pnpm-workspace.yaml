@@ -1,0 +1,13 @@
+# A single-package project, so no workspace globs. The file exists for `allowBuilds`:
+# pnpm 10+ refuses to run install scripts of packages that are not listed here, and these
+# are the ones the CMS pulls in. sharp and argon2 ship prebuilt binaries, esbuild is what
+# tsx (the loader the `manablox` CLI uses for your config file) runs on, msgpackr-extract
+# is the job queue's optional native accelerator, vue-demi comes with the query client.
+packages: []
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+  '@node-rs/argon2': true
+  msgpackr-extract: true
+  vue-demi: true

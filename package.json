@@ -1,0 +1,68 @@
+{
+  "name": "manablox-cms",
+  "version": "0.50.0",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git"
+  },
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test --concurrency=4",
+    "test:sqlite": "TEST_DATABASE_DIALECT=sqlite turbo run test --concurrency=4",
+    "typecheck": "turbo run typecheck --concurrency=4 && pnpm typecheck:vue",
+    "typecheck:vue": "turbo run typecheck:vue --concurrency=2",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "knip": "knip --no-progress",
+    "check": "pnpm lint && pnpm knip && pnpm licenses:check && pnpm plugins:boundary && pnpm docs:words && pnpm typecheck && pnpm admin:styles && pnpm admin:layout && pnpm admin:models && pnpm sdk:api:check && pnpm test && pnpm test:sqlite",
+    "plugins:boundary": "node scripts/check-plugin-boundary.mjs",
+    "docs:words": "node scripts/check-docs-words.mjs",
+    "admin:styles": "node scripts/check-admin-styles.mjs",
+    "admin:layout": "node scripts/check-admin-layout.mjs",
+    "admin:models": "node scripts/check-admin-models.mjs",
+    "admin:budget": "node scripts/check-admin-budget.mjs",
+    "sdk:api": "node scripts/admin-sdk-api.mjs",
+    "sdk:api:check": "node scripts/admin-sdk-api.mjs --check",
+    "licenses": "node scripts/sync-licenses.mjs",
+    "licenses:check": "node scripts/sync-licenses.mjs --check",
+    "bench": "./scripts/bench.sh",
+    "perf": "./scripts/perf.sh",
+    "db:generate": "pnpm --filter @manablox/db --filter @manablox/plugin-license --filter @manablox/plugin-workflows --filter @manablox/plugin-webhooks generate",
+    "db:migrate": "pnpm --filter @manablox/api migrate",
+    "db:reset": "./scripts/db-reset.sh",
+    "clean": "./scripts/clean.sh",
+    "clean:all": "./scripts/clean.sh --all",
+    "dev:up": "./scripts/dev.sh up",
+    "dev:down": "./scripts/dev.sh down",
+    "dev:logs": "./scripts/dev.sh logs",
+    "dev:reset": "./scripts/dev.sh reset",
+    "dev:services": "./scripts/dev.sh services:up",
+    "dev:publish": "./scripts/dev-publish.sh",
+    "docker:build": "./scripts/docker-build.sh",
+    "services:up": "./scripts/dev.sh services:up",
+    "services:down": "./scripts/dev.sh services:down",
+    "publish:npm": "./scripts/publish.sh",
+    "prepare": "node scripts/git-hooks.mjs",
+    "docs:generate": "node packages/cli/bin/manablox.mjs docs generate --config apps/api/src/docs.config.ts --out apps/api/generated",
+    "exports:check": "node scripts/check-exports.mjs",
+    "deps:check": "node scripts/check-runtime-deps.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:",
+    "simple-git-hooks": "catalog:",
+    "knip": "catalog:"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm biome check --staged --no-errors-on-unmatched"
+  }
+}

@@ -1,0 +1,88 @@
+name: manablox-loadtest
+
+# Standalone load testing with Grafana k6. Nothing here builds or starts the application:
+# the targets are whatever the environment points at, so the same suite runs against the
+# dev stack, a staging deployment or production.
+#
+#   cp .env.example .env            # edit PUBLIC_API_URL and FRONTEND_URLS
+#   docker compose run --rm --service-ports k6                      # public API, default profile
+#   docker compose run --rm --service-ports k6 run /loadtest/scripts/frontends.js
+#   docker compose run --rm --service-ports -e PROFILE=stress k6    # or spike, soak, smoke
+#
+# `--service-ports` is what publishes k6's live dashboard on http://localhost:5665;
+# `docker compose run` drops the `ports:` mapping otherwise. `run.sh` passes it for you.
+#
+# `host-gateway` makes `host.docker.internal` resolve to the host, so a stack published on
+# localhost is reachable from inside the runner. To hit the dev compose network directly
+# instead, set LOADTEST_NETWORK=manablox-cms-dev_default and use `http://public-api:3001`.
+#
+# Optional dashboard: `docker compose --profile dashboard up -d` starts InfluxDB and
+# Grafana on http://localhost:${GRAFANA_PORT:-3300}; the k6 runner then streams metrics
+# there when K6_OUT is set (see .env.example).
+
+x-k6: &k6
+  image: grafana/k6:${K6_VERSION:-0.54.0}
+  # The image's own user cannot write a bind mount owned by you; run as you instead so
+  # the summaries in results/ are yours to delete.
+  user: ${LOADTEST_UID:-1000}:${LOADTEST_GID:-1000}
+  env_file: [.env]
+  environment:
+    PROFILE: ${PROFILE:-load}
+    PUBLIC_API_URL: ${PUBLIC_API_URL:-http://host.docker.internal:3001}
+    FRONTEND_URLS: ${FRONTEND_URLS:-}
+    TARGETS_FILE: /config/targets.json
+    K6_OUT: ${K6_OUT:-}
+    K6_WEB_DASHBOARD: ${K6_WEB_DASHBOARD:-false}
+    K6_WEB_DASHBOARD_EXPORT: /results/dashboard-${PROFILE:-load}.html
+    K6_WEB_DASHBOARD_HOST: 0.0.0.0
+  volumes:
+    - ./scripts:/loadtest/scripts:ro
+    - ./config:/config:ro
+    - ./results:/results
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  working_dir: /loadtest/scripts
+
+services:
+  # The default runner: public API. `docker compose run --rm k6 run <script>` overrides
+  # the script; the entrypoint is k6 itself, so anything after the service name is a k6
+  # argument.
+  k6:
+    <<: *k6
+    command: ['run', '/loadtest/scripts/public-api.js']
+    ports: &dashboard-port
+      - '${K6_DASHBOARD_PORT:-5665}:5665'
+
+  # ---- optional metrics dashboard ----------------------------------------------------
+
+  influxdb:
+    image: influxdb:1.8-alpine
+    profiles: [dashboard]
+    environment:
+      INFLUXDB_DB: k6
+      INFLUXDB_HTTP_MAX_BODY_SIZE: 0
+    volumes:
+      - influx-data:/var/lib/influxdb
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:8086/ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  grafana:
+    image: grafana/grafana-oss:${GRAFANA_VERSION:-11.2.0}
+    profiles: [dashboard]
+    depends_on:
+      influxdb: { condition: service_healthy }
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: 'true'
+    ports:
+      - '${GRAFANA_PORT:-3300}:3000'
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+volumes:
+  influx-data:

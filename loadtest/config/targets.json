@@ -1,0 +1,33 @@
+{
+  "$comment": "Discovered content is preferred over what is listed here: the API suite reads /v1/content, /v1/types and the menus to build its request mix at setup time. Everything in this file is a fallback or an addition. Frontend entries override FRONTEND_URLS paths per site; a frontend named in FRONTEND_URLS but not here gets defaultFrontendPaths.",
+
+  "publicApi": {
+    "permalinks": ["", "about", "blog"],
+    "menus": ["main"],
+    "contentTypes": [],
+    "search": ["a", "the", "manablox"],
+    "graphql": {
+      "listFields": "id title slug permalink locale updatedAt",
+      "pageFields": "id title slug permalink locale publishedAt updatedAt"
+    }
+  },
+
+  "defaultFrontendPaths": ["/", "/about", "/blog"],
+
+  "$frontendsExample": [
+    {
+      "name": "my-site",
+      "url": "http://host.docker.internal:3010",
+      "host": "localhost:3010",
+      "paths": ["/", "/about", "/blog"],
+      "weight": 3
+    }
+  ],
+
+  "frontends": [],
+
+  "$controls": "With CONTROLS=on, controls.settings (a control API settings body) replaces the built-in set in scripts/lib/controls.js, e.g. { \"settings\": { \"rateLimits\": { \"delivery.space\": { \"max\": 100000, \"windowSeconds\": 60 } } } }.",
+
+  "$paths": "Any path may carry a {permalink} placeholder, which is replaced with a permalink discovered from the public API, e.g. \"/blog/{permalink}\".",
+  "$host": "An entry may set \"host\" to send that Host header instead of the URL's: a Vite or Nuxt dev server answers 403 to any name but its own, so an entry pointing at one needs host: localhost:<port>. See $frontendsExample for the shape of an entry."
+}

@@ -1,0 +1,13 @@
+import { libraryConfig } from '@manablox/config-typescript/tsdown';
+import { defineConfig } from 'tsdown';
+
+export default defineConfig(
+  libraryConfig({
+    entry: {
+      index: './src/index.ts',
+      define: './src/define.ts',
+      schema: './src/schema/index.ts',
+      testing: './src/testing.ts',
+    },
+  }),
+);

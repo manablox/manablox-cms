@@ -1,0 +1,154 @@
+name: Release
+
+# Publishing is deliberate, not a side effect of a push: a version number can never be
+# reused, so the release runs when someone asks for it.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'npm dist-tag to publish under'
+        required: false
+        default: 'latest'
+      dry-run:
+        description: 'Pack, check and build the images, but publish and push nothing'
+        type: boolean
+        default: true
+      images:
+        description: 'Also build and push the api and admin images to ghcr.io/manablox'
+        type: boolean
+        default: true
+
+permissions:
+  # What trusted publishing runs on: GitHub mints an OIDC token, npm verifies it against
+  # the trusted publisher configured for each package. No token is stored anywhere.
+  id-token: write
+  contents: read
+  # The images go to the GitHub Container Registry.
+  packages: write
+
+jobs:
+  publish:
+    name: publish to npmjs.com
+    runs-on: ubuntu-latest
+    # The tests publish.sh runs need the database and the cache, as in ci.yml.
+    env:
+      DATABASE_URL: postgres://manablox:manablox@localhost:5432/manablox
+      TEST_DATABASE_URL: postgres://manablox:manablox@localhost:5432/manablox
+      TEST_REDIS_URL: redis://localhost:6379
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/services
+        with:
+          valkey: true
+
+      # A release installs against the registry rather than trusting the restored store.
+      - uses: ./.github/actions/setup
+        with:
+          registry-url: https://registry.npmjs.org
+          prefer-offline: false
+
+      # Trusted publishing needs npm 11.5.1 or newer, which is ahead of the npm bundled
+      # with some Node 24 releases.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      # The same script the maintainers run locally, so what CI publishes and what a dry
+      # run on a laptop reports cannot drift. It runs typecheck, lint, tests and the
+      # build, then packs each publishable package.
+      #
+      # `pnpm pack` rather than `pnpm publish`: pnpm rewrites the `workspace:` and
+      # `catalog:` specifiers while packing, and `npm publish` is what understands the
+      # OIDC credential - pnpm's own publish does not work with it (pnpm/pnpm#11513).
+      - name: Apply migrations
+        run: pnpm --filter @manablox/db migrate
+
+      - name: Check, build and pack
+        run: ./scripts/publish.sh --pack-only dist-packages --host --no-git-checks
+
+      - name: Publish
+        env:
+          DIST_TAG: ${{ inputs.tag || 'latest' }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          set -euo pipefail
+
+          for tarball in dist-packages/*.tgz; do
+            # The manifest inside the tarball is the published one, specifiers already
+            # rewritten, so it is the honest source for the name and version.
+            read -r name version < <(
+              tar -xzOf "$tarball" package/package.json |
+                node -e 'let s="";process.stdin.on("data",c=>s+=c).on("end",()=>{const p=JSON.parse(s);console.log(p.name,p.version)})'
+            )
+
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "skip   $name@$version - already on the registry"
+              continue
+            fi
+
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "would publish $name@$version under '$DIST_TAG'"
+              continue
+            fi
+
+            echo "publish $name@$version under '$DIST_TAG'"
+            # `--access public` matters only on a first publish of a scoped package,
+            # which is exactly the case trusted publishing cannot serve - see the
+            # bootstrap note in https://dev.manablox.io/deployment/releases/.
+            # `--provenance`: the signed statement of which workflow run built it, which
+            # trusted publishing would add anyway; explicit so a token fallback keeps it.
+            npm publish "$tarball" --access public --provenance --tag "$DIST_TAG"
+          done
+
+      - name: Summary
+        if: always()
+        run: |
+          find dist-packages -name '*.tgz' -printf 'packed: %f\n' 2>/dev/null | sort >> "$GITHUB_STEP_SUMMARY" || true
+
+  # The production images at the release's version: ghcr.io/manablox/cms-api (the management
+  # API, the public API and the migrations) and ghcr.io/manablox/cms-admin. `latest` moves
+  # only with the npm `latest` tag, so a prerelease never becomes what `docker pull` gets.
+  images:
+    name: image - ${{ matrix.image }}
+    if: inputs.images
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api, admin]
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: version
+        run: echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to ghcr.io
+        if: ${{ !inputs.dry-run }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/cms-${{ matrix.image }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }}
+            type=raw,value=latest,enable=${{ (inputs.tag || 'latest') == 'latest' }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/Dockerfile.${{ matrix.image }}
+          push: ${{ !inputs.dry-run }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}

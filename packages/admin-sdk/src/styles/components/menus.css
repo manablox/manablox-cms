@@ -1,0 +1,18 @@
+/* Floating panels anchored to a trigger: popovers, dropdown menus, select lists. */
+
+@layer components {
+  /* Surface only; reka-ui positions it and callers add `max-h-*`. */
+  .mb-popover {
+    @apply max-w-[calc(100vw-1rem)] min-w-44 overflow-auto rounded-popover border border-surface-200 bg-surface-0 p-1 text-surface-900 shadow-pop outline-none dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100;
+    z-index: var(--mb-z-popover);
+    transform-origin: var(--reka-popper-transform-origin, center);
+  }
+
+  /* Label between groups in a popover. */
+  .mb-menu-label {
+    @apply px-2 pt-2 pb-1 text-2xs font-semibold tracking-[0.1em] text-surface-500 uppercase;
+  }
+  .mb-menu-separator {
+    @apply my-1 h-px bg-surface-200 dark:bg-surface-700;
+  }
+}

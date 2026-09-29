@@ -1,0 +1,148 @@
+name: manablox
+
+# Production compose. Every hostname, secret and origin comes from the environment.
+#
+# Image names are variables so the same file either builds locally (the default) or runs
+# what CI published:
+#
+#   IMAGE_PREFIX=ghcr.io/manablox IMAGE_TAG=0.50.0 docker compose pull && ... up -d
+
+# Two database roles: the owner runs the migrations and owns the schema, the app role is
+# what the CMS logs in as. It cannot change tables or delete audit entries. The init script
+# creates both on the first start; see https://dev.manablox.io/deployment/database-roles/.
+x-app-database-url: &app-database-url postgres://${DATABASE_APP_USER:-manablox_app}:${DATABASE_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-manablox}
+x-owner-database-url: &owner-database-url postgres://${DATABASE_OWNER_USER:-manablox_owner}:${DATABASE_OWNER_PASSWORD}@postgres:5432/${POSTGRES_DB:-manablox}
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      # The superuser, for administration only.
+      POSTGRES_USER: ${POSTGRES_USER:-manablox}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-manablox}
+      DATABASE_OWNER_USER: ${DATABASE_OWNER_USER:-manablox_owner}
+      DATABASE_OWNER_PASSWORD: ${DATABASE_OWNER_PASSWORD:?set DATABASE_OWNER_PASSWORD}
+      DATABASE_APP_USER: ${DATABASE_APP_USER:-manablox_app}
+      DATABASE_APP_PASSWORD: ${DATABASE_APP_PASSWORD:?set DATABASE_APP_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-manablox}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    command: ['valkey-server', '--appendonly', 'yes']
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ['CMD', 'valkey-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Brings the schema up to date as the owner role and grants the app role, then exits.
+  # Both APIs wait for it.
+  migrate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    image: ${IMAGE_PREFIX:-manablox}/cms-api:${IMAGE_TAG:-latest}
+    command: ['node', 'apps/api/dist/migrate.js']
+    restart: 'no'
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATABASE_URL: *app-database-url
+      MIGRATION_DATABASE_URL: *owner-database-url
+      NODE_ENV: production
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    environment:
+      DATABASE_URL: *app-database-url
+      MIGRATION_DATABASE_URL: *owner-database-url
+      REDIS_URL: redis://valkey:6379
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+      PUBLIC_URL: ${PUBLIC_URL:?set PUBLIC_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_PATH: /data/uploads
+      STORAGE_LOCAL_PUBLIC_URL: ${STORAGE_LOCAL_PUBLIC_URL:-}
+      # Premium plugin licenses; only the management API calls the license server.
+      MANABLOX_LICENSE_KEYS: ${MANABLOX_LICENSE_KEYS:-}
+      MANABLOX_LICENSE_SERVER: ${MANABLOX_LICENSE_SERVER:-https://licenses.manablox.io/api}
+      MANABLOX_LICENSE_KIND: ${MANABLOX_LICENSE_KIND:-auto}
+      MANABLOX_LICENSE_DEV_HOSTS: ${MANABLOX_LICENSE_DEV_HOSTS:-}
+      NODE_ENV: production
+    volumes:
+      - uploads:/data/uploads
+    ports:
+      - '${API_PORT:-3000}:3000'
+    image: ${IMAGE_PREFIX:-manablox}/cms-api:${IMAGE_TAG:-latest}
+
+  # The public delivery API: same image, different entrypoint and a locked config.
+  # It mounts no auth, no RPC and no upload route, so it needs neither CORS origins nor
+  # a session-capable secret beyond the one that signs media URLs.
+  public-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    image: ${IMAGE_PREFIX:-manablox}/cms-api:${IMAGE_TAG:-latest}
+    command: ['node', 'apps/public-api/dist/main.js']
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    environment:
+      # A read-only role is the last defence if any of the hardening above is bypassed.
+      # See https://dev.manablox.io/delivery/public-api/#a-read-only-database-role for the grant.
+      DATABASE_URL: ${PUBLIC_DATABASE_URL:-postgres://${DATABASE_APP_USER:-manablox_app}:${DATABASE_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-manablox}}
+      REDIS_URL: redis://valkey:6379
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+      PUBLIC_URL: ${PUBLIC_API_URL:?set PUBLIC_API_URL}
+      MANABLOX_SPACE: ${PUBLIC_SPACE:-}
+      MANABLOX_SPACE_ID: ${PUBLIC_SPACE_ID:-}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_PATH: /data/uploads
+      STORAGE_LOCAL_PUBLIC_URL: ${STORAGE_LOCAL_PUBLIC_URL:-}
+      MANABLOX_PORT: '3100'
+      PORT: '3100'
+      NODE_ENV: production
+    volumes:
+      - uploads:/data/uploads:ro
+    ports:
+      - '${PUBLIC_API_PORT:-3001}:3100'
+
+  admin:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.admin
+    image: ${IMAGE_PREFIX:-manablox}/cms-admin:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      # The management API nginx proxies for the admin.
+      MANAGEMENT_API_URL: ${MANAGEMENT_API_URL:-http://api:3000}
+    ports:
+      - '${ADMIN_PORT:-3002}:80'
+
+volumes:
+  postgres-data:
+  valkey-data:
+  uploads:

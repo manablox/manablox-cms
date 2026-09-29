@@ -1,0 +1,4 @@
+@import "@manablox/admin-plugin/tailwind.css" prefix(lic);
+
+/* The bundle's own sources, also when the admin's dev server compiles this sheet. */
+@source ".";

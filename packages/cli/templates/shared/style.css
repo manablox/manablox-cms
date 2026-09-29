@@ -1,0 +1,97 @@
+:root {
+  --ink: #18181b;
+  --muted: #71717a;
+  --line: #e4e4e7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font: 16px/1.6 system-ui, sans-serif;
+  color: var(--ink);
+}
+
+.site {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+nav a {
+  color: inherit;
+}
+
+nav a[aria-current='page'] {
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.lead {
+  color: var(--muted);
+  font-size: 1.125rem;
+}
+
+.teaser {
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.teaser h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem;
+}
+
+.teaser img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Every generated block component carries `block`, and its type's name after it. */
+.block {
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.block h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem;
+}
+
+.block img,
+.content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.listing {
+  list-style: none;
+  padding: 0;
+}
+
+.state {
+  color: var(--muted);
+}
+
+.unknown {
+  border: 1px dashed var(--line);
+  padding: 1rem;
+  margin-top: 1.5rem;
+  color: var(--muted);
+}

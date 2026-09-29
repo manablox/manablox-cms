@@ -1,0 +1,362 @@
+name: __COMPOSE_NAME__
+
+# Production stack for a Manablox instance run from the published packages.
+#
+{{#if !sqlite}}
+#   postgres  Postgres 18, the only state that matters
+{{/if}}
+#   valkey    shared response cache and job queue; every CMS process must use the same one
+#   migrate   one-shot `manablox migrate`, run before the API starts
+#   api       management API + admin, one process{{#if byDomain}}, served at ADMIN_DOMAIN{{#else}}, published on ADMIN_PORT{{/if}}
+{{#if publicApi}}
+#   public    hardened delivery API pinned to one space{{#if byDomain}}, served at PUBLIC_DOMAIN{{#else}}, published on PUBLIC_PORT{{/if}}
+{{/if}}
+{{slot compose.header}}
+{{#if mailpit}}
+#   mailpit   catches every mail the CMS sends; inbox on 127.0.0.1:MAILPIT_UI_PORT
+{{/if}}
+{{#if caddy}}
+#   caddy     TLS termination and routing; the only service with published ports
+{{/if}}
+{{#if nginx}}
+#   nginx     TLS termination and routing; the only service with published ports
+{{/if}}
+#
+{{#if sqlite}}
+# The database is SQLite: /data/db/manablox.db in the `database` volume, the only state
+# that matters. SQLite has one writer, so never run more than one api replica.
+#
+{{/if}}
+# Every hostname, secret and origin comes from `.env` (see .env.example). No value is
+# baked into the image: the same build runs staging and production.
+
+x-cms-image: &cms-image
+  build: .
+  image: ${IMAGE_NAME:-__COMPOSE_NAME__}:${IMAGE_TAG:-latest}
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: '20m'
+      max-file: '5'
+
+{{#if !sqlite}}
+# Two database roles: the owner runs the migrations and owns the schema, the app role is
+# what the CMS logs in as. It cannot change tables or delete audit entries.
+# postgres/init/10-roles.sh creates both on the first start.
+x-app-database-url: &app-database-url postgres://${DATABASE_APP_USER:-manablox_app}:${DATABASE_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-manablox}
+x-owner-database-url: &owner-database-url postgres://${DATABASE_OWNER_USER:-manablox_owner}:${DATABASE_OWNER_PASSWORD}@postgres:5432/${POSTGRES_DB:-manablox}
+
+{{/if}}
+# Environment: migrate and api get all of .env (env_file), so every variable the config
+# reads works without an edit here. `environment` wins over it and sets what differs
+# inside the compose network. The processes that only read get an explicit list instead{{#if !sqlite}}:
+# no database password but the read-only role's{{/if}}.
+x-cms-env: &cms-env
+  NODE_ENV: production
+{{#if sqlite}}
+  DATABASE_URL: file:/data/db/manablox.db
+{{/if}}
+  REDIS_URL: redis://valkey:6379
+  AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+  STORAGE_LOCAL_PATH: /data/uploads
+  MEDIA_CACHE_PATH: /data/media-cache
+
+services:
+{{#if !sqlite}}
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    <<: *logging
+    environment:
+      # The superuser, for administration only.
+      POSTGRES_USER: ${POSTGRES_USER:-manablox}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-manablox}
+      # Read by the scripts in postgres/init on the first start only.
+      DATABASE_OWNER_USER: ${DATABASE_OWNER_USER:-manablox_owner}
+      DATABASE_OWNER_PASSWORD: ${DATABASE_OWNER_PASSWORD:?set DATABASE_OWNER_PASSWORD}
+      DATABASE_APP_USER: ${DATABASE_APP_USER:-manablox_app}
+      DATABASE_APP_PASSWORD: ${DATABASE_APP_PASSWORD:?set DATABASE_APP_PASSWORD}
+{{#if readOnlyRole}}
+      POSTGRES_PUBLIC_PASSWORD: ${POSTGRES_PUBLIC_PASSWORD:?set POSTGRES_PUBLIC_PASSWORD}
+{{/if}}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-manablox} -d ${POSTGRES_DB:-manablox}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+{{/if}}
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    <<: *logging
+    command: ['valkey-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru']
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ['CMD', 'valkey-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+
+{{#if sqlite}}
+  # Brings the schema up to date, then exits. `api` waits for it, so a failing migration
+  # stops the deploy before a request can hit a stale schema.
+  migrate:
+    <<: [*cms-image, *logging]
+    command: ['migrate']
+    restart: 'no'
+    env_file: .env
+    environment:
+      <<: *cms-env
+    volumes:
+      - database:/data/db
+{{#else}}
+  # Brings the schema up to date as the owner role and grants the app role, then exits.
+  # `api` waits for it, so a failing migration stops the deploy before a request can hit a
+  # stale schema.
+  migrate:
+    <<: [*cms-image, *logging]
+    command: ['migrate']
+    restart: 'no'
+    depends_on:
+      postgres: { condition: service_healthy }
+    env_file: .env
+    environment:
+      <<: *cms-env
+      DATABASE_URL: *app-database-url
+      MIGRATION_DATABASE_URL: *owner-database-url
+{{/if}}
+
+  # The management API and the admin, one process. The admin is served at `/` from the
+  # same origin, so the session cookie needs no proxy tricks and CORS_ORIGINS is only for
+  # your own frontends.
+  api:
+    <<: [*cms-image, *logging]
+    command: ['start']
+    restart: unless-stopped
+    depends_on:
+{{#if !sqlite}}
+      postgres: { condition: service_healthy }
+{{/if}}
+      valkey: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+{{#if !byDomain}}
+    ports:
+      - '${ADMIN_PORT:-__ADMIN_PORT__}:3000'
+{{/if}}
+    env_file: .env
+    environment:
+      <<: *cms-env
+{{#if !sqlite}}
+      DATABASE_URL: *app-database-url
+      MIGRATION_DATABASE_URL: *owner-database-url
+{{/if}}
+      PORT: '3000'
+      PUBLIC_URL: ${PUBLIC_URL:?set PUBLIC_URL}
+{{#if mailpit}}
+      MAILPIT_HOST: mailpit
+      MAILPIT_PORT: '1025'
+{{/if}}
+    volumes:
+{{#if sqlite}}
+      - database:/data/db
+{{/if}}
+      - uploads:/data/uploads
+      - api-media-cache:/data/media-cache
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+{{#if publicApi}}
+
+{{#if sqlite}}
+  # The public delivery API: same image, the hardened config, read-only access to the
+  # uploads. It mounts the database read-write: SQLite in WAL mode writes its shared-memory
+  # file even to read. Until it can pin exactly one space it answers 503 and checks
+  # again every ten seconds.
+{{#else}}
+  # The public delivery API: same image, the hardened config, a read-only database role,
+  # read-only access to the uploads. Until it can pin exactly one space it answers 503
+  # and checks again every ten seconds.
+{{/if}}
+  public:
+    <<: [*cms-image, *logging]
+    command: ['start', '--config', 'manablox.public.config.ts']
+    restart: unless-stopped
+    depends_on:
+{{#if !sqlite}}
+      postgres: { condition: service_healthy }
+{{/if}}
+      valkey: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+{{#if !byDomain}}
+    ports:
+      - '${PUBLIC_PORT:-__PUBLIC_PORT__}:3100'
+{{/if}}
+    environment:
+      <<: *cms-env
+{{#if !sqlite}}
+      DATABASE_URL: postgres://manablox_public:${POSTGRES_PUBLIC_PASSWORD}@postgres:5432/${POSTGRES_DB:-manablox}
+{{/if}}
+      PUBLIC_PORT: '3100'
+      # Not read by the server, which listens on PUBLIC_PORT: the image's HEALTHCHECK
+      # probes $PORT, and without this it would ask 3000 and mark the service unhealthy.
+      PORT: '3100'
+      PUBLIC_API_URL: ${PUBLIC_API_URL:?set PUBLIC_API_URL}
+      PUBLIC_MEDIA_CACHE_PATH: /data/media-cache
+      HOST: ${HOST:-}
+{{#if sqlite}}
+      DATABASE_AUTH_TOKEN: ${DATABASE_AUTH_TOKEN:-}
+{{#else}}
+      DATABASE_SSL: ${DATABASE_SSL:-}
+{{/if}}
+      DB_POOL_MAX: ${DB_POOL_MAX:-}
+      MEDIA_SIGNING_SECRET: ${MEDIA_SIGNING_SECRET:-}
+      CACHE_ENABLED: ${CACHE_ENABLED:-}
+      CACHE_SYNC_INTERVAL: ${CACHE_SYNC_INTERVAL:-}
+      RATE_LIMIT: ${RATE_LIMIT:-}
+      MANABLOX_SPACE: ${MANABLOX_SPACE:-}
+      MANABLOX_SPACE_ID: ${MANABLOX_SPACE_ID:-}
+      PUBLIC_CACHE_TTL: ${PUBLIC_CACHE_TTL:-}
+      PUBLIC_GRAPHQL_INTROSPECTION: ${PUBLIC_GRAPHQL_INTROSPECTION:-}
+      PUBLIC_GRAPHQL_MAX_DEPTH: ${PUBLIC_GRAPHQL_MAX_DEPTH:-}
+      PUBLIC_GRAPHQL_MAX_COMPLEXITY: ${PUBLIC_GRAPHQL_MAX_COMPLEXITY:-}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-}
+      STORAGE_LOCAL_PUBLIC_URL: ${STORAGE_LOCAL_PUBLIC_URL:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
+      FILE_MAX_SIZE_MB: ${FILE_MAX_SIZE_MB:-}
+      ALLOWED_MIME_TYPES: ${ALLOWED_MIME_TYPES:-}
+      LOG_LEVEL: ${LOG_LEVEL:-}
+      LOG_PRETTY: ${LOG_PRETTY:-}
+      LOG_CONSOLE_LEVEL: ${LOG_CONSOLE_LEVEL:-}
+      LOG_FILE: ${LOG_FILE:-}
+      LOG_FILE_LEVEL: ${LOG_FILE_LEVEL:-}
+      LOG_HTTP_URL: ${LOG_HTTP_URL:-}
+      LOG_HTTP_HEADERS: ${LOG_HTTP_HEADERS:-}
+      LOG_HTTP_BATCH_SIZE: ${LOG_HTTP_BATCH_SIZE:-}
+      LOG_HTTP_LEVEL: ${LOG_HTTP_LEVEL:-}
+    volumes:
+{{#if sqlite}}
+      - database:/data/db
+{{/if}}
+      - uploads:/data/uploads:ro
+      - public-media-cache:/data/media-cache
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+{{/if}}
+
+  {{slot compose.services}}
+{{#if mailpit}}
+
+  # A mail catcher, not a mail server: every mail the CMS sends ends up in its inbox and
+  # nowhere else. Published on loopback only; set MAIL_DRIVER to a provider before real
+  # people are meant to receive mail, and drop this service.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    <<: *logging
+    ports:
+      - '127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025'
+{{/if}}
+{{#if caddy}}
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    <<: *logging
+    depends_on:
+      - api
+{{#if publicApi}}
+      - public
+{{/if}}
+      {{slot compose.proxy}}
+    environment:
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN:?set ADMIN_DOMAIN}
+{{#if publicApi}}
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?set PUBLIC_DOMAIN}
+{{/if}}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+      # Larger than FILE_MAX_SIZE_MB: the multipart envelope around an upload counts too.
+      UPLOAD_BODY_LIMIT: ${UPLOAD_BODY_LIMIT:-32MB}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+{{/if}}
+{{#if nginx}}
+
+  # Renders nginx/templates/*.template with the domains from .env at start. The filter
+  # keeps envsubst away from nginx's own $variables.
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    <<: *logging
+    depends_on:
+      - api
+{{#if publicApi}}
+      - public
+{{/if}}
+      {{slot compose.proxy}}
+    environment:
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN:?set ADMIN_DOMAIN}
+{{#if publicApi}}
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?set PUBLIC_DOMAIN}
+{{/if}}
+      # Larger than FILE_MAX_SIZE_MB: the multipart envelope around an upload counts too.
+      UPLOAD_BODY_LIMIT: ${UPLOAD_BODY_LIMIT:-32m}
+      NGINX_ENVSUBST_FILTER: '^(ADMIN_DOMAIN|PUBLIC_DOMAIN|UPLOAD_BODY_LIMIT)$$'
+    ports:
+      - '80:80'
+{{#if tls}}
+      - '443:443'
+{{/if}}
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+{{#if tls}}
+      - ./nginx/certs:/etc/nginx/certs:ro
+{{/if}}
+{{/if}}
+
+volumes:
+{{#if sqlite}}
+  database:
+{{#else}}
+  postgres-data:
+{{/if}}
+  valkey-data:
+  uploads:
+  api-media-cache:
+{{#if publicApi}}
+  public-media-cache:
+{{/if}}
+  {{slot compose.volumes}}
+{{#if caddy}}
+  caddy-data:
+  caddy-config:
+{{/if}}

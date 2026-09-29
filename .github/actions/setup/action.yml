@@ -1,0 +1,54 @@
+name: Set up the workspace
+description: >-
+  pnpm, Node 24 with the pnpm store cache, the frozen install and, when `turbo-cache` is
+  set, the turbo and Vitest caches. A local action is read from the checkout, so the
+  calling job runs actions/checkout first.
+
+inputs:
+  registry-url:
+    description: npm registry for setup-node to write an .npmrc for (publishing only).
+    required: false
+    default: ''
+  prefer-offline:
+    description: Install from the restored store without revalidating against the registry.
+    required: false
+    default: 'true'
+  turbo-cache:
+    description: >-
+      Scope of the turbo cache to restore and save, one per job, so parallel jobs never
+      race to save the same key. Empty skips the cache.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    # No `version` input: pnpm is pinned by `packageManager` in package.json, and
+    # specifying it in both places makes the action fail.
+    - uses: pnpm/action-setup@v6
+
+    - uses: actions/setup-node@v5
+      with:
+        node-version: 24
+        cache: pnpm
+        registry-url: ${{ inputs.registry-url }}
+
+    - shell: bash
+      run: pnpm install --frozen-lockfile ${{ inputs.prefer-offline == 'true' && '--prefer-offline' || '' }}
+
+    # Turbo hashes each package's inputs, so with its cache restored an unchanged package
+    # replays its typecheck, tests and build in milliseconds. The key is per commit and
+    # the prefix restores the nearest earlier run: a cache is never "hit" outright,
+    # which is what keeps it accumulating rather than frozen at its first version.
+    # Vitest's module cache is keyed by content, so an older one is safe to restore;
+    # each package keeps its own so the parallel runs cannot clear a shared directory
+    # out from under each other when the restored cache predates the lockfile.
+    - if: inputs.turbo-cache != ''
+      uses: actions/cache@v5
+      with:
+        path: |
+          .turbo
+          packages/*/node_modules/.vitest-cache
+          apps/*/node_modules/.vitest-cache
+        key: turbo-${{ runner.os }}-${{ inputs.turbo-cache }}-${{ github.sha }}
+        restore-keys: turbo-${{ runner.os }}-${{ inputs.turbo-cache }}-

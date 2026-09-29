@@ -1,0 +1,59 @@
+---
+import { listAttribute } from '@manablox/live-preview';
+import {
+  BLOCK_CLASS,
+  type BlockGridSettings,
+  type BlockLayout,
+  blockLayoutStyle,
+  blocksGridStyle,
+  columnsUsedBy,
+  GRID_CLASS,
+  uniformGrid,
+} from '@manablox/public-sdk';
+import { blockRenderers } from './blocks/index';
+
+/**
+ * A blocks field, each block through the registry in `./blocks/index.ts`. The list is
+ * tagged for the visual editor, and a grid field renders as a grid: each block's `layout`
+ * becomes custom properties the SDK's stylesheet reads.
+ *
+ * `path` is where the field sits: `['components']` on a page, deeper inside a block.
+ */
+interface Props {
+  blocks: Record<string, unknown>[];
+  path: (string | number)[];
+  grid?: BlockGridSettings | null;
+}
+
+const { blocks, path, grid } = Astro.props;
+const layouts = blocks.map((block) => (block.layout ?? null) as BlockLayout | null);
+const resolved = grid ?? uniformGrid(columnsUsedBy(layouts));
+---
+
+<div class={GRID_CLASS} {...listAttribute(path)} style={blocksGridStyle(resolved)}>
+  {
+    blocks.map((block, index) => {
+      const Renderer = blockRenderers[String(block.typeName ?? block.type)];
+      const style = blockLayoutStyle(layouts[index], resolved) || undefined;
+      return Renderer ? (
+        <div class={BLOCK_CLASS} style={style}>
+          <Renderer block={block} path={[...path, index]} />
+        </div>
+      ) : (
+        /* An unknown block type renders a visible note rather than vanishing. */
+        <div class={`unknown ${BLOCK_CLASS}`} style={style}>
+          No renderer for block type "{String(block.typeName ?? block.type)}".
+        </div>
+      );
+    })
+  }
+</div>
+
+<style>
+  .unknown {
+    border: 1px dashed var(--line);
+    padding: 1rem;
+    margin-top: 1.5rem;
+    color: var(--muted);
+  }
+</style>

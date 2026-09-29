@@ -1,0 +1,17 @@
+{
+  "extends": "@manablox/config-typescript/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "jsx": "preserve",
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "src/admin/**/*.ts",
+    "src/admin/**/*.vue",
+    "test/admin/**/*.ts",
+    "vite.admin.config.ts",
+    "vitest.admin.config.ts"
+  ]
+}

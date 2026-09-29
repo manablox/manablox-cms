@@ -1,0 +1,33 @@
+{
+  "name": "@manablox/docs-theme",
+  "version": "0.50.0",
+  "license": "MIT",
+  "description": "The Starlight theme and config the Manablox documentation sites share.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "packages/docs-theme"
+  },
+  "type": "module",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "catalog:",
+    "@astrojs/starlight": "catalog:",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/manrope": "^5.3.0",
+    "unist-util-visit": "^5.1.0"
+  },
+  "peerDependencies": {
+    "astro": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:astro"
+  }
+}

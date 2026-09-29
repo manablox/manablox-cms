@@ -1,0 +1,14 @@
+{{#if plain}}
+# Vite inlines these into the bundle at build time, so they have to be reachable
+# from a browser.
+{{#else}}
+# Read on the server at start-up, so one build runs against any instance.
+{{/if}}
+__ENV_PREFIX__MANABLOX_URL=__MANABLOX_URL__
+# The admin's origin. The preview channel refuses a message from anywhere else.
+__ENV_PREFIX__MANABLOX_ADMIN_ORIGIN=__EDITOR_ORIGIN__
+# Only needed against a management instance; a public one pins its own space.
+__ENV_PREFIX__MANABLOX_SPACE_ID=__SPACE_ID__
+{{#if !plain}}
+PORT=__PORT__
+{{/if}}

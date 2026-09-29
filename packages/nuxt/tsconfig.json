@@ -1,0 +1,5 @@
+{
+  "extends": "@manablox/config-typescript/library.json",
+  "compilerOptions": { "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["node"] },
+  "include": ["src", "test", "nuxt-imports.d.ts"]
+}

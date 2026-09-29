@@ -1,0 +1,8 @@
+{
+  "extends": "@manablox/config-typescript/library.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": false
+  },
+  "include": [".", "../src"]
+}

@@ -1,0 +1,10 @@
+# Overlay: join an existing docker network instead of reaching the host through
+# host.docker.internal. With the dev stack, that is `manablox-cms-dev_default`, and the
+# target is then `http://public-api:3001`, and any frontend by its service name.
+#
+#   LOADTEST_NETWORK=manablox-cms-dev_default docker compose -f compose.yml -f compose.network.yml run --rm k6
+
+networks:
+  default:
+    external: true
+    name: ${LOADTEST_NETWORK:?set LOADTEST_NETWORK to the network to join}

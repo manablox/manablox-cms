@@ -1,0 +1,162 @@
+/* Pages, the elevation scale, the stacking order, cards, sheets, loaders. */
+
+@layer components {
+  /* --- pages --------------------------------------------------------------------- */
+
+  /* Absolute widths, not the container scale, so pages keep their size. */
+  .mb-page {
+    @apply mx-auto w-full max-w-[80rem] p-4 sm:p-6 lg:p-8 2xl:max-w-[100rem] 2xl:p-10;
+  }
+  .mb-page-narrow {
+    @apply mx-auto w-full max-w-[56rem] p-4 sm:p-6 lg:p-8 2xl:max-w-[72rem] 2xl:p-10;
+  }
+  .mb-page-wide {
+    @apply mx-auto w-full max-w-[100rem] p-4 sm:p-6 lg:p-8 2xl:max-w-[120rem] 2xl:p-10;
+  }
+
+  /* A designer's side pane; `DesignerLayout` adds the borders and the scroll. */
+  .mb-designer-pane {
+    @apply min-w-0 space-y-4 overflow-x-hidden border-b border-surface-200 bg-surface-0 p-3 dark:border-surface-800 dark:bg-surface-900;
+  }
+
+  /* Detail column; a bottom sheet on small screens. */
+  .mb-aside-sheet {
+    @apply fixed inset-x-3 bottom-3 max-h-[70dvh] shadow-modal lg:static lg:inset-auto lg:z-auto lg:max-h-[calc(100dvh-7rem)] lg:w-72 lg:shadow-none 2xl:w-80;
+    z-index: var(--mb-z-panel);
+  }
+
+  /* --- the stacking order ---------------------------------------------------------- */
+
+  .mb-z-sticky {
+    z-index: var(--mb-z-sticky);
+  }
+  .mb-z-panel {
+    z-index: var(--mb-z-panel);
+  }
+  .mb-z-drawer {
+    z-index: var(--mb-z-drawer);
+  }
+  .mb-z-overlay {
+    z-index: var(--mb-z-overlay);
+  }
+  .mb-z-popover {
+    z-index: var(--mb-z-popover);
+  }
+  .mb-z-toast {
+    z-index: var(--mb-z-toast);
+  }
+  .mb-z-tooltip {
+    z-index: var(--mb-z-tooltip);
+  }
+  .mb-z-local {
+    z-index: var(--mb-z-local);
+  }
+
+  /* --- surfaces ---------------------------------------------------------------- */
+
+  .mb-card {
+    @apply rounded-card border border-surface-200 bg-surface-0 p-4 shadow-xs shadow-surface-900/3 dark:border-surface-800 dark:bg-surface-900 dark:shadow-none;
+  }
+
+  /* Elevation: `page` ground, `card` on it, `popover` floats, `backdrop` dims. */
+  .mb-surface-page {
+    @apply bg-surface-50 dark:bg-surface-950;
+  }
+  .mb-surface-card {
+    @apply bg-surface-0 dark:bg-surface-900;
+  }
+  .mb-surface-popover {
+    @apply bg-surface-0 dark:bg-surface-800;
+  }
+  /* Behind dialogs and drawers. */
+  .mb-backdrop {
+    @apply bg-ink/50 backdrop-blur-xs;
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .mb-backdrop {
+      @apply bg-ink/70 backdrop-blur-none;
+    }
+  }
+  /* Translucent sticky bar. */
+  .mb-surface-sticky {
+    @apply bg-surface-0/80 backdrop-blur dark:bg-surface-900/80;
+  }
+  /* Inset area on a card: a toolbar strip, a nested block. */
+  .mb-surface-inset {
+    @apply bg-surface-100 dark:bg-surface-800;
+  }
+  /* Side panel or rail, a shade off the page. */
+  .mb-surface-panel {
+    @apply bg-surface-100 dark:bg-surface-900;
+  }
+
+  /* --- empty states ---------------------------------------------------------------- */
+
+  /* Dashed well with a ringed icon medallion. */
+  .mb-empty {
+    @apply relative flex flex-col items-center justify-center rounded-card border border-dashed border-surface-300 bg-surface-100/60 px-6 py-8 text-center dark:border-surface-700 dark:bg-surface-800/40;
+  }
+  /* Compact, for panels and cards. */
+  .mb-empty-sm {
+    @apply px-4 py-6;
+  }
+  /* Fills a grid or pane that would otherwise collapse. */
+  .mb-empty-fill {
+    @apply h-full min-h-56;
+  }
+
+  /* Halo rings as flat shadow spreads of the brand hue. */
+  .mb-empty-icon {
+    @apply flex shrink-0 items-center justify-center rounded-pill bg-brand-100 text-brand-700 dark:bg-brand-600/25 dark:text-brand-100;
+    height: 2.25rem;
+    width: 2.25rem;
+    box-shadow:
+      0 0 0 0.3125rem color-mix(in oklab, var(--color-brand-500) 9%, transparent),
+      0 0 0 0.625rem color-mix(in oklab, var(--color-brand-500) 4%, transparent);
+  }
+  .mb-empty-sm .mb-empty-icon {
+    height: 1.75rem;
+    width: 1.75rem;
+    box-shadow:
+      0 0 0 0.25rem color-mix(in oklab, var(--color-brand-500) 9%, transparent),
+      0 0 0 0.5rem color-mix(in oklab, var(--color-brand-500) 4%, transparent);
+  }
+
+  .mb-empty-title {
+    @apply font-display text-base font-bold tracking-tight text-surface-900 dark:text-surface-50;
+  }
+  .mb-empty-sm .mb-empty-title {
+    @apply text-sm;
+  }
+  .mb-empty-text {
+    @apply mx-auto max-w-xs text-xs text-surface-500;
+  }
+
+  /* --- loading ------------------------------------------------------------------- */
+
+  /* Size comes from the element. */
+  .mb-spinner {
+    @apply inline-block rounded-full border-2 border-surface-200 dark:border-surface-700;
+    border-top-color: var(--color-brand-600);
+    animation: mb-spin 0.7s linear infinite;
+  }
+
+  /* Placeholder that keeps the layout's height while loading. */
+  .mb-skeleton {
+    @apply block rounded-control bg-surface-200 dark:bg-surface-800;
+    animation: mb-pulse 1.6s ease-in-out infinite;
+  }
+
+  /* Topbar bar while a request is in flight; the 250ms delay hides it for fast ones. */
+  .mb-activity-bar {
+    @apply pointer-events-none absolute inset-x-0 top-0 h-0.5 overflow-hidden;
+  }
+  .mb-activity-bar::after {
+    content: "";
+    @apply absolute inset-y-0 w-1/3 rounded-full opacity-0;
+    background-color: var(--color-brand-600);
+    animation:
+      mb-sweep 1.1s ease-in-out 250ms infinite,
+      mb-appear 1ms linear 250ms forwards;
+  }
+}

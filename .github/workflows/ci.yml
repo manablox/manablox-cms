@@ -1,0 +1,298 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+# `images` needs to write to the GitHub Container Registry; everything else is read-only.
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL: postgres://manablox:manablox@localhost:5432/manablox
+  TEST_DATABASE_URL: postgres://manablox:manablox@localhost:5432/manablox
+  TEST_REDIS_URL: redis://localhost:6379
+
+jobs:
+  # Everything that reads the source without running it: no services, no build.
+  static:
+    name: lint - typecheck - generated files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          turbo-cache: static
+
+      - name: Lint
+        run: pnpm lint
+
+      # Unused files, exports and dependencies; config in knip.jsonc.
+      - name: Dead code
+        run: pnpm knip
+
+      - name: Licenses
+        run: pnpm licenses:check
+
+      - name: Admin conventions
+        run: pnpm admin:styles && pnpm admin:layout && pnpm admin:models
+
+      # Core packages neither import the first-party feature plugins nor name what they own.
+      - name: Plugin boundary
+        run: pnpm plugins:boundary
+
+      # Docs describe what is, and names removed by a refactor stay gone.
+      - name: Docs wording and removed names
+        run: pnpm docs:words
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Admin SDK surface
+        run: pnpm sdk:api:check
+
+      # A schema change without its migration fails here. drizzle-kit diffs the schema
+      # against the migration snapshots, so no database is involved. A rename makes it ask
+      # a question it cannot ask here: it prints an error and exits 0, or would wait.
+      - name: Migrations match the schema
+        run: |
+          set -o pipefail
+          log=$(mktemp)
+          status=0
+          timeout -k 10 120 pnpm db:generate < /dev/null 2>&1 | tee "$log" || status=$?
+          if [ "$status" -ne 0 ] || grep -q '^Error' "$log"; then
+            echo "::error::drizzle-kit could not generate the migrations unattended (a rename needs an answer). The schema change needs a migration generated locally: run pnpm db:generate and commit the result."
+            exit 1
+          fi
+          drift=$(git status --porcelain --untracked-files=all -- '*/migrations/*' '*/migrations-sqlite/*')
+          if [ -n "$drift" ]; then
+            echo "$drift"
+            echo "::error::The schema changed without a migration. Run pnpm db:generate and commit the result."
+            exit 1
+          fi
+
+  # The same suites on both dialects. SQLite uses a temporary file per test file, so
+  # its leg starts no Postgres; both keep Valkey for the Redis suites.
+  test:
+    name: test - ${{ matrix.dialect }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dialect: [postgres, sqlite]
+    env:
+      TEST_DATABASE_DIALECT: ${{ matrix.dialect }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/services
+        with:
+          postgres: ${{ matrix.dialect == 'postgres' }}
+          valkey: true
+      - uses: ./.github/actions/setup
+        with:
+          turbo-cache: test-${{ matrix.dialect }}
+
+      - name: Apply migrations
+        if: matrix.dialect == 'postgres'
+        run: pnpm --filter @manablox/db migrate
+
+      - name: Test
+        run: pnpm test
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          turbo-cache: build
+
+      - name: Build
+        run: pnpm build
+
+      # The prebuilt admin stays within apps/admin/bundle-budget.json (gzip sizes).
+      - name: Admin bundle budget
+        run: pnpm admin:budget
+
+      # Every exports, main, types and bin target, source and publishConfig, is a real file.
+      - name: Package entry points exist
+        run: pnpm exports:check
+
+      # What a published build imports is in its dependencies, not only its devDependencies.
+      - name: Package runtime imports are dependencies
+        run: pnpm deps:check
+
+  # The browser tests: sign up, create a space, a type, a document, publish, read it back;
+  # runtime plugin bundles and an instance without the feature plugins. They boot the API
+  # and the admin on the runner against Postgres, a few minutes on every pull request and
+  # push. Independent of the checks: it shares no output with them, so serialising them
+  # would only lengthen the critical path.
+  e2e:
+    name: end-to-end - admin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/services
+        with:
+          valkey: true
+      - uses: ./.github/actions/setup
+      # The Chromium download is the slow part of the browser install; keyed on the
+      # Playwright version the lockfile resolved, so a bump refetches.
+      - id: playwright
+        run: echo "version=$(pnpm --filter @manablox/admin exec playwright --version | tr -d ' ')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v5
+        id: browsers
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        run: pnpm --filter @manablox/admin exec playwright install --with-deps chromium
+      # The system libraries are not cached with the browser; installing them alone is
+      # a package-manager step, not a download.
+      - if: steps.browsers.outputs.cache-hit == 'true'
+        run: pnpm --filter @manablox/admin exec playwright install-deps chromium
+      - run: pnpm --filter @manablox/admin test:e2e
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/admin/playwright-report
+          retention-days: 7
+
+  # `pnpm audit` reads the lockfile and asks the registry; it needs no install and no
+  # Node cache, so the job is checkout, pnpm, and the one command.
+  security:
+    name: audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - run: pnpm audit --audit-level high
+
+  # Which images a commit can invalidate. A change under `packages/` or to the lockfile
+  # is shared by every app, so it rebuilds all of them. A pull request diffs against its
+  # base, a push against the previous tip.
+  changes:
+    name: changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      any: ${{ steps.matrix.outputs.any }}
+    steps:
+      # Full history: the diff below needs the base commit, which a shallow clone lacks.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # The matrix is built here rather than filtered in the build job, because the
+      # `matrix` context is not available in a job-level `if`.
+      - id: matrix
+        env:
+          # A tag builds everything: it is a release of the whole instance, and no
+          # diff against the previous commit describes that.
+          RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+
+          files="$(mktemp)"
+          # A missing or unreachable base (a new branch, a force push, the first commit)
+          # leaves nothing to diff against, so everything is treated as changed.
+          if [ "$RELEASE" = true ] || [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            all=true
+          else
+            all=false
+            git diff --name-only "$BASE_SHA" "$GITHUB_SHA" > "$files"
+            echo "changed files:"
+            sed 's/^/  /' "$files"
+          fi
+
+          # Written with explicit `if`s: a bare `cmd && return` whose command fails is a
+          # failing list, which `set -e` would treat as an error.
+          changed() {
+            if [ "$all" = true ]; then return 0; fi
+            local pattern
+            for pattern in "$@"; do
+              if grep -qE "$pattern" "$files"; then return 0; fi
+            done
+            return 1
+          }
+
+          # Anything shared rebuilds every image.
+          if changed '^packages/' '^pnpm-lock\.yaml$' '^pnpm-workspace\.yaml$' \
+                     '^package\.json$' '^turbo\.json$' '^\.github/workflows/ci\.yml$' \
+                     '^\.github/actions/'; then
+            all=true
+          fi
+
+          include=()
+          # add <image> <dockerfile> <path pattern>...
+          add() {
+            local image="$1" dockerfile="$2"; shift 2
+            if changed "$@"; then
+              include+=("{\"image\":\"$image\",\"dockerfile\":\"docker/$dockerfile\"}")
+            fi
+          }
+          # `api` also runs the public delivery API: one image, two entrypoints.
+          add api Dockerfile.api \
+            '^apps/api/' '^apps/public-api/' '^docker/Dockerfile\.api$' '^docker/dist-exports\.mjs$'
+          add admin Dockerfile.admin \
+            '^apps/admin/' '^docker/Dockerfile\.admin$' '^docker/nginx\.admin\.conf$'
+
+          joined=$(IFS=,; echo "${include[*]:-}")
+          echo "matrix={\"include\":[$joined]}" >> "$GITHUB_OUTPUT"
+          echo "any=$([ ${#include[@]} -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  # A pull request builds the images it touches without pushing them, so a broken
+  # Dockerfile fails before the merge; main and tags push to ghcr.io/manablox/cms-<image>.
+  # Releases push the version tags from release.yml.
+  images:
+    name: image - ${{ matrix.image }}
+    needs: [static, test, build, changes]
+    if: needs.changes.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to ghcr.io
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/cms-${{ matrix.image }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=long
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}

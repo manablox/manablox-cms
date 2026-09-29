@@ -1,0 +1,66 @@
+/* Root sizing, body, headings, focus, cursors. */
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  /* Everything is in rem; larger screens get a larger root size for viewing distance. */
+  @media (min-width: 120rem) {
+    html {
+      font-size: 17px;
+    }
+  }
+  @media (min-width: 160rem) {
+    html {
+      font-size: 19px;
+    }
+  }
+  @media (min-width: 200rem) {
+    html {
+      font-size: 21px;
+    }
+  }
+
+  body {
+    @apply bg-surface-50 font-sans text-sm text-surface-900 antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  :root.dark body {
+    @apply bg-surface-950 text-surface-100;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+
+  button,
+  select,
+  summary,
+  [role="button"],
+  label:has(> input[type="file"]),
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+
+  /* One disabled look, custom controls included. */
+  [aria-disabled="true"] {
+    @apply cursor-not-allowed opacity-50;
+  }
+}

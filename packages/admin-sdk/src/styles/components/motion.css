@@ -1,0 +1,239 @@
+/*
+ * Enter with `--mb-ease-out` over `--mb-dur`, leave faster with `--mb-ease-in`. reka-ui
+ * keeps elements mounted until their close animation ends, so overlays key on `data-state`.
+ */
+
+/* --- keyframes ------------------------------------------------------------------- */
+
+@keyframes mb-overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes mb-overlay-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes mb-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.97);
+  }
+}
+@keyframes mb-modal-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.25rem) scale(0.985);
+  }
+}
+/* Phone dialogs are bottom-aligned, so they rise from the edge. */
+@keyframes mb-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+@keyframes mb-sheet-out {
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+@keyframes mb-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-0.2rem);
+  }
+}
+@keyframes mb-pop-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+@keyframes mb-drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes mb-drawer-out {
+  to {
+    transform: translateX(-100%);
+  }
+}
+@keyframes mb-accordion-open {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--reka-accordion-content-height);
+    opacity: 1;
+  }
+}
+@keyframes mb-accordion-close {
+  from {
+    height: var(--reka-accordion-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+@keyframes mb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes mb-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@keyframes mb-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+@keyframes mb-appear {
+  to {
+    opacity: 1;
+  }
+}
+
+/* --- overlays ------------------------------------------------------------------- */
+
+/* Backdrop for `Dialog` and the `Shell.vue` drawers, which set `data-state` themselves. */
+.mb-anim-overlay[data-state="open"] {
+  animation: mb-overlay-in var(--mb-dur-fast) var(--mb-ease-out);
+}
+.mb-anim-overlay[data-state="closed"] {
+  animation: mb-overlay-out var(--mb-dur-fast) var(--mb-ease-in);
+}
+
+/* On the panel: reka-ui only waits for the stateful element's own close animation. */
+.mb-anim-modal-panel[data-state="open"] {
+  animation: mb-sheet-in var(--mb-dur) var(--mb-ease-out);
+}
+.mb-anim-modal-panel[data-state="closed"] {
+  animation: mb-sheet-out var(--mb-dur-fast) var(--mb-ease-in);
+}
+@media (min-width: 40rem) {
+  .mb-anim-modal-panel[data-state="open"] {
+    animation-name: mb-modal-in;
+  }
+  .mb-anim-modal-panel[data-state="closed"] {
+    animation-name: mb-modal-out;
+  }
+}
+
+/* Anchored panels grow from the reka-ui transform origin. */
+.mb-anim-pop[data-state="open"] {
+  animation: mb-pop-in var(--mb-dur) var(--mb-ease-out);
+}
+.mb-anim-pop[data-state="closed"] {
+  animation: mb-pop-out var(--mb-dur-fast) var(--mb-ease-in);
+}
+
+/* Drawers, driven by a Vue `<Transition>`. */
+.mb-drawer-enter-active > .mb-drawer-panel {
+  animation: mb-drawer-in var(--mb-dur) var(--mb-ease-out);
+}
+.mb-drawer-leave-active > .mb-drawer-panel {
+  animation: mb-drawer-out var(--mb-dur-fast) var(--mb-ease-in);
+}
+.mb-drawer-enter-active > .mb-backdrop {
+  animation: mb-overlay-in var(--mb-dur-fast) var(--mb-ease-out);
+}
+.mb-drawer-leave-active > .mb-backdrop {
+  animation: mb-overlay-out var(--mb-dur-fast) var(--mb-ease-in);
+}
+/* Standalone backdrop for a drawer without a wrapper. */
+.mb-fade-enter-active {
+  animation: mb-overlay-in var(--mb-dur-fast) var(--mb-ease-out);
+}
+.mb-fade-leave-active {
+  animation: mb-overlay-out var(--mb-dur-fast) var(--mb-ease-in);
+}
+
+/* --- page transitions ---------------------------------------------------------- */
+
+/* Route cross-fade (out-in); Shell.vue pins the leaving page in place. */
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity var(--mb-dur) ease,
+    transform var(--mb-dur) ease;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.page-leave-to {
+  opacity: 0;
+}
+/* Clip during the 4px rise so no scrollbar flashes. */
+main:has(> .page-enter-active) {
+  overflow: hidden;
+}
+
+/* Side panel and rail cross-fade while the column resizes. */
+.panel-fade-enter-active,
+.panel-fade-leave-active {
+  transition: opacity var(--mb-dur-slow) ease;
+}
+.panel-fade-enter-from,
+.panel-fade-leave-to {
+  opacity: 0;
+}
+
+/* --- reduced motion --------------------------------------------------------------- */
+
+/* Fade instead of move; an overlay with no transition is harder to follow. */
+@media (prefers-reduced-motion: reduce) {
+  .mb-anim-modal-panel[data-state="open"],
+  .mb-anim-pop[data-state="open"],
+  .mb-drawer-enter-active > .mb-drawer-panel {
+    animation: mb-overlay-in var(--mb-dur-fast) ease;
+  }
+  .mb-anim-modal-panel[data-state="closed"],
+  .mb-anim-pop[data-state="closed"],
+  .mb-drawer-leave-active > .mb-drawer-panel {
+    animation: mb-overlay-out var(--mb-dur-fast) ease;
+  }
+  .mb-accordion-content[data-state="open"],
+  .mb-accordion-content[data-state="closed"] {
+    animation-duration: 1ms;
+  }
+  .mb-accordion-chevron {
+    transition: none;
+  }
+  .page-enter-active,
+  .page-leave-active {
+    transition: opacity var(--mb-dur-fast) ease;
+  }
+  .page-enter-from,
+  .page-leave-to {
+    transform: none;
+  }
+  .panel-fade-enter-active,
+  .panel-fade-leave-active {
+    transition: none;
+  }
+  .mb-spinner {
+    animation-duration: 1.6s;
+  }
+  .mb-skeleton {
+    animation: none;
+    opacity: 0.7;
+  }
+  .mb-activity-bar::after {
+    animation: mb-appear 1ms linear 250ms forwards;
+    width: 100%;
+  }
+}

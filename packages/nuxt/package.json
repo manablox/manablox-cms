@@ -1,0 +1,62 @@
+{
+  "name": "@manablox/nuxt",
+  "version": "0.50.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "packages/nuxt"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/module.ts",
+      "default": "./src/module.ts"
+    }
+  },
+  "main": "./src/module.ts",
+  "types": "./src/module.ts",
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "typecheck:vue": "vue-tsc --noEmit -p tsconfig.runtime.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@manablox/live-preview": "workspace:*",
+    "@manablox/public-sdk": "workspace:*",
+    "@nuxt/kit": "catalog:",
+    "@nuxt/schema": "catalog:"
+  },
+  "devDependencies": {
+    "@manablox/config-typescript": "workspace:*",
+    "@manablox/config-vitest": "workspace:*",
+    "@types/node": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "happy-dom": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:vue",
+    "vitest": "catalog:",
+    "vue": "catalog:",
+    "vue-tsc": "catalog:"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/module.d.ts",
+        "default": "./dist/module.js"
+      }
+    },
+    "main": "./dist/module.js",
+    "types": "./dist/module.d.ts"
+  }
+}

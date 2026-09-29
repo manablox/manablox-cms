@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manablox</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script>
+      // Before the app loads, so a dark admin does not flash light on every reload.
+      // Mirrors `src/lib/theme.ts`, which takes over once mounted.
+      (() => {
+        try {
+          // Stored as a bare string by the theme store.
+          const pref = (localStorage.getItem('manablox.theme') || 'system').replace(/"/g, '');
+          const dark =
+            pref === 'dark' ||
+            (pref !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        } catch (_) {}
+      })();
+    </script>
+  </head>
+  <body class="h-full">
+    <div id="app" class="h-full"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

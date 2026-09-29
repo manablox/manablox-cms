@@ -1,0 +1,131 @@
+# Build scripts are opt-in: each dependency that wants to run one on install must be
+# named in `allowBuilds`. Anything not listed is blocked, so a transitive package cannot
+# execute arbitrary code during `pnpm install`.
+# Dependencies are installed inside the dev containers, which record their own store path
+# in `node_modules`. Without this a host `pnpm <script>` (and the pre-commit hook with it)
+# sees a mismatch and tries to purge and reinstall.
+verifyDepsBeforeRun: false
+
+packages:
+  - apps/*
+  - packages/*
+# better-auth's optional vitest peer serves its test helpers, which nothing here imports.
+peerDependencyRules:
+  allowedVersions:
+    better-auth>vitest: '5'
+allowBuilds:
+  '@biomejs/biome': true
+  esbuild: true
+  vue-demi: true
+  msgpackr-extract: true
+  # Its postinstall only calls the same installer the root `prepare` script runs.
+  simple-git-hooks: false
+catalog:
+  '@types/node': ^26.4.1
+  '@biomejs/biome': ^2.5.12
+  turbo: ^2.10.12
+  typescript: ^7.0.2
+  vitest: ^5.0.0
+  '@playwright/test': ^1.62.1
+  '@vue/test-utils': ^2.4.6
+  happy-dom: ^20.0.0
+  simple-git-hooks: ^2.13.0
+  knip: ^6.37.0
+  tsdown: ^0.23.0
+  tsx: ^4.20.7
+  '@clack/prompts': ^1.7.0
+  picocolors: ^1.1.1
+  hono: ^4.13.5
+  fflate: ^0.8.2
+  '@fastify/busboy': ^3.2.2
+  '@hono/node-server': ^2.1.1
+  drizzle-orm: ^0.45.2
+  drizzle-kit: ^0.31.10
+  postgres: ^3.4.9
+  '@libsql/client': ^0.18.0
+  '@pothos/core': ^4.13.1
+  graphql-yoga: ^5.22.0
+  graphql: ^16.11.0
+  graphql-scalars: ^1.24.2
+  dataloader: ^2.2.3
+  '@orpc/server': ^1.15.0
+  '@orpc/client': ^1.15.0
+  '@orpc/contract': ^1.15.0
+  '@orpc/openapi': ^1.15.0
+  '@orpc/zod': ^1.15.0
+  zod: ^4.5.4
+  # better-auth and its packages are pinned to one tested version: they peer on each other
+  # and on exact versions of their helpers, which @manablox/auth installs itself so a
+  # consumer resolves them once.
+  better-auth: 1.7.2
+  '@better-auth/core': 1.7.2
+  '@better-auth/sso': 1.7.2
+  '@better-auth/utils': 0.4.2
+  '@better-fetch/fetch': 1.3.1
+  better-call: 1.4.0
+  jose: ^6.2.3
+  kysely: ^0.29.0
+  nanostores: ^1.3.0
+  # Test IdP for the SAML sign-in; the sso plugin depends on the same version.
+  samlify: 2.13.1
+  '@node-rs/argon2': ^2.2.0
+  sharp: ^0.35.4
+  '@aws-sdk/client-s3': ^3.1137.0
+  '@aws-sdk/s3-request-presigner': ^3.1137.0
+  '@aws-sdk/lib-storage': ^3.1137.0
+  ioredis: ^6.0.0
+  bullmq: ^6.3.4
+  nodemailer: ^10.0.0
+  '@types/nodemailer': ^8.0.1
+  web-push: ^3.6.7
+  '@types/web-push': ^3.6.4
+  pino: ^10.3.1
+  pino-pretty: ^13.1.2
+  vite: ^8.2.2
+  vue: ^3.5.42
+  '@vitejs/plugin-vue': ^6.0.8
+  vue-router: ^5.3.1
+  reka-ui: ^2.10.4
+  '@vue-flow/core': ^1.48.0
+  '@vue-flow/background': ^1.3.2
+  '@vue-flow/controls': ^1.1.2
+  '@vue-flow/minimap': ^1.5.3
+  tailwindcss: ^4.3.3
+  pinia: ^4.0.3
+  '@tanstack/vue-query': ^5.102.8
+  '@tiptap/core': ^3.31.3
+  '@tiptap/extension-text-align': ^3.31.3
+  '@vueuse/core': ^14.4.0
+  vue-tsc: ^3.3.11
+  '@tailwindcss/vite': ^4.3.3
+  '@tiptap/pm': ^3.31.3
+  '@tiptap/starter-kit': ^3.31.3
+  '@tiptap/vue-3': ^3.31.3
+  '@nuxt/kit': ^4.5.2
+  '@nuxt/schema': ^4.5.2
+  astro: ^7.3.1
+  '@astrojs/starlight': ^0.42.0
+  '@astrojs/markdown-remark': ^7.3.0
+catalogs:
+  vue:
+    typescript: ^5.9.3
+  # `astro check` drives TypeScript's programmatic API, which the native 7.x compiler
+  # does not expose yet. See https://github.com/withastro/roadmap/discussions/1321.
+  astro:
+    typescript: ^6.0.3
+minimumReleaseAgeExclude:
+  - '@biomejs/biome@2.5.12'
+  - '@biomejs/cli-darwin-arm64@2.5.12'
+  - '@biomejs/cli-darwin-x64@2.5.12'
+  - '@biomejs/cli-linux-arm64-musl@2.5.12'
+  - '@biomejs/cli-linux-arm64@2.5.12'
+  - '@biomejs/cli-linux-x64-musl@2.5.12'
+  - '@biomejs/cli-linux-x64@2.5.12'
+  - '@biomejs/cli-win32-arm64@2.5.12'
+  - '@biomejs/cli-win32-x64@2.5.12'
+  - '@vitest/mocker@5.0.0'
+  - '@vitest/spy@5.0.0'
+  - vitest@5.0.0
+  - rolldown-plugin-dts@0.28.5
+  - tsdown@0.23.0
+  - astro@7.3.1

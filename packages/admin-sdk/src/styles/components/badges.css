@@ -1,0 +1,89 @@
+/* Text: eyebrows, titles, badges, callouts, tiles. */
+
+@layer components {
+  /* --- text -------------------------------------------------------------------- */
+
+  /* Small label above a title. */
+  .mb-eyebrow {
+    @apply text-2xs font-semibold tracking-[0.14em] text-brand-600 uppercase dark:text-brand-300;
+  }
+  .mb-title {
+    @apply font-display text-2xl font-bold tracking-tight text-surface-950 dark:text-surface-50;
+  }
+  /* Heading inside a page: a card title, a settings section. */
+  .mb-subtitle {
+    @apply font-display text-base font-bold tracking-tight text-surface-900 dark:text-surface-100;
+  }
+
+  /* Status pills. */
+  .mb-badge,
+  .mb-badge-ok,
+  .mb-badge-brand,
+  .mb-badge-warn,
+  .mb-badge-danger {
+    @apply inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-2xs font-semibold tracking-wide;
+  }
+  .mb-badge {
+    @apply bg-surface-200 text-surface-700 dark:bg-surface-800 dark:text-surface-300;
+  }
+  .mb-badge-ok {
+    @apply bg-ok-500/15 text-ok-700 dark:bg-ok-500/20 dark:text-ok-500;
+  }
+  .mb-badge-brand {
+    @apply bg-brand-100 text-brand-700 dark:bg-brand-600/25 dark:text-brand-100;
+  }
+  .mb-badge-warn {
+    @apply bg-warn-100 text-warn-800 dark:bg-warn-500/20 dark:text-warn-200;
+  }
+  .mb-badge-danger {
+    @apply bg-danger-100 text-danger-800 dark:bg-danger-500/20 dark:text-danger-200;
+  }
+
+  /* A numbered step marker. */
+  .mb-step {
+    @apply flex size-5 shrink-0 items-center justify-center rounded-pill bg-surface-200 text-2xs font-bold text-surface-700 dark:bg-surface-700 dark:text-surface-200;
+  }
+  .mb-callout {
+    @apply rounded-card border border-warn-300/70 bg-warn-50 px-3 py-2 text-xs text-warn-950 dark:border-warn-500/40 dark:bg-warn-500/10 dark:text-warn-100;
+  }
+  .mb-text-danger {
+    @apply text-danger-600 dark:text-danger-400;
+  }
+
+  /* Flat colour tiles, named for materials so the palette can change. */
+  .mb-tile-clay {
+    @apply bg-brand-100 text-brand-700 dark:bg-brand-600/25 dark:text-brand-100;
+  }
+  .mb-tile-iris {
+    @apply bg-iris-100 text-iris-700 dark:bg-iris-500/20 dark:text-iris-100;
+  }
+  .mb-tile-ochre {
+    @apply bg-ochre-100 text-ochre-700 dark:bg-ochre-500/20 dark:text-ochre-100;
+  }
+  .mb-tile-sand {
+    @apply bg-warn-100 text-warn-800 dark:bg-warn-500/20 dark:text-warn-100;
+  }
+
+  /* --- icons ---------------------------------------------------------------------- */
+
+  /* `Icon.vue` applies `.mb-icon` by default. */
+  .mb-icon-sm {
+    width: var(--mb-icon-sm);
+    height: var(--mb-icon-sm);
+  }
+  .mb-icon {
+    width: var(--mb-icon);
+    height: var(--mb-icon);
+  }
+  .mb-icon-lg {
+    width: var(--mb-icon-lg);
+    height: var(--mb-icon-lg);
+  }
+}
+
+@layer components {
+  /* Key cap: sized in `em` to match its text; min width keeps single keys square. */
+  .mb-kbd {
+    @apply inline-flex min-w-[1.75em] items-center justify-center rounded-[0.35em] border border-surface-300 bg-surface-100 px-[0.4em] py-[0.15em] font-sans text-[0.85em] font-semibold leading-none text-surface-700 shadow-[inset_0_-1px_0_var(--color-surface-300)] dark:border-surface-700 dark:bg-surface-800 dark:text-surface-200 dark:shadow-[inset_0_-1px_0_var(--color-surface-700)];
+  }
+}

@@ -1,0 +1,61 @@
+name: Start the test services
+description: >-
+  Postgres on 5432 and Valkey on 6379 as plain containers, each optional, so one
+  definition serves every job and a job that needs neither starts nothing. Returns once
+  both accept connections.
+
+inputs:
+  postgres:
+    description: Start Postgres (user, password and database `manablox`).
+    required: false
+    default: 'true'
+  valkey:
+    description: Start Valkey.
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        POSTGRES: ${{ inputs.postgres }}
+        VALKEY: ${{ inputs.valkey }}
+      run: |
+        set -euo pipefail
+        started=()
+
+        # The data directory on tmpfs: every suite clones a template database and
+        # commits constantly, and on the runner's disk those writes contend with each
+        # other. The database is disposable, so durability buys nothing here.
+        if [ "$POSTGRES" = true ]; then
+          docker run -d --name postgres -p 5432:5432 --tmpfs /var/lib/postgresql \
+            -e POSTGRES_USER=manablox -e POSTGRES_PASSWORD=manablox -e POSTGRES_DB=manablox \
+            --health-cmd 'pg_isready -U manablox -d manablox' --health-interval 2s \
+            postgres:18-alpine >/dev/null
+          started+=(postgres)
+        fi
+
+        # Carries the content-type announcements between processes in the cache tests.
+        if [ "$VALKEY" = true ]; then
+          docker run -d --name valkey -p 6379:6379 \
+            --health-cmd 'valkey-cli ping' --health-interval 2s \
+            valkey/valkey:8-alpine >/dev/null
+          started+=(valkey)
+        fi
+
+        # The integration suite creates a database per test file, so the service must be
+        # accepting connections before the first test runs, not merely started.
+        for name in "${started[@]}"; do
+          for _ in $(seq 60); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' "$name")
+            if [ "$status" = healthy ]; then break; fi
+            sleep 1
+          done
+          if [ "$status" != healthy ]; then
+            docker logs "$name"
+            echo "::error::$name did not become healthy"
+            exit 1
+          fi
+          echo "$name is up"
+        done

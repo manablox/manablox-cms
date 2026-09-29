@@ -1,0 +1,48 @@
+---
+import Site from '../layouts/Site.astro';
+import { config } from '../lib/manablox';
+
+/**
+ * The visual editor's canvas. No API key: the editor sends the document over the channel,
+ * so this never fetches a draft. The editor's origin comes from the server rather than
+ * the build, so one image previews against any admin.
+ */
+const { editorOrigin } = config;
+
+Astro.response.headers.set('x-robots-tag', 'noindex');
+---
+
+<Site title="Preview" bare>
+  <!-- The origin travels on the element rather than an inline script, so the module
+       below stays processed and can import from the workspace. -->
+  <div id="canvas" data-editor-origin={editorOrigin}></div>
+</Site>
+
+<script>
+  import { startPreview } from '../lib/preview-client';
+
+  const canvas = document.getElementById('canvas');
+  if (canvas) startPreview(canvas, canvas.dataset.editorOrigin ?? '');
+</script>
+
+<style is:global>
+  .teaser {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .teaser h2 {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem;
+  }
+  .teaser img {
+    max-width: 100%;
+    height: auto;
+  }
+  .unknown {
+    border: 1px dashed var(--line);
+    padding: 1rem;
+    margin-top: 1.5rem;
+    color: var(--muted);
+  }
+</style>

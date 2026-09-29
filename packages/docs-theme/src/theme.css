@@ -1,0 +1,125 @@
+/*
+ * The admin typefaces and palette on Starlight's custom properties. Starlight names
+ * neutrals dark-first, so each block reads the `surface-*` scale from the opposite end.
+ */
+
+:root {
+  --sl-font: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  --sl-font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  --manablox-font-display:
+    "Bricolage Grotesque Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* Dark: surfaces from 950 up to 100. */
+  --sl-color-white: oklch(96% 0.007 290);
+  --sl-color-gray-1: oklch(92% 0.01 290);
+  --sl-color-gray-2: oklch(85% 0.013 290);
+  --sl-color-gray-3: oklch(72% 0.016 290);
+  --sl-color-gray-4: oklch(47% 0.022 290);
+  --sl-color-gray-5: oklch(30% 0.026 290);
+  --sl-color-gray-6: oklch(21% 0.026 290);
+  --sl-color-black: oklch(14% 0.024 290);
+
+  /* A lighter violet reads as the accent on dark. */
+  --sl-color-accent-low: oklch(30% 0.12 295);
+  --sl-color-accent: oklch(68% 0.2 295);
+  --sl-color-accent-high: oklch(86% 0.1 295);
+
+  --sl-color-orange-low: oklch(24% 0.05 60);
+  --sl-color-orange: oklch(78% 0.17 75);
+  --sl-color-orange-high: oklch(89% 0.12 80);
+  --sl-color-green-low: oklch(25% 0.06 150);
+  --sl-color-green: oklch(70% 0.17 150);
+  --sl-color-green-high: oklch(88% 0.1 150);
+  --sl-color-red-low: oklch(30% 0.1 25);
+  --sl-color-red: oklch(70% 0.18 25);
+  --sl-color-red-high: oklch(87% 0.08 25);
+  --sl-color-blue-low: oklch(30% 0.08 215);
+  --sl-color-blue: oklch(78% 0.15 205);
+  --sl-color-blue-high: oklch(91% 0.07 205);
+  --sl-color-purple-low: oklch(30% 0.1 345);
+  --sl-color-purple: oklch(66% 0.23 345);
+  --sl-color-purple-high: oklch(91% 0.06 345);
+
+  --sl-color-bg: var(--sl-color-black);
+  --sl-color-bg-nav: oklch(17% 0.026 290);
+  --sl-color-bg-sidebar: oklch(17% 0.026 290);
+}
+
+:root[data-theme="light"],
+[data-theme="light"] ::backdrop {
+  /* Light: surfaces from 900 down to 0, with the 50 tint as the page. */
+  --sl-color-white: oklch(19% 0.026 290);
+  --sl-color-gray-1: oklch(26% 0.026 290);
+  --sl-color-gray-2: oklch(36% 0.024 290);
+  --sl-color-gray-3: oklch(58% 0.02 290);
+  --sl-color-gray-4: oklch(72% 0.016 290);
+  --sl-color-gray-5: oklch(85% 0.013 290);
+  --sl-color-gray-6: oklch(92% 0.01 290);
+  --sl-color-gray-7: oklch(96% 0.007 290);
+  --sl-color-black: oklch(100% 0 0);
+
+  --sl-color-accent-low: oklch(92.5% 0.055 295);
+  --sl-color-accent: oklch(53% 0.235 295);
+  --sl-color-accent-high: oklch(46% 0.21 295);
+
+  --sl-color-orange-low: oklch(94% 0.07 80);
+  --sl-color-orange: oklch(62% 0.16 65);
+  --sl-color-orange-high: oklch(43% 0.1 60);
+  --sl-color-green-low: oklch(94% 0.06 150);
+  --sl-color-green: oklch(56% 0.15 150);
+  --sl-color-green-high: oklch(40% 0.11 150);
+  --sl-color-red-low: oklch(93% 0.04 25);
+  --sl-color-red: oklch(55% 0.21 25);
+  --sl-color-red-high: oklch(39% 0.14 25);
+  --sl-color-blue-low: oklch(91% 0.07 205);
+  --sl-color-blue: oklch(50% 0.11 215);
+  --sl-color-blue-high: oklch(40% 0.09 215);
+  --sl-color-purple-low: oklch(91% 0.06 345);
+  --sl-color-purple: oklch(50% 0.2 345);
+  --sl-color-purple-high: oklch(40% 0.16 345);
+
+  --sl-color-bg: oklch(98.2% 0.004 290);
+  --sl-color-bg-nav: oklch(100% 0 0);
+  --sl-color-bg-sidebar: var(--sl-color-bg);
+}
+
+/* Display face for headings, as in the admin. */
+.sl-markdown-content :is(h1, h2, h3),
+.hero h1,
+.site-title,
+.content-panel h1 {
+  font-family: var(--manablox-font-display);
+  letter-spacing: -0.01em;
+}
+.sl-markdown-content :is(h1, h2, h3, h4) {
+  font-weight: 700;
+}
+
+body {
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+.sl-markdown-content .expressive-code .frame,
+.sl-markdown-content pre,
+.card,
+.sl-link-card,
+.starlight-aside,
+.sl-markdown-content details {
+  border-radius: 0.875rem;
+}
+
+/* Mermaid diagrams and prerendered SVG diagrams on a card of their own. */
+.sl-markdown-content .mermaid,
+.sl-markdown-content p > img[src$=".svg"]:only-child {
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  margin-block: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 0.875rem;
+  background: var(--sl-color-bg-nav);
+  overflow-x: auto;
+}

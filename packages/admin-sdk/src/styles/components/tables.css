@@ -1,0 +1,27 @@
+/* Tables: header, row and cell. */
+
+@layer components {
+  .mb-table {
+    @apply w-full text-sm;
+    border-collapse: collapse;
+  }
+  .mb-th {
+    @apply pb-1.5 text-left text-2xs font-semibold tracking-[0.12em] text-surface-500 uppercase;
+  }
+  /* Height from the control scale, matching list rows. */
+  .mb-tr {
+    @apply border-t border-surface-200 transition dark:border-surface-800;
+  }
+  .mb-tr-interactive:hover {
+    @apply bg-surface-100 dark:bg-surface-800/60;
+  }
+  .mb-tr-active {
+    @apply bg-brand-50 dark:bg-brand-600/15;
+  }
+  .mb-td {
+    @apply align-middle;
+    height: var(--mb-control-h-lg);
+    padding-block: 0.125rem;
+    padding-right: var(--mb-control-gap);
+  }
+}

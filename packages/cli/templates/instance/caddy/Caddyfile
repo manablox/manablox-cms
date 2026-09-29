@@ -1,0 +1,51 @@
+# TLS termination and routing. Certificates are issued and renewed automatically for
+# every domain. Give a domain an `http://` prefix in `.env` to serve it without TLS
+# (a local trial, or behind another proxy that already terminates TLS).
+{{slot caddy.header}}
+
+{
+	email {$ACME_EMAIL}
+	{{slot caddy.global}}
+}
+
+(hardening) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
+
+# The admin and the management API, one origin.
+{$ADMIN_DOMAIN} {
+	import hardening
+	# Uploads go through here; UPLOAD_BODY_LIMIT stays above FILE_MAX_SIZE_MB.
+	request_body {
+		max_size {$UPLOAD_BODY_LIMIT}
+	}
+	{{slot caddy.admin}}
+	reverse_proxy api:3000 {
+		# The API reads these for absolute URLs and the request log.
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+}
+{{#if publicApi}}
+
+# The public delivery API. Anonymous, cacheable: a CDN can sit in front of this host and
+# honour the s-maxage the API sends.
+{$PUBLIC_DOMAIN} {
+	import hardening
+	request_body {
+		max_size 1MB
+	}
+	reverse_proxy public:3100 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+}
+{{/if}}
+
+{{slot caddy.sites}}

@@ -1,0 +1,13 @@
+{
+  "name": "@manablox/plugin-website",
+  "version": "0.50.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./cli": "./cli.ts"
+  },
+  "manablox": {
+    "plugin": "website",
+    "cli": "@manablox/plugin-website/cli"
+  }
+}

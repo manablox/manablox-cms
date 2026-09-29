@@ -1,0 +1,8 @@
+/* `static`: plugin sheets reference any theme token, used here or not. */
+@import "tailwindcss" theme(static);
+
+/* Self-hosted fonts, no external requests. */
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/manrope";
+
+@import "@manablox/admin-sdk/styles/index.css";

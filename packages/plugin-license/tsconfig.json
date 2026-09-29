@@ -1,0 +1,5 @@
+{
+  "extends": "@manablox/config-typescript/library.json",
+  "include": ["src", "test"],
+  "exclude": ["src/admin", "test/admin"]
+}

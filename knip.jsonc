@@ -1,0 +1,90 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  // Scaffold templates are copied into generated projects; dist is build output.
+  "ignore": ["packages/cli/templates/**", "**/dist/**"],
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.mjs", "scripts/perf/*.mjs", "loadtest/scripts/*.js"],
+      "project": ["scripts/**/*.mjs", "loadtest/scripts/**/*.js"],
+      // k6 modules are provided by the k6 runtime.
+      "ignoreDependencies": ["k6"]
+    },
+    "apps/admin": {
+      // The e2e fixture plugins' admin bundles, built by their own vite config.
+      "entry": [
+        "public/sw.js",
+        "e2e/fixtures/runtime-plugins/vite.config.ts",
+        "e2e/fixtures/runtime-plugins/*/index.ts"
+      ],
+      // Built as a shared module for plugin bundles (shared-modules.ts); the first-party
+      // plugins' admin sources are listed by name for the dev server.
+      "ignoreDependencies": [
+        "reka-ui",
+        "@manablox/plugin-license",
+        "@manablox/plugin-webhooks",
+        "@manablox/plugin-workflows"
+      ]
+    },
+    "packages/admin-plugin": {
+      // Imported by tailwind.css, the optional Tailwind preset.
+      "ignoreDependencies": ["tailwindcss"]
+    },
+    "apps/api": {
+      "entry": [
+        "src/cli/*.ts",
+        "src/docs.config.ts",
+        "scripts/seed-bench.mts",
+        "scripts/serve-admin-perf.mts"
+      ]
+    },
+    "packages/cli": {
+      // Fixtures are imported by path.
+      "entry": ["bin/*.mjs", "test/fixtures/**/*.ts"],
+      // Optional peers, loaded by module id as default plugins of `manablox create`.
+      "ignoreDependencies": [
+        "@manablox/plugin-license",
+        "@manablox/plugin-workflows",
+        "@manablox/plugin-webhooks"
+      ]
+    },
+    "packages/db": {
+      "entry": ["drizzle.sqlite.config.ts"]
+    },
+    "packages/server": {
+      // The fixture plugins export their classes so the build's declaration pass can name
+      // their types (tsconfig includes test/); nothing imports those names.
+      "entry": ["test/fixtures/**/*.ts"]
+    },
+    "packages/plugin-license": {
+      "entry": ["drizzle.sqlite.config.ts", "src/server/db/schema/sqlite.ts"]
+    },
+    "packages/plugin-workflows": {
+      "entry": ["drizzle.sqlite.config.ts", "src/server/db/schema/sqlite.ts"],
+      // Named only by the emitted declarations (the runtime's auth types), which a clone
+      // has not built yet.
+      "ignoreDependencies": ["@manablox/auth"]
+    },
+    "packages/plugin-webhooks": {
+      "entry": ["drizzle.sqlite.config.ts", "src/server/db/schema/sqlite.ts"]
+    },
+    "packages/nuxt": {
+      // Nuxt registers the runtime folder itself (addComponentsDir, addImportsDir).
+      "entry": ["src/runtime/**/*.{ts,vue}"]
+    },
+    "packages/docs-theme": {
+      // Resolved by path for Starlight's customCss.
+      "ignoreDependencies": [
+        "@fontsource-variable/bricolage-grotesque",
+        "@fontsource-variable/manrope"
+      ]
+    },
+    "packages/config-vitest": {
+      // graphql is resolved through the calling package (graphqlTestConfig).
+      "ignoreDependencies": ["graphql"]
+    },
+    "packages/core": {
+      // Loaded with createRequire in logger.node.ts.
+      "ignoreDependencies": ["pino-pretty"]
+    }
+  }
+}

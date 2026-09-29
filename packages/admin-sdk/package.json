@@ -1,0 +1,88 @@
+{
+  "name": "@manablox/admin-sdk",
+  "version": "0.50.0",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "description": "The Manablox admin's UI kit, stores and API client for admin plugins.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manablox/manablox-cms.git",
+    "directory": "packages/admin-sdk"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./vite": {
+      "types": "./icon-names-plugin.ts",
+      "default": "./icon-names-plugin.ts"
+    },
+    "./testing": {
+      "types": "./src/testing.ts",
+      "default": "./src/testing.ts"
+    },
+    "./styles/*": "./src/styles/*",
+    "./package.json": "./package.json",
+    "./*.vue": "./src/*.vue",
+    "./*": "./src/*.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "vite build && vue-tsc -p tsconfig.build.json",
+    "typecheck:vue": "vue-tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@iconify/vue": "^5.0.1",
+    "@manablox/api-rpc": "workspace:*",
+    "@manablox/core": "workspace:*",
+    "@manablox/public-sdk": "workspace:*",
+    "@orpc/client": "catalog:",
+    "@orpc/server": "catalog:",
+    "@tanstack/vue-query": "catalog:",
+    "@vueuse/core": "catalog:",
+    "pinia": "catalog:",
+    "reka-ui": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "@iconify-icons/lucide": "^2.0.5",
+    "@manablox/config-typescript": "workspace:*",
+    "@manablox/config-vitest": "workspace:*",
+    "@types/node": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "happy-dom": "catalog:",
+    "typescript": "catalog:vue",
+    "vite": "catalog:",
+    "vitest": "catalog:",
+    "vue-tsc": "catalog:"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./testing": {
+        "types": "./dist/types/testing.d.ts",
+        "default": "./dist/testing.js"
+      },
+      "./styles/*": "./dist/styles/*",
+      "./package.json": "./package.json"
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/types/index.d.ts"
+  }
+}

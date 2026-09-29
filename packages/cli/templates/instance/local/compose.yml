@@ -1,0 +1,79 @@
+name: __COMPOSE_NAME__
+
+# The services a Manablox instance needs while the CMS itself runs on this machine:
+#
+{{#if !sqlite}}
+#   postgres  Postgres 18, published on POSTGRES_PORT
+{{/if}}
+#   valkey    response cache and job queue, published on VALKEY_PORT
+{{#if mailpit}}
+#   mailpit   catches every mail the CMS sends; SMTP on MAILPIT_PORT, inbox on MAILPIT_UI_PORT
+{{/if}}
+#
+{{#if sqlite}}
+# The database is SQLite, the file data/manablox.db, and needs no service here.
+# Ports come from `.env`, the same file the `manablox` CLI reads.
+{{#else}}
+# Passwords and ports come from `.env`, the same file the `manablox` CLI reads.
+{{/if}}
+# `pnpm services:up` starts them, `pnpm dev` starts the CMS against them.
+
+services:
+{{#if !sqlite}}
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      # The superuser, for administration only.
+      POSTGRES_USER: manablox
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: manablox
+      # Read by the scripts in postgres/init on the first start only: the owner role runs
+      # the migrations, the app role is what the CMS logs in as.
+      DATABASE_OWNER_USER: manablox_owner
+      DATABASE_OWNER_PASSWORD: ${DATABASE_OWNER_PASSWORD:?set DATABASE_OWNER_PASSWORD}
+      DATABASE_APP_USER: manablox_app
+      DATABASE_APP_PASSWORD: ${DATABASE_APP_PASSWORD:?set DATABASE_APP_PASSWORD}
+{{#if readOnlyRole}}
+      POSTGRES_PUBLIC_PASSWORD: ${POSTGRES_PUBLIC_PASSWORD:?set POSTGRES_PUBLIC_PASSWORD}
+{{/if}}
+    ports:
+      - '${POSTGRES_PORT:-__POSTGRES_PORT__}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U manablox -d manablox']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+{{/if}}
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    command: ['valkey-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru']
+    ports:
+      - '${VALKEY_PORT:-__VALKEY_PORT__}:6379'
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ['CMD', 'valkey-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+{{#if mailpit}}
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - '${MAILPIT_PORT:-1025}:1025'
+      - '${MAILPIT_UI_PORT:-8025}:8025'
+{{/if}}
+
+volumes:
+{{#if !sqlite}}
+  postgres-data:
+{{/if}}
+  valkey-data:

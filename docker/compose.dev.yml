@@ -1,0 +1,240 @@
+name: manablox-cms-dev
+
+# The development environment. `pnpm dev:up` brings up the backing services, the local npm
+# registry *and* every app - api, public api and admin - so every developer runs the same
+# Node, the same pnpm and the same installed binaries regardless of their host.
+#
+# The ports are fixed per repository so every Manablox repository's stack can run side by
+# side (the other repositories keep clear of these):
+#
+#   api 3000   public api 3001   admin 3002   postgres 5432   valkey 6379
+#   minio 9000 (console 9001)    mailpit smtp 1025, ui 8025   verdaccio 4873 (127.0.0.1)
+#
+# The repository is bind-mounted and nothing is masked over it: `pnpm install` runs in the
+# container, writes into the working copy, and the host reads the same `node_modules`. One
+# install serves both, which works because host and container are both linux/glibc on the
+# same architecture. A macOS or Windows host would need its own install masked by volumes;
+# see the git history for that arrangement.
+
+x-workspace: &workspace
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile.dev
+  image: manablox-cms-dev
+  init: true
+  # Everything the container installs lands in the bind-mounted working copy, so it has
+  # to run as the host's user or the host cannot delete what it produced. `scripts/dev.sh`
+  # exports these; 1000 is right for a single-user Linux desktop.
+  user: ${DEV_UID:-1000}:${DEV_GID:-1000}
+  working_dir: /app
+  volumes:
+    - ..:/app
+  environment: &watch-env
+    # The image's home belongs to root, which this user cannot write. Only disposable
+    # cache goes there - the pnpm store is `/app/.pnpm-store` (see Dockerfile.dev).
+    HOME: /tmp
+    # Filesystems that do not deliver inotify events over a bind mount need polling
+    # instead; on a native Linux mount it is pure overhead.
+    CHOKIDAR_USEPOLLING: ${DEV_POLL:-false}
+
+x-app: &app
+  <<: *workspace
+  restart: unless-stopped
+  depends_on:
+    install:
+      condition: service_completed_successfully
+
+# Each app's own environment lives in `apps/<app>/.env`, next to the code that reads it,
+# seeded from the `.env.example` beside it by `scripts/dev.sh`. Besides the
+# container-plumbing variables above, only the ports and the URLs built from them are set
+# here, so the stack's port table holds whatever an older `.env` says.
+x-env-api: &env-api
+  - ../apps/api/.env
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: manablox
+      POSTGRES_PASSWORD: manablox
+      POSTGRES_DB: manablox
+    ports: ['5432:5432']
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U manablox -d manablox']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    ports: ['6379:6379']
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ['CMD', 'valkey-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: manablox
+      MINIO_ROOT_PASSWORD: manablox123
+    ports: ['9000:9000', '9001:9001']
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ['1025:1025', '8025:8025']
+
+  # The local npm registry: `pnpm dev:publish` publishes the `@manablox/*` packages here and
+  # the other Manablox repositories install them from it (README.md, "The local registry").
+  # Its storage is a named volume, so `pnpm dev:reset` wipes it with the rest.
+  #
+  # Anyone who can reach it may publish `@manablox/*`, so the host port is bound to the
+  # loopback only. The other repositories' containers reach it over the `manablox-registry`
+  # network instead, as `http://verdaccio:4873/`.
+  verdaccio:
+    image: verdaccio/verdaccio:6
+    ports: ['127.0.0.1:4873:4873']
+    networks:
+      default:
+      registry:
+        aliases: [verdaccio]
+    volumes:
+      - ./verdaccio/config.yaml:/verdaccio/conf/config.yaml:ro
+      - verdaccio-storage:/verdaccio/storage
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:4873/-/ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # One install for the whole workspace. Every app waits for it to exit successfully, so
+  # the app containers never race the same store.
+  install:
+    <<: *workspace
+    # CI=true lets pnpm replace a node_modules folder a host install left behind, which it
+    # otherwise refuses to do without a terminal.
+    environment:
+      <<: *watch-env
+      CI: 'true'
+    command: ['pnpm', 'install', '--frozen-lockfile']
+
+  # Migrations run before the API starts rather than from the API's own boot path: a
+  # schema change must fail the migration, not a request.
+  migrate:
+    <<: *workspace
+    env_file: *env-api
+    # The API's entry, so the instance's plugins migrate their tables too.
+    command: ['pnpm', '--filter', '@manablox/api', 'migrate']
+    depends_on:
+      install:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    command: ['pnpm', '--filter', '@manablox/api', 'dev']
+    env_file: *env-api
+    environment:
+      <<: *watch-env
+      PORT: '3000'
+      PUBLIC_URL: http://localhost:3000
+      # Every browser-facing origin in the stack: the admin.
+      CORS_ORIGINS: http://localhost:3002
+    ports: ['3000:3000']
+    # The admin's Vite proxy is serving long before the API process binds, so without a
+    # readiness gate the first request out of a freshly opened admin - creating the very
+    # first account - comes back 502. `node -e` rather than curl: the slim image has no
+    # curl, and it already has the runtime.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        # Quoted: the ternary's `: ` would otherwise read as a YAML mapping.
+        - "fetch('http://127.0.0.1:3000/healthz').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
+    networks:
+      default:
+        # `api.localhost` resolves to this container inside the network and to 127.0.0.1
+        # in a browser, so a server-rendered frontend and its hydrated client can share
+        # one API URL. Without it, SSR needs `api:3000` and the browser needs
+        # `localhost:3000` - the same config value, two answers.
+        aliases: [api.localhost]
+
+  # Until the admin has a space, this one exits on boot: a public instance pins exactly
+  # one space and refuses to start without it. `restart` is what makes it pick itself up
+  # once you create the first one.
+  public-api:
+    <<: *app
+    # The management API's file first: same instance, so the database, cache and auth
+    # secret have to match. The public API's own file then overrides what differs.
+    command: ['pnpm', '--filter', '@manablox/public-api', 'dev']
+    env_file:
+      - ../apps/api/.env
+      - ../apps/public-api/.env
+    environment:
+      <<: *watch-env
+      PORT: '3001'
+      PUBLIC_URL: http://localhost:3001
+    ports: ['3001:3001']
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
+    networks:
+      default:
+        aliases: [public-api.localhost]
+
+  admin:
+    <<: *app
+    # `--host` is what makes Vite listen on the container's interface instead of its
+    # loopback; without it the published port answers nothing.
+    command: ['pnpm', '--filter', '@manablox/admin', 'dev', '--host', '0.0.0.0']
+    env_file: [../apps/admin/.env]
+    environment:
+      <<: *watch-env
+      PORT: '3002'
+    ports: ['3002:3002']
+    # Everything the admin does goes through the proxy, so it waits for the API to answer
+    # rather than for its container to exist. This is also what holds `dev:up` open until
+    # the stack is actually usable.
+    depends_on:
+      install:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+
+networks:
+  # A fixed name rather than the project-prefixed one, so the other repositories' compose
+  # files can join it as an `external: true` network. It exists while this stack is up.
+  registry:
+    name: manablox-registry
+
+volumes:
+  postgres-data:
+  valkey-data:
+  minio-data:
+  verdaccio-storage:

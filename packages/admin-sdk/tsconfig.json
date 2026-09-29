@@ -1,0 +1,18 @@
+{
+  "extends": "@manablox/config-typescript/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "jsx": "preserve",
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "test/**/*.ts",
+    "icon-names-plugin.ts",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ]
+}

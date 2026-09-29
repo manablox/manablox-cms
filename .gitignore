@@ -1,0 +1,32 @@
+node_modules/
+.pnpm-store/
+dist/
+.output/
+.nuxt/
+.turbo/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+docker/data/
+.remember
+# Tarballs built by scripts/publish.sh --pack-only
+dist-packages/
+
+# Written by scripts/publish.sh while it runs; holds only the NPM_TOKEN variable name
+.publish-npmrc
+
+# Written by `pnpm docs:generate`
+apps/api/generated/
+
+# Playwright
+test-results/
+playwright-report/
+
+# Agent worktrees
+.claude/worktrees/
+
+# Local and generated files, ignored in every Manablox repository
+.npmrc
+.astro/

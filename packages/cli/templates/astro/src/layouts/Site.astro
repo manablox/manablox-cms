@@ -1,0 +1,71 @@
+---
+import { BLOCK_GRID_CSS } from '@manablox/public-sdk';
+
+interface Props {
+  title: string;
+  bare?: boolean;
+}
+
+const { title, bare = false } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <style set:html={BLOCK_GRID_CSS}></style>
+  </head>
+  <body>
+    <div class:list={['site', { bare }]}>
+      <slot />
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --ink: #18181b;
+    --muted: #71717a;
+    --line: #e4e4e7;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font: 16px/1.6 system-ui, sans-serif;
+    color: var(--ink);
+  }
+  .site {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+  .site.bare {
+    padding-top: 1.5rem;
+  }
+  h1 {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+  .lead {
+    color: var(--muted);
+    font-size: 1.125rem;
+  }
+  /* Every generated block component carries `block`, and its type's name after it. */
+  .block {
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .block h2 {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem;
+  }
+  .block img,
+  .content img {
+    max-width: 100%;
+    height: auto;
+  }
+</style>
