@@ -37,6 +37,7 @@ describe('the ceiling of each state', () => {
     'grace',
     'expiring',
     'conflict',
+    'development',
   ];
 
   it('locks nothing while a lease covers the product', () => {
@@ -107,7 +108,7 @@ describe('the ceiling of each state', () => {
       {
         id: 'license.development',
         level: 'info',
-        text: 'Development license: the premium plugins run here for development only.',
+        text: 'Development instance: the premium plugins run without a production license, on private hosts only.',
         dismissible: false,
         audience: 'all',
       },
@@ -120,6 +121,23 @@ describe('the ceiling of each state', () => {
     expect(ceilingBanners([locked], links).map((banner) => banner.id)).toEqual([
       'license.ai.missing',
     ]);
+  });
+
+  it('shows the same notice for a product that runs without a license in development', () => {
+    const unlicensed = entitlement('development', { kind: null, periodEnd: null, exp: null });
+    expect(ceilingBanners([unlicensed], links)).toEqual([
+      expect.objectContaining({ id: 'license.development', level: 'info', dismissible: false }),
+    ]);
+    // Once a production lease covers every product, the notice goes.
+    const website = { product: 'website' as const };
+    expect(
+      ceilingBanners([entitlement('active'), { ...unlicensed, ...website }], links).map(
+        (banner) => banner.id,
+      ),
+    ).toEqual(['license.development']);
+    expect(ceilingBanners([entitlement('active'), entitlement('active', website)], links)).toEqual(
+      [],
+    );
   });
 
   it('joins the lapse sets of every plugin selling a product', () => {

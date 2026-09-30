@@ -231,7 +231,12 @@ export async function create(
   const license = applied.find((plugin) => plugin.id === LICENSE_PLUGIN);
   const licenseLater =
     premium.length && !(license && context.prompter)
-      ? licenseSteps(premium, 'pnpm exec manablox')
+      ? [
+          ...(resolved.preset === 'local'
+            ? ['# the premium plugins run locally without a key; production needs a license:']
+            : []),
+          ...licenseSteps(premium, 'pnpm exec manablox'),
+        ]
       : [];
   if (premium.length && license && context.prompter) {
     await premiumPrompt(premium, {
@@ -242,6 +247,8 @@ export async function create(
       tty: context.reporter !== undefined,
       license: { id: license.id, name: license.id, contribution: license.contribution },
       ready: false,
+      // A local instance runs on localhost: the premium plugins run there without a key.
+      development: resolved.preset === 'local',
       runtime: () => Promise.reject(new Error('the new instance does not run yet')),
     });
   }

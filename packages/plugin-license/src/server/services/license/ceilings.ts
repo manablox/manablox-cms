@@ -68,8 +68,9 @@ export function ceilingFeatures(
 }
 
 /**
- * The admin banners of the products' states, and the development notice. Hosted licenses
- * get none but the lock.
+ * The admin banners of the products' states, and the development notice while a product
+ * runs on a development lease or without a license on a development instance. Hosted
+ * licenses get none but the lock.
  */
 export function ceilingBanners(
   entitlements: Iterable<Entitlement>,
@@ -97,7 +98,10 @@ export function ceilingBanners(
     const locked = LOCKED_STATES.includes(state);
     // Manablox Cloud manages hosted licenses: their admins hear only of a lock.
     if (!locked && entitlement.kind === 'hosted') continue;
-    if (!locked && entitlement.kind === 'development') development = true;
+    // A development lease, or none on a development instance: no production license covers it.
+    if (state === 'development' || (!locked && entitlement.kind === 'development')) {
+      development = true;
+    }
     switch (state) {
       case 'canceled':
         banner(
@@ -144,6 +148,7 @@ export function ceilingBanners(
         banner('danger', lockMessage(entitlement), links.buy(product), true);
         break;
       case 'active':
+      case 'development':
         break;
     }
   }
@@ -151,7 +156,7 @@ export function ceilingBanners(
     banners.push({
       id: 'license.development',
       level: 'info',
-      text: 'Development license: the premium plugins run here for development only.',
+      text: 'Development instance: the premium plugins run without a production license, on private hosts only.',
       dismissible: false,
       audience: 'all',
     });

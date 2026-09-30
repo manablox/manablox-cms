@@ -355,7 +355,7 @@ manablox plugin disable ai --space blog
 
 | Command | What it does |
 | --- | --- |
-| `list` | The first-party plugins, the installed ones (dependencies with a `manablox` field) and the configured ones, with their migration status and instance flag when the database answers. The `premium` column names the product a premium plugin sells (`ai`, `website`), `license` its license state (`active`, `missing`, ...; `?` while the database does not answer). Library plugins, dependencies without a `manablox` field such as `@manablox/fields`, are left out |
+| `list` | The first-party plugins, the installed ones (dependencies with a `manablox` field) and the configured ones, with their migration status and instance flag when the database answers. The `premium` column names the product a premium plugin sells (`ai`, `website`), `license` its license state (`active`, `development`, `missing`, ...; `?` while the database does not answer). Library plugins, dependencies without a `manablox` field such as `@manablox/fields`, are left out |
 | `install <id\|package>...` | A first-party id (`website`, `ai`, `workflows`, `webhooks`) at the version of the project's other `@manablox/*` packages, or an npm package that declares itself a plugin. Asks the plugin's questions, adds the dependency, writes the plugin's marked parts, installs with the project's package manager (by its lockfile, the `packageManager` field, or the tool you ran) and migrates when the database answers. Says so for an installed plugin |
 | `uninstall <id>...` | Removes the marked parts, the plugin's files, scripts and dependency. Refused while another installed plugin requires it. The data stays in the database, and installing again brings it back |
 | `enable <id>`, `disable <id>` | Writes `features.plugins.<id>` for the whole instance, or with `--space <name>` for one space |
@@ -378,14 +378,22 @@ already have.
 Only whole marked parts are ever changed. Afterwards restart the CMS (`pnpm dev` restarts
 on its own); in the docker preset run `./scripts/lockfile.sh` and `docker compose up -d --build`.
 
-`ai` and `website` are premium plugins. When no license covers one after `install`, it asks
-once: start a 14-day trial (`manablox license buy --trial`) or buy a subscription (`buy`), enter a key
-you have (`manablox license add`), or later. The plugin is installed either way and stays
-locked until a license covers it. A migrated instance is asked for its license states; before
-the first migration any key in `MANABLOX_LICENSE_KEYS` counts, and a new key only goes to
-`.env`, activated when the instance starts. With `--yes` or without a terminal it prints the
-commands instead. `manablox create` asks the same once at the end, for all premium plugins
-picked, before the instance first starts.
+`ai` and `website` are premium plugins. They run without a license key on a development
+instance (not `NODE_ENV=production`, every URL and domain private, such as `localhost`); a
+production instance needs a subscription. When no license covers one after `install`, it
+asks once: start a 14-day trial (`manablox license buy --trial`) or buy a subscription
+(`buy`), enter a key you have (`manablox license add`), or later. On a local setup the
+question says that the plugin works there without a key and that production needs a
+subscription, and its default is "Continue without a key (development)", in place of later.
+The plugin is installed either way; on a production instance it stays locked until a license
+covers it. A migrated instance is asked for its license states (a product in the
+`development` state counts as local); before the first migration any key in
+`MANABLOX_LICENSE_KEYS` counts, a local setup is told by `.env` (`PUBLIC_URL` and
+`PUBLIC_API_URL` private, no `NODE_ENV=production` or `MANABLOX_LICENSE_KIND=production`, not
+the docker preset), and a new key only goes to `.env`, activated when the instance starts.
+With `--yes` or without a terminal it prints the commands instead. `manablox create` asks the
+same once at the end, for all premium plugins picked, before the instance first starts; the
+local preset counts as a local setup.
 
 ## Plugin commands
 
@@ -397,7 +405,9 @@ lists the commands of the plugins your config includes.
 
 License keys for the premium plugins (`@manablox/plugin-license`, which `ai` and `website`
 bring along). Keys are secrets: the commands keep them in `MANABLOX_LICENSE_KEYS` in `.env`,
-never in the config.
+never in the config. A development instance needs none: the premium plugins run there on
+private hosts without a key (the `development` state). A key on it activates as development
+unless `--production` says otherwise.
 
 ```sh
 manablox license buy --plugins ai,website --yearly
@@ -411,7 +421,7 @@ manablox license remove XXXXX
 | --- | --- |
 | `buy` | Asks for the plugins (both are the bundle) and monthly or yearly billing, with the prices and trials of the license server's catalogue ("price on request" where it has none). Then it opens the portal in the browser with a code to confirm, and waits until the purchase is done (up to 30 minutes; Ctrl-C stops waiting, exit code 130). The key arrives by itself and continues as `add`. Whether a trial applies, the portal decides |
 | `add <key>` | Checks the key offline, adds it to `MANABLOX_LICENSE_KEYS` in `.env` (once; without a `.env` it asks whether to create one or to print the line for the deployment's environment) and activates it, printing the products, the kind and when the period or trial ends. When every production seat is taken it lists the instances holding them and offers to deactivate one, to activate this one as development, or to stop |
-| `status` | A table of every key: products, kind, state, period end, lease expiry, last refresh and error, then each product's state. Exit code 1 while a premium plugin of the config is `lapsed` or `missing`, for CI and health checks. `--json` prints the overview as JSON |
+| `status` | A table of every key: products, kind, state, period end, lease expiry, last refresh and error, then each product's state: `development` for one that runs without a license on a development instance, with the buy link for production. Exit code 1 while a premium plugin of the config is `lapsed` or `missing` (not `development`), for CI and health checks. `--json` prints the overview as JSON |
 | `activate [<keyId>]` | Activates one key again, or every key: after a conflict (a copy of the instance refreshed it) or a restore |
 | `refresh` | Refreshes every lease now |
 | `remove <keyId>` | Frees the key's activation on the license server and takes it out of `.env`; a key added in the admin is removed from the database |

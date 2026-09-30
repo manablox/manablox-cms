@@ -223,6 +223,18 @@ export interface ManabloxHooks {
     { spaceId: string; locales: string[]; previous: string[] },
     HookContextBase,
   ];
+  /** A space created or imported, once committed. Handler errors are logged only. */
+  'space:afterCreate': [{ spaceId: string; url: string }, HookContextBase];
+  /** A space's settings changed, once committed; `previousUrl` is its URL before. Logged only. */
+  'space:afterUpdate': [{ spaceId: string; url: string; previousUrl: string }, HookContextBase];
+  /** A space deleted, once committed. Handler errors are logged only. */
+  'space:afterDelete': [{ spaceId: string; url: string }, HookContextBase];
+
+  // API hosts
+  /** An API host added to a space, once committed. Handler errors are logged only. */
+  'apiHost:afterCreate': [{ id: string; spaceId: string; hostname: string }, HookContextBase];
+  /** An API host removed from a space, once committed. Handler errors are logged only. */
+  'apiHost:afterDelete': [{ id: string; spaceId: string; hostname: string }, HookContextBase];
 
   // menus
   /** Before a menu is created; throw to refuse it. */

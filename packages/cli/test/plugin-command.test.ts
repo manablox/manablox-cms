@@ -173,13 +173,13 @@ describe('manablox plugin install and uninstall', () => {
 
   it('asks the plugin its install questions and to confirm an uninstall', async () => {
     const dir = await instance({});
-    const asked = scriptedPrompter(['3301', 'later']);
+    const asked = scriptedPrompter(['3301', 'development']);
     expect(
       (await plugin(dir, ['install', 'website', '--no-install', '--no-migrate'], asked)).code,
     ).toBe(0);
     expect(asked.asked()).toEqual([
       'Port of the site process',
-      'Website is a premium plugin. License it now?',
+      'Website is a premium plugin. On this local instance it runs without a license key; production needs a subscription. License it now?',
     ]);
     expect(readFileSync(join(dir, '.env'), 'utf8')).toContain('\nSITE_PORT=3301\n');
     expect(readFileSync(join(dir, 'README.md'), 'utf8')).toContain('## Designed sites');
@@ -205,7 +205,7 @@ describe('manablox plugin install and uninstall', () => {
 
   it("takes a plugin's create options without asking, and refuses others", async () => {
     const dir = await instance({});
-    const asked = scriptedPrompter(['later']);
+    const asked = scriptedPrompter(['development']);
     const given = await plugin(
       dir,
       ['install', 'website', '--site-port', '3302', '--no-install', '--no-migrate'],
@@ -213,7 +213,9 @@ describe('manablox plugin install and uninstall', () => {
     );
     expect(given.code, given.err).toBe(0);
     // Only the license question: the site port was given.
-    expect(asked.asked()).toEqual(['Website is a premium plugin. License it now?']);
+    expect(asked.asked()).toEqual([
+      'Website is a premium plugin. On this local instance it runs without a license key; production needs a subscription. License it now?',
+    ]);
     expect(readFileSync(join(dir, '.env'), 'utf8')).toContain('\nSITE_PORT=3302\n');
 
     const other = await instance({});

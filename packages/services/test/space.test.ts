@@ -201,3 +201,61 @@ describe('environments', () => {
     }
   });
 });
+
+describe('the space:after hooks', () => {
+  it('run once the create, a URL change and the delete committed', async () => {
+    const seen: unknown[] = [];
+    const offs = [
+      ctx.manablox.hooks.on('space:afterCreate', (payload) => void seen.push(['create', payload])),
+      ctx.manablox.hooks.on('space:afterUpdate', (payload) => void seen.push(['update', payload])),
+      ctx.manablox.hooks.on('space:afterDelete', (payload) => void seen.push(['delete', payload])),
+    ];
+    try {
+      const space = await ctx.spaces.create(
+        { name: 'Hooked', machineName: 'hooked', url: 'http://hooked.test' },
+        null,
+      );
+      await ctx.spaces.update(space.id, { url: 'https://hooked.example.com' });
+      await ctx.spaces.delete(space.id);
+      expect(seen).toEqual([
+        ['create', { spaceId: space.id, url: 'http://hooked.test' }],
+        [
+          'update',
+          {
+            spaceId: space.id,
+            url: 'https://hooked.example.com',
+            previousUrl: 'http://hooked.test',
+          },
+        ],
+        ['delete', { spaceId: space.id, url: 'https://hooked.example.com' }],
+      ]);
+    } finally {
+      for (const off of offs) off();
+    }
+  });
+
+  it('do not run for a write that rolls back, and a throwing handler is only logged', async () => {
+    const seen: string[] = [];
+    const offs = [
+      ctx.manablox.hooks.on('space:afterUpdate', () => {
+        throw new Error('handler failed');
+      }),
+      ctx.manablox.hooks.on('space:afterCreate', ({ spaceId }) => void seen.push(spaceId)),
+    ];
+    try {
+      const space = await ctx.spaces.create(
+        { name: 'Once', machineName: 'once', url: 'http://once.test' },
+        null,
+      );
+      await expect(
+        ctx.spaces.create({ name: 'Twice', machineName: 'once', url: 'http://twice.test' }, null),
+      ).rejects.toMatchObject({ key: 'space.validation.failed' });
+      expect(seen).toEqual([space.id]);
+      await expect(
+        ctx.spaces.update(space.id, { url: 'http://moved.test' }),
+      ).resolves.toMatchObject({ url: 'http://moved.test' });
+    } finally {
+      for (const off of offs) off();
+    }
+  });
+});

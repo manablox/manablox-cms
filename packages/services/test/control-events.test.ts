@@ -202,6 +202,34 @@ describe('lifecycle events', () => {
       ['domain.removed', payload],
     ]);
   });
+
+  it('runs the apiHost:after hooks once the add and the removal committed', async () => {
+    const space = await freshSpace();
+    const seen: unknown[] = [];
+    const offs = [
+      ctx.manablox.hooks.on('apiHost:afterCreate', (payload) => void seen.push(['add', payload])),
+      ctx.manablox.hooks.on('apiHost:afterDelete', (payload) => {
+        seen.push(['remove', payload]);
+        throw new Error('handler failed');
+      }),
+    ];
+    try {
+      const row = await ctx.apiHosts.create(space.id, `${name()}.example.test`);
+      // A refused add (the name is taken) runs nothing.
+      await expect(ctx.apiHosts.create(space.id, row.hostname)).rejects.toMatchObject({
+        key: 'apiHost.validation.failed',
+      });
+      // A throwing handler is only logged.
+      await ctx.apiHosts.delete(space.id, row.id);
+      const payload = { id: row.id, spaceId: space.id, hostname: row.hostname };
+      expect(seen).toEqual([
+        ['add', payload],
+        ['remove', payload],
+      ]);
+    } finally {
+      for (const off of offs) off();
+    }
+  });
 });
 
 describe('refusals and soft limits', () => {

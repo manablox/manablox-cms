@@ -241,10 +241,15 @@ as \`<id>:<event>\`: the workflows plugin's are in [Workflows](../admin/workflow
 webhooks plugin's in [Webhooks](../admin/webhooks.md#hooks), the website plugin's in
 [Forms and links](../site/forms-links.md).
 
-\`asset:afterDelete\`, \`mail:afterSend\` and \`request:served\` only observe: a handler that
-throws is logged and the operation goes on. \`asset:afterDelete\` runs once an asset and its
-files are gone; \`size\` includes the variants, except for assets removed with their last
-space, where it is the original only. \`mail:afterSend\` runs per sent mail, for notifications
+\`asset:afterDelete\`, \`mail:afterSend\`, \`request:served\`, the \`space:after*\` and the
+\`apiHost:after*\` hooks only observe: a handler that throws is logged and the operation goes
+on. \`space:afterCreate\` (a created or imported space), \`space:afterUpdate\` (with
+\`previousUrl\`) and \`space:afterDelete\` run once the write committed, with the space's
+\`url\`; \`apiHost:afterCreate\` and \`apiHost:afterDelete\` likewise, per API host added to
+or removed from a space, with its \`hostname\`.
+\`asset:afterDelete\` runs once an asset and its files are gone; \`size\` includes the
+variants, except for assets removed with their last space, where it is the original only.
+\`mail:afterSend\` runs per sent mail, for notifications
 and the mail actions of workflows; \`kind\` names the sender (\`notification\`, or what a
 plugin that sends mail passes, e.g. \`workflows\`) and \`transport\` is \`account\` for mail sent
 through an editor's own account. \`request:served\` (\`RequestServed\`: \`surface\`, \`spaceId\`, \`status\`,
@@ -367,7 +372,8 @@ ${await apiTable(publicRouter, '/v1', { title: 'Manablox Delivery API' })}
 A plugin's router answers under \`plugins.<id>\` of the management API, with the same
 authentication, environments and error body. While the plugin is off for the instance or the
 space it answers 404 \`route.notFound\` when hidden and 403 \`control.feature\` when locked (a
-premium plugin without a license, say). The plugins of the default instance:
+premium plugin on a production instance without an active subscription, say; a development
+instance runs them without a key). The plugins of the default instance:
 
 ${await pluginTables(plugins)}
 `,

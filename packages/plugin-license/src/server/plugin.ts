@@ -65,13 +65,26 @@ export function licensePlugin(options: LicensePluginOptions = {}): ManabloxPlugi
     },
     services: licenseServices(config),
     // Every process reads the leases before it serves, and again when another one wrote them.
-    hooks: (plugin) => [
-      onHook('before:start', async () => {
-        const { licenses } = plugin.services;
-        plugin.manablox.onDispose(() => licenses.close());
-        await licenses.boot(plugin.channel(RELOAD_CHANNEL));
-      }),
-    ],
+    hooks: (plugin) => {
+      // A space's URL and its API hosts count for the development check: read the hostnames
+      // again at once. A context that built no services (a test harness, a script) has nothing
+      // to reload.
+      const reload = () => plugin.plugins.get(LICENSE)?.reload();
+      return [
+        onHook('before:start', async () => {
+          const { licenses } = plugin.services;
+          plugin.manablox.onDispose(() => licenses.close());
+          await licenses.boot(plugin.channel(RELOAD_CHANNEL));
+        }),
+        onHook('space:afterCreate', reload),
+        onHook('space:afterUpdate', ({ url, previousUrl }) =>
+          url === previousUrl ? undefined : reload(),
+        ),
+        onHook('space:afterDelete', reload),
+        onHook('apiHost:afterCreate', reload),
+        onHook('apiHost:afterDelete', reload),
+      ];
+    },
     ceilings: (plugin) => plugin.services.licenses.ceiling(),
     // In the background: the license server may be slow or away, the boot does not wait.
     start: (plugin) => {

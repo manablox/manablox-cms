@@ -28,6 +28,12 @@ export interface LicenseServices {
   entitlement(product: PremiumProduct): Entitlement;
   /** False for a non-private host while only a development lease covers the product. */
   allowsHost(product: PremiumProduct, host: string): boolean;
+  /**
+   * Reads the leases and hostnames again in every process of the instance. A plugin that
+   * contributes `license.hostnames` calls it once they changed; spaces and API hosts reload on
+   * their own.
+   */
+  reload(): Promise<void>;
 }
 
 /** The release this package belongs to; every `@manablox/*` package shares it. */
@@ -112,6 +118,7 @@ export function licenseServices(config: LicenseConfig) {
       licenses,
       entitlement: (product) => licenses.entitlement(product),
       allowsHost: (product, host) => licenses.allowsHost(product, host),
+      reload: () => licenses.reload(),
     };
   };
 }

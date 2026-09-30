@@ -7,7 +7,9 @@ const PLUGIN = '  licensePlugin(),';
 const ENV = `# --- Premium plugin licenses ----------------------------------------------------------
 # License keys, comma separated (MBX-XXXXX-...). Keys are secrets: keep them here, never in
 # manablox.config.ts. Keys added in the admin (Settings -> Licenses) are stored encrypted in
-# the database instead.
+# the database instead. On a development instance (NODE_ENV not production, every URL and
+# domain private, such as localhost) the premium plugins run without a key; production
+# needs a subscription.
 MANABLOX_LICENSE_KEYS=
 `;
 

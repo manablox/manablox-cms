@@ -317,7 +317,7 @@ async function licensePremium(
     ready: state.migrated,
   };
   const missing = await uncovered(products, setup);
-  if (!missing.length) return;
+  if (!missing.products.length) return;
   context.out.write('\n');
-  await premiumPrompt(missing, setup);
+  await premiumPrompt(missing.products, { ...setup, development: missing.development });
 }

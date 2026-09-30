@@ -289,8 +289,13 @@ describe('space transfer', () => {
   it('imports a full export under a new identity, ids and references preserved', async () => {
     const payload = await ctx.spaces.export(ctx.spaceId);
     const copy = asCopy(payload, 'copy');
+    const created: string[] = [];
+    const off = ctx.manablox.hooks.on('space:afterCreate', ({ spaceId }) => {
+      created.push(spaceId);
+    });
 
-    const result = await ctx.spaces.import(copy, ownerId);
+    const result = await ctx.spaces.import(copy, ownerId).finally(off);
+    expect(created).toEqual([result.spaceId]);
     expect(result).toMatchObject({
       contents: 2,
       versions: 3,

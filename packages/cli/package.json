@@ -43,6 +43,7 @@
     "@manablox/auth": "workspace:*",
     "@manablox/core": "workspace:*",
     "@manablox/db": "workspace:*",
+    "@manablox/license": "workspace:*",
     "@manablox/public-sdk": "workspace:*",
     "@manablox/server": "workspace:*",
     "@manablox/services": "workspace:*",

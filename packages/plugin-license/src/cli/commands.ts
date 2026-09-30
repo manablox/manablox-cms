@@ -555,6 +555,11 @@ export async function status(
       const failed = failure(key, places);
       if (failed) write(context.err, failed);
     }
+  } else if (overview.products.some((product) => product.state === 'development')) {
+    write(context.out, [
+      'No license keys: this development instance runs the premium plugins without one, on private hosts only.',
+      'Production needs a subscription: manablox license buy, or manablox license add <key>',
+    ]);
   } else {
     write(context.out, 'No license keys: manablox license buy, or manablox license add <key>');
   }
@@ -563,7 +568,11 @@ export async function status(
     for (const product of overview.products) {
       const until = product.periodEnd ? `, period ends ${day(product.periodEnd)}` : '';
       const kind = product.kind ? ` (${product.kind})` : '';
-      const buy = LOCKED_STATES.includes(product.state) ? `, buy: ${product.buyUrl}` : '';
+      const buy = LOCKED_STATES.includes(product.state)
+        ? `, buy: ${product.buyUrl}`
+        : product.state === 'development'
+          ? `, no license needed on private hosts; for production: ${product.buyUrl}`
+          : '';
       write(context.out, `  ${product.label.padEnd(8)} ${product.state}${kind}${until}${buy}`);
     }
   }

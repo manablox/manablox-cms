@@ -39,7 +39,9 @@ so a hosting or billing system can offer it in plans.
   `manablox plugin install`, `uninstall`, `enable` and `disable` change them later. The
   premium plugins, AI and the website designer, install from npm by name.
 - **License keys for the premium plugins.** `@manablox/plugin-license` activates keys,
-  keeps signed leases and unlocks what they pay for; development instances need no key.
+  keeps signed leases and unlocks what they pay for. Development instances (private hosts,
+  not `NODE_ENV=production`) run the premium plugins without a key; production needs a
+  subscription.
 - **Tools for plugin authors.** `manablox docs generate` writes the error, HTTP API and hooks
   reference for an instance with its plugins. `@manablox/db/testing`,
   `@manablox/services/testing`, `@manablox/core/testing` and `@manablox/plugin-license/testing`

@@ -1,6 +1,11 @@
 import { auditor, ManabloxError } from '@manablox/core';
 import type { Manablox } from '@manablox/core/node';
-import type { Repositories, SpaceRow, TransactionRepositories } from '@manablox/db';
+import {
+  type Repositories,
+  type SpaceRow,
+  type TransactionRepositories,
+  whenCommitted,
+} from '@manablox/db';
 import type { SpaceConfigService } from '../config/service.js';
 import type { RoleService } from '../role.service.js';
 import type { SpaceTransferService } from '../transfer/service.js';
@@ -35,13 +40,23 @@ export class SpaceContext {
     return space;
   }
 
-  /** `space.created` or `space.deleted`, in the write's transaction. */
-  spaceEvent(
+  /**
+   * `space.created` or `space.deleted`, in the write's transaction, and `space:afterCreate`
+   * or `space:afterDelete` once it commits.
+   */
+  async spaceEvent(
     type: 'space.created' | 'space.deleted',
     space: SpaceRow,
     tx: TransactionRepositories,
   ): Promise<void> {
-    return this.manablox.controls.emit(
+    await whenCommitted(tx, () =>
+      this.manablox.hooks.observe(
+        type === 'space.created' ? 'space:afterCreate' : 'space:afterDelete',
+        { spaceId: space.id, url: space.url },
+        { manablox: this.manablox, spaceId: space.id },
+      ),
+    );
+    await this.manablox.controls.emit(
       type,
       { kind: 'space', id: space.id },
       {

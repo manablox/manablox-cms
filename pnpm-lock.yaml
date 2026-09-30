@@ -827,6 +827,9 @@ importers:
       '@manablox/db':
         specifier: workspace:*
         version: link:../db
+      '@manablox/license':
+        specifier: workspace:*
+        version: link:../license
       '@manablox/public-sdk':
         specifier: workspace:*
         version: link:../public-sdk

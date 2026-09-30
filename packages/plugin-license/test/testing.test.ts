@@ -98,6 +98,13 @@ describe('testLicensePlugin', () => {
     expect(await designOn(api)).toBe(false);
   });
 
+  it('is a development instance only when asked, which runs without a grant', async () => {
+    const api = await bootWith(testLicensePlugin({ signing, grant: false, kind: 'auto' }));
+    expect(services(api).entitlement('website').state).toBe('development');
+    expect(await designOn(api)).toBe(true);
+    expect(services(api).allowsHost('website', 'www.example.com')).toBe(false);
+  });
+
   it('grants a development lease that serves private hosts only', async () => {
     const api = await boot({ kind: 'development', products: ['website'] });
     expect(services(api).entitlement('website').kind).toBe('development');
@@ -117,6 +124,8 @@ describe('testLicensePlugin', () => {
         keys: [],
         fetch: async () => Response.json({ error: { code: 'offline' } }, { status: 503 }),
         trustedKeys: { [other.kid]: other.publicKey },
+        // Not a development instance, which would run the product without a lease.
+        kind: 'production',
       }),
     );
     expect(services(runtime).entitlement('website').state).not.toBe('active');

@@ -187,6 +187,15 @@ export class LicenseService {
   }
 
   /**
+   * Reads the rows and hostnames again here and tells the instance's other processes to, e.g.
+   * after a hostname the development check counts was added, changed or removed. Never throws.
+   */
+  async reload(): Promise<void> {
+    await this.load();
+    this.options.publish();
+  }
+
+  /**
    * Reads the rows now and whenever another process wrote them, and checks the clock every
    * minute. For every process, before it serves.
    */
@@ -213,8 +222,20 @@ export class LicenseService {
   }
 
   /** Whether an instance hostname is public, so development leases cover nothing. */
-  private publicHostnames(): boolean {
-    return this.hostnames.some((host) => !isPrivateHostname(host, this.options.config.devHosts));
+  private publicHostnames(hostnames: readonly string[] = this.hostnames): boolean {
+    return hostnames.some((host) => !isPrivateHostname(host, this.options.config.devHosts));
+  }
+
+  /**
+   * Whether the instance is a development one, whose products run without a license: every
+   * hostname private, and `NODE_ENV` not `production` unless the kind forces development.
+   * The `production` kind never is one.
+   */
+  private developmentInstance(hostnames: readonly string[] = this.hostnames): boolean {
+    const { kind } = this.options.config;
+    if (kind === 'production') return false;
+    if (kind === 'auto' && this.options.nodeEnv === 'production') return false;
+    return !this.publicHostnames(hostnames);
   }
 
   private evaluate(): void {
@@ -238,12 +259,12 @@ export class LicenseService {
         ),
       }));
       const checked = keys.map((key) => key.checked);
-      const publicHostnames = this.publicHostnames();
+      const instance = {
+        publicHostnames: this.publicHostnames(),
+        development: this.developmentInstance(),
+      };
       const entitlements = new Map(
-        PREMIUM_PRODUCT_IDS.map((product) => [
-          product,
-          entitlementOf(product, checked, { publicHostnames }),
-        ]),
+        PREMIUM_PRODUCT_IDS.map((product) => [product, entitlementOf(product, checked, instance)]),
       );
       this.adopt(keys, entitlements, nextChange(checked, nowSeconds));
     } catch (error) {
@@ -329,13 +350,14 @@ export class LicenseService {
   }
 
   /**
-   * Whether a request for `host` may use the product. Only a development lease restricts
-   * hosts: the product then serves private hosts alone. A locked product answers true, since
-   * its lapse set already switches it off where it has to be.
+   * Whether a request for `host` may use the product. Only development restricts hosts: a
+   * product a development lease covers, or one that runs without a license on a development
+   * instance, serves private hosts alone. A locked product answers true, since its lapse set
+   * already switches it off where it has to be.
    */
   allowsHost(product: PremiumProduct, host: string): boolean {
     const entitlement = this.entitlement(product);
-    if (entitlement.kind !== 'development') return true;
+    if (entitlement.kind !== 'development' && entitlement.state !== 'development') return true;
     return isPrivateHostname(host, this.options.config.devHosts);
   }
 
@@ -407,13 +429,9 @@ export class LicenseService {
 
   /** The kind to activate as: forced by the config, else by the environment and hostnames. */
   async activationKind(): Promise<LicenseKind> {
-    const { kind, devHosts } = this.options.config;
+    const { kind } = this.options.config;
     if (kind !== 'auto') return kind;
-    if (this.options.nodeEnv === 'production') return 'production';
-    const hostnames = await this.options.hostnames();
-    return hostnames.every((host) => isPrivateHostname(host, devHosts))
-      ? 'development'
-      : 'production';
+    return this.developmentInstance(await this.options.hostnames()) ? 'development' : 'production';
   }
 
   /** The key a row stands for: from the config by its hash, or decrypted from the row. */

@@ -9,7 +9,9 @@ import type { PremiumProduct } from '@manablox/license';
 /**
  * What a product's license allows now. `active`, `canceled` (paid until the period end, not
  * renewed after it), `pastDue`, `grace`, `expiring` and `conflict` lock nothing; `lapsed` and
- * `missing` switch the product's lapse set off.
+ * `missing` switch the product's lapse set off. `development` locks nothing either: no valid
+ * lease covers the product, but the instance is a development one (see the README), so it
+ * runs without a license on private hosts.
  */
 export type LicenseState =
   | 'active'
@@ -19,7 +21,8 @@ export type LicenseState =
   | 'expiring'
   | 'conflict'
   | 'lapsed'
-  | 'missing';
+  | 'missing'
+  | 'development';
 
 /** The states that lock a product's lapse set. */
 export const LOCKED_STATES: readonly LicenseState[] = ['lapsed', 'missing'];
@@ -27,7 +30,11 @@ export const LOCKED_STATES: readonly LicenseState[] = ['lapsed', 'missing'];
 /** Who an activation counts against: a production seat, nothing, or a hosted instance. */
 export type LicenseKind = 'production' | 'development' | 'hosted';
 
-/** The kind an instance activates as; `auto` decides by its hostnames (see the README). */
+/**
+ * The kind an instance activates as, and whether it counts as a development instance:
+ * `auto` decides by `NODE_ENV` and its hostnames, `development` by its hostnames alone,
+ * `production` never is one (see the README).
+ */
 export type LicenseKindSetting = 'auto' | 'production' | 'development';
 
 /**
@@ -43,7 +50,8 @@ export interface LicenseProductEntry {
 /**
  * A `license.hostnames` entry: hostnames the contributing plugin serves beyond the configured
  * URLs, such as a website's domains. A development lease covers the instance only while every
- * one is private. Called with the contributing plugin's context; a throw counts as public.
+ * one is private, and the instance is a development one only then. Called with the
+ * contributing plugin's context; a throw counts as public.
  */
 export interface LicenseHostnameEntry {
   hostnames(plugin: PluginContext): Promise<readonly string[]>;

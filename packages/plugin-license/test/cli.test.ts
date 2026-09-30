@@ -26,8 +26,8 @@ afterEach(async () => {
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-async function boot(): Promise<LicenseInstance> {
-  instance = await bootLicense('cli', { license: () => ({ keys: [], kind: 'production' }) });
+async function boot(kind: 'production' | 'auto' = 'production'): Promise<LicenseInstance> {
+  instance = await bootLicense('cli', { license: () => ({ keys: [], kind }) });
   await instance.services().licenses.reconcile();
   return instance;
 }
@@ -325,6 +325,22 @@ describe('manablox license status, activate, refresh, remove, open', () => {
     expect(active.out).toMatch(new RegExp(`^${keyId(key)} +env +ai +production +active `, 'm'));
     const json = await license(target, ['status'], { json: true }, { cwd });
     expect(JSON.parse(json.out).products).toMatchObject([{ product: 'ai', state: 'active' }]);
+  });
+
+  it('shows a development instance without a key as development, with exit code 0', async () => {
+    const target = await boot('auto');
+    const cwd = folder();
+    const result = await license(target, ['status'], {}, { cwd });
+    expect(result.code).toBe(0);
+    expect(result.out).toContain(
+      'No license keys: this development instance runs the premium plugins without one, on private hosts only.\nProduction needs a subscription: manablox license buy, or manablox license add <key>',
+    );
+    expect(result.out).toMatch(
+      /AI +development, no license needed on private hosts; for production: https:\/\/licenses\.test\/buy\?products=ai/,
+    );
+    const json = await license(target, ['status'], { json: true }, { cwd });
+    expect(json.code).toBe(0);
+    expect(JSON.parse(json.out).products).toMatchObject([{ product: 'ai', state: 'development' }]);
   });
 
   it('activates again, as another kind, and refreshes', async () => {

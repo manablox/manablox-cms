@@ -118,15 +118,27 @@ const RANK: Partial<Record<LicenseState, number>> = {
 
 const at = (seconds: number) => new Date(seconds * 1000);
 
+/** What decides beside the leases: the instance's hostnames and whether it is a development one. */
+export interface InstanceClass {
+  /** A hostname of the instance is public: development leases cover nothing. */
+  publicHostnames: boolean;
+  /**
+   * A development instance (every hostname private, and `NODE_ENV` not `production` unless
+   * forced): a product no valid lease covers runs anyway, as `development`.
+   */
+  development: boolean;
+}
+
 /**
  * The best state over every valid lease that grants `product`. A development lease covers
- * nothing while the instance has a public hostname; without any valid lease the product is
- * `lapsed` when a stored lease once named it, else `missing`.
+ * nothing while the instance has a public hostname. Without any valid lease the product is
+ * `development` on a development instance, else `lapsed` when a stored lease once named it,
+ * else `missing`.
  */
 export function entitlementOf(
   product: PremiumProduct,
   leases: readonly CheckedLease[],
-  options: { publicHostnames: boolean },
+  options: InstanceClass,
 ): Entitlement {
   let best: CheckedLease | null = null;
   let development: CheckedLease | null = null;
@@ -161,6 +173,9 @@ export function entitlementOf(
       exp: at(development.lease.exp),
       reason: 'developmentOnPublicHost',
     };
+  }
+  if (options.development) {
+    return { product, state: 'development', kind: null, periodEnd: null, exp: null };
   }
   const once = leases.some((checked) => checked.payload?.products.includes(product));
   return { product, state: once ? 'lapsed' : 'missing', kind: null, periodEnd: null, exp: null };

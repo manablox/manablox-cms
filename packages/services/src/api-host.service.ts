@@ -95,6 +95,7 @@ export class ApiHostService {
       await this.audit.in(tx).record('apiHost.delete', row, snapshotChanges(row, 'deleted'));
       await this.hostEvent('domain.removed', row, tx);
       await this.purge(tx, scopeSpaceId(scope));
+      await this.afterCommit(tx, 'apiHost:afterDelete', row);
     });
   }
 
@@ -152,6 +153,7 @@ export class ApiHostService {
           .catch(hostnameConflict({ hostname }));
         await this.audit.in(tx).record('apiHost.create', row, snapshotChanges(row, 'created'));
         await this.hostEvent('domain.added', row, tx);
+        await this.afterCommit(tx, 'apiHost:afterCreate', row);
         rows.push(row);
       }
       await this.purge(tx, spaceId);
@@ -200,6 +202,21 @@ export class ApiHostService {
         kind: 'api',
       },
       { tx },
+    );
+  }
+
+  /** Runs the observing hook once the write committed. */
+  private afterCommit(
+    tx: Repositories,
+    hook: 'apiHost:afterCreate' | 'apiHost:afterDelete',
+    row: SpaceApiHostRow,
+  ): Promise<void> {
+    return whenCommitted(tx, () =>
+      this.manablox.hooks.observe(
+        hook,
+        { id: row.id, spaceId: row.spaceId, hostname: row.hostname },
+        { manablox: this.manablox, spaceId: row.spaceId },
+      ),
     );
   }
 

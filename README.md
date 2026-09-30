@@ -33,7 +33,8 @@ pnpm services:up && pnpm migrate && pnpm dev   # local preset: API and admin on 
 
 `manablox create` asks which features a project gets. Workflows and webhooks are free
 plugins from this repository; AI and the website designer are premium plugins installed from
-npm (`@manablox/plugin-ai`, `@manablox/plugin-website`). `manablox plugin install`,
+npm (`@manablox/plugin-ai`, `@manablox/plugin-website`); they run without a license key on a
+local development instance, and production needs a subscription. `manablox plugin install`,
 `uninstall`, `enable` and `disable` change them later.
 
 The same CLI writes a frontend that reads from it:

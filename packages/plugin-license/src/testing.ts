@@ -135,7 +135,9 @@ function testLease(instanceId: string, signing: TestSigningKeys, grant: TestLice
 /**
  * `licensePlugin` for tests: it trusts `signing`, calls no license server and, before it
  * reads the leases in each process, stores `grant` as an activated key of the instance
- * (replacing an earlier grant). Every process of the instance can load it.
+ * (replacing an earlier grant). Every process of the instance can load it. Its `kind` is
+ * `production` unless given, so the grant alone decides: pass `kind: 'auto'` or
+ * `'development'` to test a development instance, whose products run without a lease.
  */
 export function testLicensePlugin(options: TestLicenseOptions): ManabloxPlugin<LicenseServices> {
   const { grant = {}, signing, ...rest } = options;
@@ -143,6 +145,9 @@ export function testLicensePlugin(options: TestLicenseOptions): ManabloxPlugin<L
     server: TEST_SERVER,
     keys: [],
     fetch: async () => Response.json({ error: { code: 'offline' } }, { status: 503 }),
+    // Tests run on localhost outside production: `auto` would unlock every product as a
+    // development instance, whatever the grant.
+    kind: 'production',
     ...rest,
     trustedKeys: { ...rest.trustedKeys, [signing.kid]: signing.publicKey },
   });

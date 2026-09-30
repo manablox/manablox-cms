@@ -7,7 +7,7 @@ import { parseArgs } from '../src/args.js';
 import { logsOnStderr, pluginCommand } from '../src/commands/plugin.js';
 import { managePlugins } from '../src/commands/plugins.js';
 import { create } from '../src/create/index.js';
-import { premiumProducts, premiumPrompt, uncovered } from '../src/license.js';
+import { developmentSetup, premiumProducts, premiumPrompt, uncovered } from '../src/license.js';
 import { browserCommand, type OpenEnvironment, openUrl } from '../src/open.js';
 import type { CliPlugin } from '../src/plugins.js';
 import type { Prompter } from '../src/ui.js';
@@ -20,6 +20,9 @@ const tempDir = tempDirs('manablox-license-');
 /** A key with a valid checksum; no license server is asked about it. */
 const KEY = 'MBX-0KB84-X6NY9-NT3YS-1QQPF-Z5NEB';
 const PREMIUM = 'AI is a premium plugin. License it now?';
+/** The question on a local instance, where the premium plugins run without a key. */
+const PREMIUM_LOCAL =
+  'AI is a premium plugin. On this local instance it runs without a license key; production needs a subscription. License it now?';
 
 const env = { ...process.env };
 afterEach(() => {
@@ -237,7 +240,7 @@ describe('manablox plugin install: the license prompt', () => {
   });
 
   it('prints the commands to run without a terminal, and installs anyway', async () => {
-    const dir = await instance({});
+    const dir = await instance({ preset: 'docker' });
     const result = await install(dir, ['ai', '--no-install', '--no-migrate']);
     expect(result.code, result.err).toBe(0);
     expect(result.out).toContain(
@@ -250,7 +253,7 @@ describe('manablox plugin install: the license prompt', () => {
   });
 
   it('asks once, and later leaves the plugin locked', async () => {
-    const dir = await instance({});
+    const dir = await instance({ preset: 'docker' });
     const prompter = scriptedPrompter(['later']);
     const result = await install(dir, ['ai', '--no-install', '--no-migrate'], prompter);
     expect(result.code, result.err).toBe(0);
@@ -258,12 +261,74 @@ describe('manablox plugin install: the license prompt', () => {
     expect(result.out).toContain('AI stays locked until a license covers it');
   });
 
+  it('says a local instance runs it without a key, and leads with continuing so', async () => {
+    const dir = await instance({});
+    const prompter = scriptedPrompter(['']);
+    const result = await install(dir, ['ai', '--no-install', '--no-migrate'], prompter);
+    expect(result.code, result.err).toBe(0);
+    expect(prompter.asked()).toEqual([PREMIUM_LOCAL]);
+    expect(result.out).toContain(
+      'AI runs here without a license key, on private hosts only. A production instance needs a subscription:\n  manablox license buy --plugins ai --trial --monthly',
+    );
+    expect(dotEnv(dir)).toContain('\nMANABLOX_LICENSE_KEYS=\n');
+    // The license choices stay, after continuing without a key.
+    let offered: unknown[] = [];
+    const recording: Prompter = {
+      ...scriptedPrompter([]),
+      select: async (question) => {
+        offered = question.options.map((option) => [option.value, option.label]);
+        return question.initialValue as never;
+      },
+    };
+    await premiumPrompt(['ai'], {
+      cwd: dir,
+      out: { write: () => true },
+      err: { write: () => true },
+      prompter: recording,
+      tty: false,
+      license: { id: 'license', name: 'license', contribution: { summary: '', commands: {} } },
+      ready: false,
+      development: true,
+    });
+    expect(offered).toEqual([
+      ['development', 'Continue without a key (development)'],
+      ['trial', 'Start a 14-day trial'],
+      ['buy', 'Buy a subscription'],
+      ['add', 'Enter a key I already have'],
+    ]);
+  });
+
+  it('tells a development setup by its .env', () => {
+    const dir = tempDir();
+    const setup = (text: string, env: Record<string, string> = {}) => {
+      writeFileSync(join(dir, '.env'), text);
+      return developmentSetup(dir, env);
+    };
+    expect(setup('PUBLIC_URL=http://localhost:3000\nPUBLIC_API_URL=http://localhost:3100\n')).toBe(
+      true,
+    );
+    expect(setup('PUBLIC_URL=https://cms.example.com\n')).toBe(false);
+    expect(
+      setup('PUBLIC_URL=https://cms.example.com\nMANABLOX_LICENSE_DEV_HOSTS=cms.example.com\n'),
+    ).toBe(true);
+    expect(setup('PUBLIC_URL=http://localhost:3000\nNODE_ENV=production\n')).toBe(false);
+    expect(setup('PUBLIC_URL=http://localhost:3000\n', { NODE_ENV: 'production' })).toBe(false);
+    expect(setup('PUBLIC_URL=http://localhost:3000\nMANABLOX_LICENSE_KIND=production\n')).toBe(
+      false,
+    );
+    // The docker preset runs NODE_ENV=production in its compose file.
+    expect(setup('ADMIN_DOMAIN=http://cms.localhost\nPUBLIC_URL=http://cms.localhost\n')).toBe(
+      false,
+    );
+    expect(setup('')).toBe(false);
+  });
+
   it('takes a key: into .env, activated when the instance starts', async () => {
     const dir = await instance({});
     const prompter = scriptedPrompter(['add', KEY]);
     const result = await install(dir, ['ai', '--no-install', '--no-migrate'], prompter);
     expect(result.code, result.err).toBe(0);
-    expect(prompter.asked()).toEqual([PREMIUM, 'License key']);
+    expect(prompter.asked()).toEqual([PREMIUM_LOCAL, 'License key']);
     expect(dotEnv(dir)).toContain(`\nMANABLOX_LICENSE_KEYS=${KEY}\n`);
     expect(result.out).toContain('The instance activates it when it starts.');
   });
@@ -284,6 +349,7 @@ describe('manablox plugin install: the license prompt', () => {
                   products: [
                     { product: 'ai', state: 'active' },
                     { product: 'website', state: 'lapsed' },
+                    { product: 'next', state: 'development' },
                   ],
                 }),
               );
@@ -302,15 +368,24 @@ describe('manablox plugin install: the license prompt', () => {
       license: states,
       runtime: async () => ({ runtime: { plugin: {} as never }, shutdown: async () => {} }),
     };
-    expect(await uncovered(['ai', 'website'], { ...setup, ready: true })).toEqual(['website']);
-    // Not migrated: only whether a key is configured at all.
-    expect(await uncovered(['ai', 'website'], { ...setup, ready: false }, {})).toEqual([
-      'ai',
-      'website',
-    ]);
+    expect(await uncovered(['ai', 'website'], { ...setup, ready: true })).toEqual({
+      products: ['website'],
+      development: false,
+    });
+    // A development instance runs a product without a license: still asked, as development.
+    const next = 'next' as 'ai';
+    expect(await uncovered(['ai', next], { ...setup, ready: true })).toEqual({
+      products: [next],
+      development: true,
+    });
+    // Not migrated: only whether a key is configured at all, and the .env for development.
+    expect(await uncovered(['ai', 'website'], { ...setup, ready: false }, {})).toEqual({
+      products: ['ai', 'website'],
+      development: false,
+    });
     expect(
       await uncovered(['ai'], { ...setup, ready: false }, { MANABLOX_LICENSE_KEYS: KEY }),
-    ).toEqual([]);
+    ).toEqual({ products: [], development: false });
   });
 
   it('hands the trial choice to buy as its trial hint, and buy without it', async () => {
@@ -374,7 +449,9 @@ describe('manablox create: the license prompt', () => {
         question.message === 'License key' ? scripted.text(question) : question.defaultValue,
       select: async (question) => {
         asked.push(question.message);
-        return question.message === PREMIUM ? scripted.select(question) : question.initialValue;
+        return question.message === PREMIUM_LOCAL
+          ? scripted.select(question)
+          : question.initialValue;
       },
       multiselect: async (question) => [...(question.initialValues ?? [])],
       confirm: async (question) => question.initialValue,
@@ -399,14 +476,26 @@ describe('manablox create: the license prompt', () => {
   it('lists the license commands in the next steps without a terminal', async () => {
     const result = await run(null);
     expect(result.code).toBe(0);
+    expect(result.out).toContain(
+      '# the premium plugins run locally without a key; production needs a license:',
+    );
     expect(result.out).toContain('pnpm exec manablox license buy --plugins ai --trial --monthly');
+  });
+
+  it('continues without a key by default on the local preset', async () => {
+    const prompter = defaults(['']);
+    const result = await run(prompter);
+    expect(result.code, result.out).toBe(0);
+    expect(prompter.asked.filter((message) => message === PREMIUM_LOCAL)).toHaveLength(1);
+    expect(result.out).toContain('AI runs here without a license key, on private hosts only.');
+    expect(dotEnv(result.dir)).toContain('MANABLOX_LICENSE_KEYS=\n');
   });
 
   it('asks once at the end and writes the key to the new .env', async () => {
     const prompter = defaults(['add', KEY]);
     const result = await run(prompter);
     expect(result.code, result.out).toBe(0);
-    expect(prompter.asked.filter((message) => message === PREMIUM)).toHaveLength(1);
+    expect(prompter.asked.filter((message) => message === PREMIUM_LOCAL)).toHaveLength(1);
     expect(dotEnv(result.dir)).toContain(`MANABLOX_LICENSE_KEYS=${KEY}\n`);
     expect(result.out).not.toContain('pnpm exec manablox license buy');
   });

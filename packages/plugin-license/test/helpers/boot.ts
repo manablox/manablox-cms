@@ -19,15 +19,19 @@ import { T0, TRUSTED_KEYS } from './leases.js';
 
 /**
  * A plugin that sells the `ai` product, as a paid plugin will: its `design` feature is the
- * lapse set, so it locks without a license while the plugin itself stays on.
+ * lapse set, so it locks without a license while the plugin itself stays on. `hostnames`
+ * are the ones it serves, read on every evaluation, as the website's domains are.
  */
-const sellerPlugin = () =>
+export const sellerPlugin = (hostnames?: () => string[]) =>
   definePlugin({
     name: 'seller',
     enhances: ['license'],
     controls: { 'features.plugins.seller.design': { description: 'Designing things.' } },
     contributions: {
-      license: { products: [{ product: 'ai', lapse: ['plugins.seller.design'] }] },
+      license: {
+        products: [{ product: 'ai', lapse: ['plugins.seller.design'] }],
+        ...(hostnames ? { hostnames: [{ hostnames: async () => hostnames() }] } : {}),
+      },
     },
   });
 

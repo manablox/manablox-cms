@@ -9,9 +9,12 @@ License keys for the Manablox premium plugins, as a plugin:
 - **Daily refresh**: the management worker refreshes a lease once it is a day old or ends
   within a week (the `license:refresh` maintenance task, every six hours), and rotates the
   refresh secret each time. Failures back off.
-- **Locks, not lock-outs**: a product no valid lease covers has its lapse set switched off
-  through a feature ceiling, shown with a lock and a buy link. Data stays, the server keeps
-  booting, and a valid lease unlocks everything again.
+- **Development needs no key**: on a development instance (private hostnames only, not
+  `NODE_ENV=production`) the premium plugins run without a license, on private hosts only.
+  Production needs a subscription.
+- **Locks, not lock-outs**: on a production instance a product no valid lease covers has its
+  lapse set switched off through a feature ceiling, shown with a lock and a buy link. Data
+  stays, the server keeps booting, and a valid lease unlocks everything again.
 - **Settings → Licenses**: superadmins see every key, refresh or deactivate it, add keys
   and open the portal.
 
@@ -59,7 +62,7 @@ are read-only. The instance's entitlements are the union of every key's lease.
 | `keys` | `MANABLOX_LICENSE_KEYS` | none | License keys, a comma list in the environment |
 | `server` | `MANABLOX_LICENSE_SERVER` | `https://licenses.manablox.io/api` | The license server's API |
 | `portal` | | the server's origin | The customer portal, for the buy and manage links |
-| `kind` | `MANABLOX_LICENSE_KIND` | `auto` | `auto`, `production` or `development` |
+| `kind` | `MANABLOX_LICENSE_KIND` | `auto` | `auto`, `production` or `development`: how keys activate, and whether the instance counts as a development one (below) |
 | `devHosts` | `MANABLOX_LICENSE_DEV_HOSTS` | none | Preview hosts that count as private (`host` or `*.suffix`) |
 | `trustedKeys` | | none | Lease signing keys to trust besides the bundled ones, for tests and local license servers. Code only, never the environment |
 
@@ -99,16 +102,34 @@ manablox license open [billing]
 
 ## Development and production
 
-`auto` activates as `development` when `NODE_ENV` is not `production` and every hostname of
-the instance is private: its configured URLs (`server.publicUrl`, `server.adminUrl`,
-`auth.baseUrl`), every space's URL and API hosts, and the hostnames plugins contribute (the
-website's domains). Private are
+A **development instance** runs the premium plugins without any key. It is one when
+`NODE_ENV` is not `production` and every hostname of the instance is private: its configured
+URLs (`server.publicUrl`, `server.adminUrl`, `auth.baseUrl`), every space's URL and API
+hosts, and the hostnames plugins contribute (the website's domains). Private are
 `localhost`, names under `.localhost`, `.test`, `.local` and `.internal`, loopback,
-RFC 1918, link-local and unique-local addresses, and `devHosts`.
+RFC 1918, link-local and unique-local addresses, and `devHosts`. The `kind` setting changes
+that: `development` makes it one whatever `NODE_ENV` says, but the hostnames still have to be
+private; `production` makes it none.
 
-A development activation takes no seat, but it only covers an instance whose hostnames are
-all private, and `allowsHost(product, host)` refuses a public `Host`. The admin shows a
-"Development license" notice.
+- A product no valid lease covers is `development` there, not `missing` or `lapsed`: nothing
+  locks, and the admin shows the notice "Development instance: the premium plugins run
+  without a production license, on private hosts only." A production lease that covers every
+  product removes the notice.
+- `allowsHost(product, host)` refuses a public `Host` while only development unlocks the
+  product, so a site request or an AI call over a public hostname is still refused.
+- The classification is evaluated whenever the rows and hostnames are read: at boot, after
+  every license write here or in another process, as soon as a space is created, deleted or
+  gets another URL, when a plugin calls `reload()` (the website does once a site domain
+  changes), and every ten minutes. Once a public hostname appears (a site domain, a space
+  URL), or the instance starts with `NODE_ENV=production`, the products fall back to
+  `missing` and lock.
+
+Keys still work on a development instance. `auto` activates a key as `development` there:
+such an activation takes no seat, but it only covers an instance whose hostnames are all
+private, and `allowsHost` refuses a public `Host` as well. A production activation
+(`manablox license activate --production`, or `kind: 'production'`) takes a seat and covers
+every host. The admin shows the same development notice while a development lease covers a
+product.
 
 ## States
 
@@ -122,6 +143,11 @@ all private, and `allowsHost(product, host)` refuses a public `Host`. The admin 
 | `conflict` | nothing, until the lease runs out | active on another instance |
 | `lapsed` | the lapse set | needs a license, buy link |
 | `missing` | the lapse set | add a key, buy link |
+| `development` | nothing; private hosts only | the development notice |
+
+`development` stands for no valid lease on a development instance; `lapsed` and `missing`
+only happen on production instances (or when the leases cannot be read: every product is
+then `lapsed`, whatever the instance).
 
 A refresh the license server answers with `activation.notFound` drops the lease at once: its
 products lock unless another key covers them. The key stays; Refresh or Activate here (or
@@ -156,11 +182,24 @@ contributions: {
 },
 ```
 
+The list is read again every ten minutes; once one of its hostnames was added, changed or
+removed, the plugin calls `reload()` so every process reads it at once:
+
+```ts
+await plugin.manablox.plugins.get('license')?.reload();
+```
+
 Its services are `plugins.get('license')`:
 
-- `entitlement(product)`: `{ product, state, kind, periodEnd, exp, reason? }`.
-- `allowsHost(product, host)`: false for a public host while only a development lease covers
-  the product.
+- `entitlement(product)`: `{ product, state, kind, periodEnd, exp, reason? }`; `state` is
+  `development` (and `kind` `null`) for a product that runs without a license on a
+  development instance.
+- `allowsHost(product, host)`: false for a public host while only a development lease or the
+  development instance unlocks the product.
+- `reload()`: reads the leases and the hostnames again in this process and, over the plugin's
+  `reload` channel, in the instance's other processes. Spaces and their API hosts reload on
+  their own (`space:afterCreate`, `space:afterUpdate`, `space:afterDelete`,
+  `apiHost:afterCreate`, `apiHost:afterDelete`).
 - `licenses`: the `LicenseService` itself (activate, refresh, deactivate, reconcile, and
   for the CLI `addEnvironmentKey`, `removeEnvironmentKey` and `freeSeat`).
 
@@ -169,7 +208,9 @@ Its services are `plugins.get('license')`:
 `@manablox/plugin-license/testing` has `testLicensePlugin`, the plugin trusting a test
 signing key and calling no license server. Before each process reads its leases it stores a
 lease for the instance: both products and `production` by default,
-`grant: { products, kind, status, days }` for another, `grant: false` for none.
+`grant: { products, kind, status, days }` for another, `grant: false` for none. Its `kind`
+is `production` unless given, so a test on localhost is no development instance and the
+grant alone decides; `grant: false, kind: 'auto'` tests the development instance.
 
 It ships no key pair. `generateTestSigningKeys()` makes one at runtime (an Ed25519 pair from
 `@manablox/license`'s `generateSigningKeyPair`), or pass your own
@@ -183,7 +224,7 @@ import { generateTestSigningKeys, testLicensePlugin } from '@manablox/plugin-lic
 const signing = generateTestSigningKeys();
 
 plugins: [testLicensePlugin({ signing }), websitePlugin()]; // licensed
-plugins: [testLicensePlugin({ signing, grant: false }), websitePlugin()]; // lapsed
+plugins: [testLicensePlugin({ signing, grant: false }), websitePlugin()]; // missing, locked
 ```
 
 Processes that boot the same instance need the same pair. `signingToEnv(signing)` turns it

@@ -20,8 +20,10 @@ const stored = (token: string | null, extra: Partial<StoredLease> = {}): StoredL
 const check = (token: string | null, now = T0, extra: Partial<StoredLease> = {}) =>
   checkLease(stored(token, extra), { now, instanceId: INSTANCE_ID, trustedKeys: TRUSTED_KEYS });
 
-const ai = (leases: CheckedLease[], publicHostnames = true) =>
-  entitlementOf('ai', leases, { publicHostnames });
+const ai = (leases: CheckedLease[], publicHostnames = true, development = false) =>
+  entitlementOf('ai', leases, { publicHostnames, development });
+/** On a development instance: every hostname private. */
+const dev = (leases: CheckedLease[]) => ai(leases, false, true);
 
 describe('the state of a product', () => {
   it('is active for an active or trialing lease', () => {
@@ -100,6 +102,28 @@ describe('the state of a product', () => {
     expect(ai([development, check(lease({ aid: 'act-2' }))], true)).toMatchObject({
       state: 'active',
       kind: 'production',
+    });
+  });
+
+  it('is development without a valid lease on a development instance', () => {
+    const none = { state: 'development', kind: null, periodEnd: null, exp: null };
+    expect(dev([])).toEqual({ product: 'ai', ...none });
+    // A lease that ran out or names another product unlocks nothing, the instance does.
+    expect(dev([check(lease({ exp: T0 + DAY }), T0 + DAY)])).toMatchObject(none);
+    expect(dev([check(lease({ products: ['website'] }))])).toMatchObject(none);
+    // A private but not development instance (production, or NODE_ENV=production) locks.
+    expect(ai([], false, false).state).toBe('missing');
+  });
+
+  it('takes a valid lease over the development instance', () => {
+    expect(dev([check(lease())])).toMatchObject({ state: 'active', kind: 'production' });
+    expect(dev([check(lease({ status: 'pastDue' }))])).toMatchObject({
+      state: 'pastDue',
+      kind: 'production',
+    });
+    expect(dev([check(lease({ kind: 'development' }))])).toMatchObject({
+      state: 'active',
+      kind: 'development',
     });
   });
 

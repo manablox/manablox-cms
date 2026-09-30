@@ -146,6 +146,17 @@ describe('Settings → Licenses', () => {
     expect(wrapper.text()).toContain('No license keys');
   });
 
+  it('shows a product that runs without a license in development, with a buy link', async () => {
+    const data = overview([]);
+    const [product] = data.products;
+    if (!product) throw new Error('no product');
+    const wrapper = await settings({ ...data, products: [{ ...product, state: 'development' }] });
+    expect(wrapper.text()).toContain('Development');
+    expect(wrapper.text()).toContain('Runs without a license on this development instance');
+    const buy = wrapper.find('a[href="https://licenses.test/buy?products=ai"]');
+    expect(buy.text()).toBe('Buy a AI license for production');
+  });
+
   it('refreshes a key through the router', async () => {
     const wrapper = await settings(overview([key()]));
     const button = wrapper.findAll('button').find((entry) => entry.text() === 'Refresh now');

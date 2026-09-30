@@ -10,6 +10,7 @@ export const STATE_BADGES: Record<LicenseState, { label: string; badge: string }
   conflict: { label: 'On another instance', badge: 'mb-badge-danger' },
   lapsed: { label: 'Lapsed', badge: 'mb-badge-danger' },
   missing: { label: 'No license', badge: 'mb-badge-danger' },
+  development: { label: 'Development', badge: 'mb-badge-brand' },
 };
 
 export const KIND_LABELS: Record<LicenseKind, string> = {
@@ -29,4 +30,6 @@ export const STATE_HINTS: Record<LicenseState, string> = {
     'The license server saw this activation on another instance. Activate it here to move it.',
   lapsed: 'The lease ran out, so its products are locked.',
   missing: 'No key covers this product, so its features are locked.',
+  development:
+    'Runs without a license on this development instance, on private hosts only. A production instance needs a subscription.',
 };

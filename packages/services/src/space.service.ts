@@ -199,6 +199,13 @@ export class SpaceService {
       if (space.defaultLocale !== current.defaultLocale) {
         tx.afterCommit(() => purgeTags(this.manablox, space.id, [`space:${space.id}`]));
       }
+      tx.afterCommit(() =>
+        this.manablox.hooks.observe(
+          'space:afterUpdate',
+          { spaceId, url: space.url, previousUrl: current.url },
+          { manablox: this.manablox, spaceId },
+        ),
+      );
       return space;
     });
   }

@@ -8,6 +8,7 @@ import {
   SettingsPage,
 } from '@manablox/admin-sdk';
 import { computed, ref } from 'vue';
+import type { LicenseState } from '../../sdk';
 import { KIND_LABELS, STATE_BADGES, STATE_HINTS } from '../model/states';
 import { useLicenseOverview } from '../queries';
 import LicenseKeyDialog from './LicenseKeyDialog.vue';
@@ -19,6 +20,8 @@ const adding = ref(false);
 
 const products = computed(() => data.value?.products ?? []);
 const keys = computed(() => data.value?.keys);
+/** The states a product shows its buy link in: locked, or running without a license. */
+const BUYABLE: readonly LicenseState[] = ['missing', 'lapsed', 'development'];
 /** Hosted keys only: Manablox Cloud manages them, so nothing changes here. */
 const managed = computed(() => data.value?.managed === true);
 </script>
@@ -26,7 +29,7 @@ const managed = computed(() => data.value?.managed === true);
 <template>
   <SettingsPage
     title="Licenses"
-    description="Premium plugins need a license key. Keys from MANABLOX_LICENSE_KEYS are read-only here; keys added here are stored encrypted in the database. The instance checks its leases offline and refreshes them once a day."
+    description="Premium plugins need a license key in production; a development instance on private hosts runs them without one. Keys from MANABLOX_LICENSE_KEYS are read-only here; keys added here are stored encrypted in the database. The instance checks its leases offline and refreshes them once a day."
   >
     <template v-if="!managed" #actions>
       <a
@@ -62,13 +65,13 @@ const managed = computed(() => data.value?.managed === true);
           <span v-if="product.periodEnd" class="mb-meta">until {{ formatDate(product.periodEnd) }}</span>
           <span class="mb-hint lic:basis-full">{{ STATE_HINTS[product.state] }}</span>
           <a
-            v-if="!managed && (product.state === 'missing' || product.state === 'lapsed')"
+            v-if="!managed && BUYABLE.includes(product.state)"
             class="mb-link lic:text-xs"
             :href="product.buyUrl"
             target="_blank"
             rel="noopener"
           >
-            Buy a {{ product.label }} license
+            Buy a {{ product.label }} license{{ product.state === 'development' ? ' for production' : '' }}
           </a>
         </li>
       </ul>
