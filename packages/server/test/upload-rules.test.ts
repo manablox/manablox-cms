@@ -79,12 +79,22 @@ async function png(width = 40, shade = 0xc0): Promise<Buffer> {
   ]);
 }
 
-const upload = (form: FormData) =>
-  app.request(`/upload/${spaceId}`, {
+/**
+ * Sends the form as bytes. undici streams a FormData body from a task nobody awaits, and a
+ * route that stops reading early (a second file) closes the stream under it: its next
+ * enqueue throws as an unhandled rejection, which fails the run.
+ */
+const upload = async (form: FormData) => {
+  const encoded = new Response(form);
+  return app.request(`/upload/${spaceId}`, {
     method: 'POST',
-    headers: { 'x-api-key': apiKey },
-    body: form,
+    headers: {
+      'x-api-key': apiKey,
+      'content-type': encoded.headers.get('content-type') ?? '',
+    },
+    body: await encoded.arrayBuffer(),
   });
+};
 
 const formWith = (...files: Array<[Buffer, string, string?]>) => {
   const form = new FormData();

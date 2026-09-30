@@ -88,9 +88,21 @@ describe('bootstrap', () => {
 
 const redisUrl = process.env.TEST_REDIS_URL ?? '';
 
+/**
+ * Every runtime shares one job queue, and test files running alongside this one boot their
+ * own workers against it. On SQLite each has its own database file, so a foreign worker
+ * that takes the render job fails it and the retry backoff outlasts the wait. A logical
+ * database of its own keeps the job on this runtime's worker.
+ */
+function isolatedRedisUrl(): string {
+  const url = new URL(redisUrl);
+  url.pathname = '/1';
+  return url.toString();
+}
+
 describe.skipIf(!redisUrl)('bootstrap over Redis', () => {
   it('returns from the upload and leaves eager variants to the worker', async () => {
-    const runtime = await boot('management', redisUrl);
+    const runtime = await boot('management', isolatedRedisUrl());
     let release = () => {};
     const gate = new Promise<void>((resolve) => {
       release = resolve;
