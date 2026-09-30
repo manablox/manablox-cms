@@ -5,7 +5,7 @@ together.
 
 ## 0.50.0 - 2026-09-30
 
-The first release. Manablox is a headless CMS: you write and organise your content in a web admin, and your website or app fetches it over an API. It is free and open source (MIT), and it runs on your own server or with a hosting provider.
+Manablox is a headless CMS: you write and organise your content in a web admin, and your website or app fetches it over an API. It is free and open source (MIT), and it runs on your own server or with a hosting provider.
 
 ### Getting started
 
