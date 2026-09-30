@@ -129,7 +129,7 @@ export function stubContext(overrides: Partial<RpcContext> = {}): RpcContext {
       get: (id: string) => ({ id, requiresApproval: false }),
     },
     // Hook reports are dropped here.
-    hooks: { run: async () => undefined },
+    hooks: { run: async () => undefined, observe: async () => undefined },
     // Catalogue defaults unless a test swaps them.
     controls: new DefaultControls(),
     // No plugins, so only core's data providers.

@@ -75,7 +75,7 @@ catalog:
   '@aws-sdk/lib-storage': ^3.1137.0
   ioredis: ^6.0.0
   bullmq: ^6.3.4
-  nodemailer: ^10.0.0
+  nodemailer: ^10.0.12
   '@types/nodemailer': ^8.0.1
   web-push: ^3.6.7
   '@types/web-push': ^3.6.4
