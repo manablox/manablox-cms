@@ -1,9 +1,12 @@
 {
   "name": "@manablox/config-vitest",
-  "version": "0.50.1",
+  "version": "0.51.0",
   "license": "MIT",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/dom-clock.ts",
+    "./dist/dom-clock.js"
+  ],
   "engines": {
     "node": ">=24"
   },
@@ -17,6 +20,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./dom-clock": {
+      "types": "./src/dom-clock.ts",
+      "default": "./src/dom-clock.ts"
     }
   },
   "main": "./src/index.ts",
@@ -53,6 +60,10 @@
       ".": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
+      },
+      "./dom-clock": {
+        "types": "./dist/dom-clock.d.ts",
+        "default": "./dist/dom-clock.js"
       }
     },
     "main": "./dist/index.js",

@@ -18,6 +18,7 @@ describe('sharedConfig', () => {
       unstubEnvs: true,
       fsModuleCachePath: 'node_modules/.vitest-cache',
     });
+    expect(sharedConfig.test?.setupFiles).toEqual(['@manablox/config-vitest/dom-clock']);
   });
 });
 

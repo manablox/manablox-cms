@@ -39,6 +39,8 @@ export const sharedConfig: ViteUserConfig = defineConfig({
     // Tests behave the same in a container that sets NODE_ENV=development.
     env: { NODE_ENV: 'test' },
     include: ['test/**/*.test.ts'],
+    // An export of this package, so it resolves from the package running the tests.
+    setupFiles: ['@manablox/config-vitest/dom-clock'],
     ...(underTurbo && { maxWorkers: Math.max(2, Math.floor(availableParallelism() / 4)) }),
     // Headroom for a loaded machine; a test that really hangs still fails.
     testTimeout: 20_000,

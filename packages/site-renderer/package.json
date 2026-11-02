@@ -1,6 +1,6 @@
 {
   "name": "@manablox/site-renderer",
-  "version": "0.50.1",
+  "version": "0.51.0",
   "license": "MIT",
   "description": "Renders a designed Manablox site to HTML, with its island scripts, the design canvas and bundled fonts.",
   "type": "module",

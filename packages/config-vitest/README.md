@@ -17,7 +17,9 @@ export default sharedConfig;
 - `sharedConfig`: `test/**/*.test.ts` in Node with `NODE_ENV=test`, generous timeouts, stubbed
   globals and environment variables reset after each test, the `vmThreads` pool and a module
   cache in the package's own `node_modules/.vitest-cache`. Under turbo each package gets a
-  quarter of the cores. Extend it with `mergeConfig` from `vitest/config`.
+  quarter of the cores. In a DOM, `Date.now` follows the monotonic clock, because Vue ignores
+  a `trigger()` when the wall clock steps back. Extend it with `mergeConfig` from
+  `vitest/config`.
 - `pluginTestConfig(base = sharedConfig)`: a plugin's server tests, without `test/admin`, with
   a minute per test for suites that seed a real database.
 - `pluginAdminTestConfig(plugins)`: a plugin's admin tests, only `test/admin/**/*.test.ts`, in
