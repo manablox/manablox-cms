@@ -144,7 +144,8 @@ jobs:
               grep -qx "$file" <<< "$listing" || { echo "::error::$file is missing from $plugin"; exit 1; }
             done
           done
-          tar -tzf "$RUNNER_TEMP/plugin-ai.tgz" | grep -qx package/dist/cli/templates/env \
+          # Not a pipe: `grep -q` stops at the match, and pipefail reports the SIGPIPE tar gets.
+          grep -qx package/dist/cli/templates/env <<< "$(tar -tzf "$RUNNER_TEMP/plugin-ai.tgz")" \
             || { echo "::error::the AI plugin's CLI templates are missing"; exit 1; }
 
   # The browser tests: sign up, create a space, a type, a document, publish, read it back;
