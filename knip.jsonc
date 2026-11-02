@@ -18,7 +18,13 @@
       ],
       // Built as a shared module for plugin bundles (shared-modules.ts); the first-party
       // plugins' admin sources are listed by name for the dev server.
-      "ignoreDependencies": ["reka-ui", "@manablox/plugin-webhooks", "@manablox/plugin-workflows"]
+      "ignoreDependencies": [
+        "reka-ui",
+        "@manablox/plugin-ai",
+        "@manablox/plugin-webhooks",
+        "@manablox/plugin-website",
+        "@manablox/plugin-workflows"
+      ]
     },
     "packages/admin-plugin": {
       // Imported by tailwind.css, the optional Tailwind preset.
@@ -54,6 +60,22 @@
     },
     "packages/plugin-webhooks": {
       "entry": ["drizzle.sqlite.config.ts", "src/server/db/schema/sqlite.ts"]
+    },
+    "packages/plugin-ai": {
+      "entry": ["drizzle.sqlite.config.ts", "src/server/db/schema/sqlite.ts"],
+      // The CLI test runs `manablox create`, found by resolving the package.
+      "ignoreDependencies": ["@manablox/cli"]
+    },
+    "packages/plugin-website": {
+      "entry": ["drizzle.sqlite.config.ts", "src/server/db/schema/sqlite.ts"],
+      // Named only by the built declarations (the procedures' inferred context types reach
+      // into it). Knip reads those from `dist` once it is built and then hints that this is
+      // not needed; unbuilt, as in CI, it would report the dependency unused.
+      "ignoreDependencies": ["@manablox/media"]
+    },
+    "packages/site-renderer": {
+      // Bundled by src/client-build.ts, which names its entries by path.
+      "entry": ["src/canvas/entry.ts", "src/islands/*.ts"]
     },
     "packages/nuxt": {
       // Nuxt registers the runtime folder itself (addComponentsDir, addImportsDir).

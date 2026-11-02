@@ -1,7 +1,7 @@
-// The website and AI plugins install from npm and are not part of this repository. Their
+// The CLI does not depend on the website and AI plugins: `create` installs them from npm. Their
 // stand-ins under `fixtures/packages/` are linked into a plugin cache of the CLI's version, where
-// `firstPartyPlugins` finds them by package name as it finds the published ones. The in-repo
-// plugins resolve beside the CLI, as before.
+// `firstPartyPlugins` finds them by package name as it finds the published ones. The workflows
+// and webhooks plugins are the CLI's optional peers and resolve beside it.
 import { mkdirSync, mkdtempSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

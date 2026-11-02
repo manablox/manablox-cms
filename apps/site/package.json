@@ -1,0 +1,23 @@
+{
+  "name": "@manablox/site-app",
+  "version": "0.50.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@manablox/fields": "workspace:*",
+    "@manablox/plugin-website": "workspace:*"
+  },
+  "devDependencies": {
+    "@manablox/config-typescript": "workspace:*",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  }
+}

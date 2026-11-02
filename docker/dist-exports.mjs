@@ -1,5 +1,5 @@
 // Points every workspace package at its built `dist` by applying its `publishConfig`, as
-// `pnpm pack` does. Run in the API image's build stage only; the workspace keeps `src`.
+// `pnpm pack` does. Run in the images' build stages only; the workspace keeps `src`.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 

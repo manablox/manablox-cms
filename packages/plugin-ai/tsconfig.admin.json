@@ -1,0 +1,21 @@
+{
+  "extends": "@manablox/config-typescript/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    // The admin is bundled by Vite and never emits declarations, so the portability of
+    // inferred types (a declaration build's concern) is not checked here.
+    "declaration": false,
+    "declarationMap": false,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "jsx": "preserve",
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "src/admin/**/*.ts",
+    "src/admin/**/*.vue",
+    "test/admin/**/*.ts",
+    "vite.admin.config.ts",
+    "vitest.admin.config.ts"
+  ]
+}

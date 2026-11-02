@@ -88,7 +88,7 @@ fi
 # already running; a stopped stack stays stopped.
 running="$("$DEV" ps --services --filter status=running 2>/dev/null || true)"
 restart=()
-for svc in api public-api; do
+for svc in api public-api site; do
   if printf '%s\n' "$running" | grep -qx "$svc"; then restart+=("$svc"); fi
 done
 if [ ${#restart[@]} -gt 0 ]; then

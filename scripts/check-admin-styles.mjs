@@ -13,7 +13,9 @@ const roots = (
     : [
         'apps/admin/src',
         'packages/admin-sdk/src',
+        'packages/plugin-ai/src/admin',
         'packages/plugin-webhooks/src/admin',
+        'packages/plugin-website/src/admin',
         'packages/plugin-workflows/src/admin',
       ]
 ).map((dir) => resolve(dir));

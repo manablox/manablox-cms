@@ -23,8 +23,8 @@ export function workspacePackages() {
 }
 
 /**
- * The `/testing` subpaths that are published: the plugin repositories run their
- * tests with them. Every other `/testing` export stays workspace-only.
+ * The `/testing` subpaths that are published: authors of plugins outside this repository
+ * run their tests with them. Every other `/testing` export stays workspace-only.
  */
 const PUBLISHED_TESTING = new Set([
   '@manablox/admin-sdk/testing',
@@ -42,7 +42,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   for (const { dir, pkg } of publishablePackages()) {
     // `publishConfig` wins, as pnpm writes it into the tarball. No entry point means files only.
     const published = pkg.publishConfig ?? {};
-    // Only the test helpers other repositories' tests import are published.
+    // Only the test helpers a plugin author's tests import are published.
     const leaked = Object.keys(published.exports ?? {})
       .filter((key) => key.endsWith('/testing'))
       .filter((key) => !PUBLISHED_TESTING.has(`${pkg.name}${key.slice(1)}`));

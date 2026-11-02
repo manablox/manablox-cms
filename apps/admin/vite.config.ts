@@ -14,7 +14,12 @@ export default defineConfig({
     tailwindcss(),
     // Plugin sources for the dev server, with HMR; builds load plugin bundles at runtime.
     manabloxAdminPlugins({
-      plugins: ['@manablox/plugin-workflows/admin-src', '@manablox/plugin-webhooks/admin-src'],
+      plugins: [
+        '@manablox/plugin-workflows/admin-src',
+        '@manablox/plugin-webhooks/admin-src',
+        '@manablox/plugin-ai/admin-src',
+        '@manablox/plugin-website/admin-src',
+      ],
     }),
     // Shared module chunks and the import map plugin bundles resolve them through.
     sharedModules(),

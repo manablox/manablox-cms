@@ -1,0 +1,160 @@
+@import "@manablox/admin-plugin/tailwind.css" prefix(ai);
+
+/* The bundle's own sources, also when the admin's dev server compiles this sheet. */
+@source ".";
+
+/* --- magic ------------------------------------------------------------------------ */
+
+/* Layers around a button waiting on the model; `AiSparkles` places them. */
+.ai-magic {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+/* A halo breathing under everything else. */
+.ai-magic-aura {
+  position: absolute;
+  inset: -0.5rem;
+  border-radius: var(--radius-control);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--color-brand-400) 40%, transparent),
+    color-mix(in oklab, var(--color-iris-400) 18%, transparent) 60%,
+    transparent
+  );
+  filter: blur(5px);
+  animation: ai-magic-aura 2.4s ease-in-out infinite;
+}
+/* A light travelling the edge: the mask cuts the middle out of the conic sweep. */
+.ai-magic-ring {
+  position: absolute;
+  inset: -1px;
+  overflow: hidden;
+  border-radius: calc(var(--radius-control) + 1px);
+  padding: 1.5px;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+}
+.ai-magic-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 240%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: conic-gradient(
+    transparent 0deg,
+    color-mix(in oklab, var(--color-brand-400) 85%, transparent) 35deg,
+    color-mix(in oklab, var(--color-iris-400) 85%, transparent) 70deg,
+    transparent 110deg,
+    transparent 360deg
+  );
+  animation: ai-magic-spin 2.4s linear infinite;
+}
+/* Stars twinkle out of nothing and drift away; the glow is their own colour. */
+.ai-magic-star {
+  /* The drift, set per star. */
+  --magic-x: 0rem;
+  --magic-y: 0rem;
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  color: var(--color-brand-400);
+  opacity: 0;
+  filter: drop-shadow(0 0 3px currentColor);
+  animation-name: ai-magic-star;
+  animation-timing-function: var(--mb-ease-out);
+  animation-iteration-count: infinite;
+}
+.ai-magic-iris {
+  color: var(--color-iris-400);
+}
+.ai-magic-gold {
+  color: var(--color-warn-400);
+}
+.ai-magic-mote {
+  position: absolute;
+  bottom: 0.25rem;
+  width: 2px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-300);
+  opacity: 0;
+  animation-name: ai-magic-mote;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
+}
+
+/* A breathing halo, a light going round the edge, stars and rising dust. */
+@keyframes ai-magic-aura {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.04);
+  }
+}
+@keyframes ai-magic-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes ai-magic-star {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0) rotate(-60deg);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -50%)
+      translate(calc(var(--magic-x) * 0.45), calc(var(--magic-y) * 0.45)) scale(1) rotate(0deg);
+  }
+  60% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) translate(var(--magic-x), var(--magic-y)) scale(0.7)
+      rotate(55deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%)
+      translate(calc(var(--magic-x) * 1.9), calc(var(--magic-y) * 1.9)) scale(0) rotate(120deg);
+  }
+}
+@keyframes ai-magic-mote {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.6);
+  }
+  25% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -1.4rem) scale(1);
+  }
+}
+
+/* The magic holds still: stars sit where they are, nothing travels or rises. */
+@media (prefers-reduced-motion: reduce) {
+  .ai-magic-star {
+    animation: none;
+    opacity: 0.9;
+    transform: translate(-50%, -50%);
+  }
+  .ai-magic-aura {
+    animation: none;
+    opacity: 0.5;
+  }
+  .ai-magic-beam {
+    animation: none;
+  }
+  .ai-magic-mote {
+    display: none;
+  }
+}

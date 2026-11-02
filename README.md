@@ -12,9 +12,10 @@ management API, and GraphQL and REST delivery APIs. It runs on Postgres or SQLit
 feature can be switched on or off and limited from the outside, so a hosting or billing
 system can offer Manablox in plans.
 
-This repository holds the CMS: the packages published to npm as `@manablox/*`, the admin, and
-the apps it runs in development. The AI and website plugins, the marketing website and both
-documentation sites live in their own repositories and depend on these packages by name.
+This repository holds the CMS: the packages published to npm as `@manablox/*`, the admin, the
+four first-party plugins (workflows, webhooks, AI and designed websites) and the apps it runs
+in development. The marketing website and both documentation sites live in their own
+repositories and depend on these packages by name.
 
 - **Developer documentation:** <https://dev.manablox.io>
 - **User guide:** <https://docs.manablox.io>
@@ -30,10 +31,9 @@ cd my-cms
 pnpm services:up && pnpm migrate && pnpm dev   # local preset: API and admin on http://localhost:3000
 ```
 
-`manablox create` asks which features a project gets. Workflows and webhooks are plugins from
-this repository; AI and the website designer are plugins installed from npm
-(`@manablox/plugin-ai`, `@manablox/plugin-website`). All of them are MIT licensed.
-`manablox plugin install`, `uninstall`, `enable` and `disable` change them later.
+`manablox create` asks which features a project gets: workflows, webhooks, AI or designed
+websites, each a plugin from this repository with an npm package of its own. All of them are
+MIT licensed. `manablox plugin install`, `uninstall`, `enable` and `disable` change them later.
 
 The same CLI writes a frontend that reads from it:
 
@@ -67,6 +67,10 @@ pnpm dlx @manablox/cli frontend my-site --framework astro   # or plain, react-ss
 | `@manablox/nuxt` | The Nuxt module, with live preview built in |
 | `@manablox/plugin-workflows` | Automations editors build in the admin |
 | `@manablox/plugin-webhooks` | Outgoing calls when content changes, and incoming endpoints |
+| `@manablox/plugin-ai` | Text, image and model generation with your own provider keys |
+| `@manablox/plugin-website` | Designed websites: the visual designer, themes, the site process, forms and domains |
+| `@manablox/site` | The building blocks of a designed site: designs, themes, validation and CSS |
+| `@manablox/site-renderer` | Renders a designed site to HTML, with its island scripts, the design canvas and fonts |
 | `@manablox/config-typescript` | Shared TypeScript and build settings |
 | `@manablox/config-vitest` | Shared vitest settings, for plugin tests too |
 | `@manablox/docs-theme` | The Starlight theme of the documentation sites |
@@ -78,7 +82,8 @@ The apps are what this repository runs in development:
 | `apps/api` | The management API: its config, entrypoint and the checkout's scripts |
 | `apps/public-api` | The same code with the hardened, published-only configuration |
 | `apps/admin` | The admin interface, a Vue single-page app that loads plugin screens at runtime |
-| `loadtest/` | A k6 suite for the public API and frontends |
+| `apps/site` | The site process: every designed space as a finished website, picked by the domain a visitor opens |
+| `loadtest/` | A k6 suite for the public API, frontends and designed sites |
 
 `CONTRIBUTING.md` explains where a given change belongs and how to run the checks.
 
@@ -102,6 +107,7 @@ all Manablox repositories run side by side:
 | api | 3000 | the management API; `/healthz` |
 | public api | 3001 | starts once the instance has a space |
 | admin | 3002 | the admin in Vite's dev server |
+| site | 3003 | the site process; add the domain `localhost` to a designed space to open it here |
 | postgres | 5432 | `manablox` / `manablox`, database `manablox` |
 | valkey | 6379 | |
 | mailpit | SMTP 1025, UI 8025 | |
@@ -113,13 +119,13 @@ all Manablox repositories run side by side:
 | `pnpm dev:services` | Only postgres, valkey, mailpit and verdaccio, to run the apps on the host with `pnpm dev` |
 | `pnpm dev:logs [service]` | Follow the logs |
 | `pnpm dev:down` | Stop, keep the data |
-| `pnpm dev:reset` | Stop and delete every volume: database, cache and the registry's packages; empty `docker/data/uploads` and `docker/data/media-cache` |
+| `pnpm dev:reset` | Stop and delete every volume: database, cache and the registry's packages; empty `docker/data/uploads` and the media caches |
 | `pnpm dev:publish` | Build every package and publish it to the local registry |
 
 ### The local registry
 
-The other Manablox repositories (the AI and website plugins, the documentation sites)
-depend on these packages by name. In development they install them
+The other Manablox repositories (the marketing website, the documentation sites) depend on
+these packages by name. In development they install them
 from the Verdaccio in this stack rather than from npmjs:
 
 ```sh
@@ -200,16 +206,18 @@ repositories install `0.50.0` from npmjs.
 
 `pnpm docker:build` builds the production images from `docker/Dockerfile.api` (the
 management API, the public API with `node apps/public-api/dist/main.js`, and the migrations
-with `node apps/api/dist/migrate.js`) and `docker/Dockerfile.admin` (the admin behind nginx).
+with `node apps/api/dist/migrate.js`), `docker/Dockerfile.admin` (the admin behind nginx) and
+`docker/Dockerfile.site` (the site process). The API image runs all four first-party plugins.
 
 ```sh
-pnpm docker:build                        # ghcr.io/manablox/cms-api:0.50.0 and ghcr.io/manablox/cms-admin:0.50.0
+pnpm docker:build                        # ghcr.io/manablox/cms-api, cms-admin and site at 0.50.0
 pnpm docker:build --tag test admin       # one image, another tag
 pnpm docker:build --prefix my.registry/me --push
 ```
 
-`docker/compose.yml` runs them in production. CI builds both on every change to them and
-pushes `main` and tags to ghcr.io; `release.yml` pushes the version tags.
+`docker/compose.yml` runs them in production (`--profile site` adds the site process). CI
+builds them on every change to them and pushes `main` and tags to ghcr.io; `release.yml` pushes
+the version tags.
 
 ### Other commands
 
@@ -223,6 +231,7 @@ pushes `main` and tags to ghcr.io; `release.yml` pushes the version tags.
 | `pnpm build` | Every package and the admin |
 | `pnpm db:generate` | Generate a migration from the schema, for Postgres and SQLite |
 | `pnpm db:migrate` | Apply migrations |
+| `pnpm --filter @manablox/admin test:e2e` | The browser tests, the designer included; they need Postgres |
 | `pnpm docs:generate` | The reference pages generated from the code (`manablox docs generate`), into `apps/api/generated` |
 | `pnpm licenses` | Rewrite the per-package `LICENSE` files from the root licence sources |
 | `pnpm publish:npm` | Dry run of the npm release; releases run from `.github/workflows/release.yml` |
@@ -242,8 +251,7 @@ pushes `main` and tags to ghcr.io; `release.yml` pushes the version tags.
 ## Licence
 
 Manablox is open source under the [MIT licence](./LICENSE): the CMS, the admin, the CLI,
-the SDKs, the workflows and webhooks plugins, and the projects the CLI scaffolds. The AI and
-website plugins live in their own repositories, also under the MIT licence.
+the SDKs, the workflows, webhooks, AI and website plugins, and the projects the CLI scaffolds.
 
 [`TRADEMARKS.md`](./TRADEMARKS.md) covers the name and logo, which the MIT licence does not.
 Contributions are accepted under the [CLA](./CLA.md). Release notes are in

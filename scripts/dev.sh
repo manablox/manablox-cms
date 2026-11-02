@@ -11,8 +11,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
 # registry is one of them: the other repositories install from it with or without the apps.
 INFRA_SERVICES=(postgres valkey mailpit verdaccio)
 
-# Emptied by `reset`: the uploads and media cache of the API's local storage driver.
-DATA_DIRS=(docker/data/uploads docker/data/media-cache)
+# Emptied by `reset`: the uploads and the media caches of the API and the site process.
+DATA_DIRS=(docker/data/uploads docker/data/media-cache docker/data/media-cache-site)
 
 usage() {
   cat <<'USAGE'
@@ -32,7 +32,7 @@ Usage: scripts/dev.sh <command> [docker compose args...]
 
   -h, --help       this message
 
-Ports: api 3000, public api 3001, admin 3002, postgres 5432, valkey 6379,
+Ports: api 3000, public api 3001, admin 3002, site 3003, postgres 5432, valkey 6379,
 mailpit 1025 (ui 8025), verdaccio 4873.
 USAGE
 }
@@ -74,6 +74,7 @@ where() {
   api          http://localhost:3000   (health: /healthz)
   public api   http://localhost:3001   (starts once the instance has a space)
   admin        http://localhost:3002
+  site         http://localhost:3003   (designed sites, by the domains of their spaces)
   mailpit      http://localhost:8025
   verdaccio    http://localhost:4873   (pnpm dev:publish fills it)
 WHERE

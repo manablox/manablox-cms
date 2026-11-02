@@ -1,7 +1,7 @@
 # `@manablox/config-vitest`
 
-The vitest settings the Manablox packages share, for the plugin repositories and your own
-Manablox packages, so their tests run the same way.
+The vitest settings the Manablox packages share, for your own plugins and packages too, so
+their tests run the same way.
 
 ```sh
 pnpm add -D @manablox/config-vitest vitest
@@ -30,7 +30,7 @@ export default sharedConfig;
   `import.meta.url`; `via` names the package graphql is resolved through when you do not
   depend on graphql yourself, e.g. `'@manablox/api-graphql'`.
 
-A plugin repository's two configs:
+A plugin's two configs:
 
 ```ts
 // vitest.config.ts

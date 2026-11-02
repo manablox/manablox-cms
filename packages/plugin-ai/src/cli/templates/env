@@ -1,0 +1,4 @@
+# --- AI ----------------------------------------------------------------------------------
+# Comma-separated private-network hosts a self-hosted AI provider may reach, as `host` or
+# `host:port` (e.g. `ollama:11434`). Public providers need no entry.
+AI_ALLOWED_HOSTS=

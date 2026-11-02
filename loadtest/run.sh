@@ -4,6 +4,7 @@
 #   ./run.sh api [profile] [k6 args...]         public API (REST + GraphQL)
 #   ./run.sh frontends [profile] [k6 args...]   the configured frontends
 #   ./run.sh all [profile] [k6 args...]         all of them together
+#   ./run.sh site [profile] [k6 args...]        designed sites on the site process
 #   ./run.sh dashboard up|down                   the optional Grafana + InfluxDB stack
 #
 # profile: smoke | load | stress | spike | soak | breakpoint (default: PROFILE from .env,
@@ -15,7 +16,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 if [[ ! -f .env ]]; then
   cp .env.example .env
-  echo "run.sh: created .env from .env.example; edit PUBLIC_API_URL and FRONTEND_URLS" >&2
+  echo "run.sh: created .env from .env.example; edit PUBLIC_API_URL, FRONTEND_URLS and SITE_URL" >&2
 fi
 
 compose=(docker compose -f compose.yml)
@@ -39,7 +40,8 @@ case "$suite" in
   api) script=/loadtest/scripts/public-api.js ;;
   frontends) script=/loadtest/scripts/frontends.js ;;
   all) script=/loadtest/scripts/all.js ;;
-  *) echo "run.sh: unknown suite '$suite' (api | frontends | all | dashboard)" >&2; exit 2 ;;
+  site) script=/loadtest/scripts/site.js ;;
+  *) echo "run.sh: unknown suite '$suite' (api | frontends | all | site | dashboard)" >&2; exit 2 ;;
 esac
 
 profile_args=()

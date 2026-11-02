@@ -1,0 +1,6 @@
+{
+  "extends": "@manablox/config-typescript/library.json",
+  // Browser-safe: neither Node nor DOM globals.
+  "compilerOptions": { "types": [] },
+  "include": ["src", "test"]
+}

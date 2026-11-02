@@ -208,6 +208,9 @@ catalogs:
     reka-ui:
       specifier: ^2.10.4
       version: 2.10.4
+    rolldown:
+      specifier: ^1.2.7
+      version: 1.2.16
     samlify:
       specifier: 2.15.1
       version: 2.15.1
@@ -341,9 +344,15 @@ importers:
       '@manablox/config-vitest':
         specifier: workspace:*
         version: link:../../packages/config-vitest
+      '@manablox/plugin-ai':
+        specifier: workspace:*
+        version: link:../../packages/plugin-ai
       '@manablox/plugin-webhooks':
         specifier: workspace:*
         version: link:../../packages/plugin-webhooks
+      '@manablox/plugin-website':
+        specifier: workspace:*
+        version: link:../../packages/plugin-website
       '@manablox/plugin-workflows':
         specifier: workspace:*
         version: link:../../packages/plugin-workflows
@@ -395,9 +404,15 @@ importers:
       '@manablox/fields':
         specifier: workspace:*
         version: link:../../packages/fields
+      '@manablox/plugin-ai':
+        specifier: workspace:*
+        version: link:../../packages/plugin-ai
       '@manablox/plugin-webhooks':
         specifier: workspace:*
         version: link:../../packages/plugin-webhooks
+      '@manablox/plugin-website':
+        specifier: workspace:*
+        version: link:../../packages/plugin-website
       '@manablox/plugin-workflows':
         specifier: workspace:*
         version: link:../../packages/plugin-workflows
@@ -444,6 +459,31 @@ importers:
       '@manablox/server':
         specifier: workspace:*
         version: link:../../packages/server
+    devDependencies:
+      '@manablox/config-typescript':
+        specifier: workspace:*
+        version: link:../../packages/config-typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.1
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.23.0(@volar/typescript@2.4.28(typescript@7.0.2))(oxc-resolver@11.24.2)(tsx@4.23.13)(typescript@7.0.2)(vue-tsc@3.3.11(typescript@7.0.2))
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.13
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+
+  apps/site:
+    dependencies:
+      '@manablox/fields':
+        specifier: workspace:*
+        version: link:../../packages/fields
+      '@manablox/plugin-website':
+        specifier: workspace:*
+        version: link:../../packages/plugin-website
     devDependencies:
       '@manablox/config-typescript':
         specifier: workspace:*
@@ -1174,6 +1214,109 @@ importers:
         specifier: 'catalog:'
         version: 3.3.11(typescript@5.9.3)
 
+  packages/plugin-ai:
+    dependencies:
+      '@manablox/api-rpc':
+        specifier: workspace:*
+        version: link:../api-rpc
+      '@manablox/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@manablox/core':
+        specifier: workspace:*
+        version: link:../core
+      '@manablox/db':
+        specifier: workspace:*
+        version: link:../db
+      '@manablox/fields':
+        specifier: workspace:*
+        version: link:../fields
+      '@manablox/media':
+        specifier: workspace:*
+        version: link:../media
+      '@manablox/server':
+        specifier: workspace:*
+        version: link:../server
+      '@manablox/services':
+        specifier: workspace:*
+        version: link:../services
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.2(@libsql/client@0.18.0)(kysely@0.29.5)(postgres@3.4.9)
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
+    devDependencies:
+      '@manablox/admin-plugin':
+        specifier: workspace:*
+        version: link:../admin-plugin
+      '@manablox/admin-sdk':
+        specifier: workspace:*
+        version: link:../admin-sdk
+      '@manablox/cli':
+        specifier: workspace:*
+        version: link:../cli
+      '@manablox/config-typescript':
+        specifier: workspace:*
+        version: link:../config-typescript
+      '@manablox/config-vitest':
+        specifier: workspace:*
+        version: link:../config-vitest
+      '@manablox/plugin-workflows':
+        specifier: workspace:*
+        version: link:../plugin-workflows
+      '@tailwindcss/vite':
+        specifier: 'catalog:'
+        version: 4.3.3(vite@8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
+      '@tanstack/vue-query':
+        specifier: 'catalog:'
+        version: 5.102.8(vue@3.5.42(typescript@5.9.3))
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.1
+      '@vitejs/plugin-vue':
+        specifier: 'catalog:'
+        version: 6.0.8(vite@8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))(vue@3.5.42(typescript@5.9.3))
+      '@vue/test-utils':
+        specifier: 'catalog:'
+        version: 2.5.0(@vue/compiler-dom@3.5.42)(@vue/server-renderer@3.5.42)(vue@3.5.42(typescript@5.9.3))
+      drizzle-kit:
+        specifier: 'catalog:'
+        version: 0.31.10
+      happy-dom:
+        specifier: 'catalog:'
+        version: 21.0.4
+      hono:
+        specifier: 'catalog:'
+        version: 4.13.16
+      pinia:
+        specifier: 'catalog:'
+        version: 4.0.3(@vue/devtools-api@8.2.1)(typescript@5.9.3)(vue@3.5.42(typescript@5.9.3))
+      postgres:
+        specifier: 'catalog:'
+        version: 3.4.9
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.3.3
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.23.0(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.13)(typescript@5.9.3)(vue-tsc@3.3.11(typescript@5.9.3))
+      typescript:
+        specifier: catalog:vue
+        version: 5.9.3
+      vite:
+        specifier: 'catalog:'
+        version: 8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.5(@types/node@26.4.1)(happy-dom@21.0.4)(vite@8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
+      vue:
+        specifier: 'catalog:'
+        version: 3.5.42(typescript@5.9.3)
+      vue-router:
+        specifier: 'catalog:'
+        version: 5.3.1(@vue/compiler-sfc@3.5.42)(esbuild@0.28.2)(pinia@4.0.3(@vue/devtools-api@8.2.1)(typescript@5.9.3)(vue@3.5.42(typescript@5.9.3)))(rolldown@1.2.16)(rollup@4.63.1)(vite@8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))(vue@3.5.42(typescript@5.9.3))
+
   packages/plugin-webhooks:
     dependencies:
       '@manablox/api-rpc':
@@ -1258,6 +1401,124 @@ importers:
       vue:
         specifier: 'catalog:'
         version: 3.5.42(typescript@5.9.3)
+
+  packages/plugin-website:
+    dependencies:
+      '@manablox/api-graphql':
+        specifier: workspace:*
+        version: link:../api-graphql
+      '@manablox/api-public':
+        specifier: workspace:*
+        version: link:../api-public
+      '@manablox/api-rpc':
+        specifier: workspace:*
+        version: link:../api-rpc
+      '@manablox/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@manablox/cache':
+        specifier: workspace:*
+        version: link:../cache
+      '@manablox/core':
+        specifier: workspace:*
+        version: link:../core
+      '@manablox/db':
+        specifier: workspace:*
+        version: link:../db
+      '@manablox/media':
+        specifier: workspace:*
+        version: link:../media
+      '@manablox/server':
+        specifier: workspace:*
+        version: link:../server
+      '@manablox/services':
+        specifier: workspace:*
+        version: link:../services
+      '@manablox/site':
+        specifier: workspace:*
+        version: link:../site
+      '@manablox/site-renderer':
+        specifier: workspace:*
+        version: link:../site-renderer
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.2(@libsql/client@0.18.0)(kysely@0.29.5)(postgres@3.4.9)
+      hono:
+        specifier: 'catalog:'
+        version: 4.13.16
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
+    devDependencies:
+      '@manablox/admin-plugin':
+        specifier: workspace:*
+        version: link:../admin-plugin
+      '@manablox/admin-sdk':
+        specifier: workspace:*
+        version: link:../admin-sdk
+      '@manablox/config-typescript':
+        specifier: workspace:*
+        version: link:../config-typescript
+      '@manablox/config-vitest':
+        specifier: workspace:*
+        version: link:../config-vitest
+      '@manablox/fields':
+        specifier: workspace:*
+        version: link:../fields
+      '@manablox/live-preview':
+        specifier: workspace:*
+        version: link:../live-preview
+      '@manablox/public-sdk':
+        specifier: workspace:*
+        version: link:../public-sdk
+      '@orpc/server':
+        specifier: 'catalog:'
+        version: 1.15.0(crossws@0.4.12(srvx@0.11.22))(ws@8.21.3)
+      '@tailwindcss/vite':
+        specifier: 'catalog:'
+        version: 4.3.3(vite@8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
+      '@tanstack/vue-query':
+        specifier: 'catalog:'
+        version: 5.102.8(vue@3.5.42(typescript@5.9.3))
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.1
+      '@vitejs/plugin-vue':
+        specifier: 'catalog:'
+        version: 6.0.8(vite@8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))(vue@3.5.42(typescript@5.9.3))
+      '@vueuse/core':
+        specifier: 'catalog:'
+        version: 14.4.0(vue@3.5.42(typescript@5.9.3))
+      drizzle-kit:
+        specifier: 'catalog:'
+        version: 0.31.10
+      happy-dom:
+        specifier: 'catalog:'
+        version: 21.0.4
+      pinia:
+        specifier: 'catalog:'
+        version: 4.0.3(@vue/devtools-api@8.2.1)(typescript@5.9.3)(vue@3.5.42(typescript@5.9.3))
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.3.3
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.23.0(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.13)(typescript@5.9.3)(vue-tsc@3.3.11(typescript@5.9.3))
+      typescript:
+        specifier: catalog:vue
+        version: 5.9.3
+      vite:
+        specifier: 'catalog:'
+        version: 8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1)
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.5(@types/node@26.4.1)(happy-dom@21.0.4)(vite@8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
+      vue:
+        specifier: 'catalog:'
+        version: 3.5.42(typescript@5.9.3)
+      vue-router:
+        specifier: 'catalog:'
+        version: 5.3.1(@vue/compiler-sfc@3.5.42)(esbuild@0.28.2)(pinia@4.0.3(@vue/devtools-api@8.2.1)(typescript@5.9.3)(vue@3.5.42(typescript@5.9.3)))(rolldown@1.2.16)(rollup@4.63.1)(vite@8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))(vue@3.5.42(typescript@5.9.3))
 
   packages/plugin-workflows:
     dependencies:
@@ -1522,6 +1783,80 @@ importers:
       tsdown:
         specifier: 'catalog:'
         version: 0.23.0(@volar/typescript@2.4.28(typescript@7.0.2))(oxc-resolver@11.24.2)(tsx@4.23.13)(typescript@7.0.2)(vue-tsc@3.3.11(typescript@7.0.2))
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.5(@types/node@26.4.1)(happy-dom@21.0.4)(vite@8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
+
+  packages/site:
+    dependencies:
+      '@manablox/core':
+        specifier: workspace:*
+        version: link:../core
+      '@manablox/public-sdk':
+        specifier: workspace:*
+        version: link:../public-sdk
+    devDependencies:
+      '@manablox/config-typescript':
+        specifier: workspace:*
+        version: link:../config-typescript
+      '@manablox/config-vitest':
+        specifier: workspace:*
+        version: link:../config-vitest
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.1
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.23.0(@volar/typescript@2.4.28(typescript@7.0.2))(oxc-resolver@11.24.2)(tsx@4.23.13)(typescript@7.0.2)(vue-tsc@3.3.11(typescript@7.0.2))
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.5(@types/node@26.4.1)(happy-dom@21.0.4)(vite@8.3.5(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.1))
+
+  packages/site-renderer:
+    dependencies:
+      '@manablox/core':
+        specifier: workspace:*
+        version: link:../core
+      '@manablox/live-preview':
+        specifier: workspace:*
+        version: link:../live-preview
+      '@manablox/public-sdk':
+        specifier: workspace:*
+        version: link:../public-sdk
+      '@manablox/site':
+        specifier: workspace:*
+        version: link:../site
+      vue:
+        specifier: 'catalog:'
+        version: 3.5.42(typescript@7.0.2)
+    devDependencies:
+      '@manablox/config-typescript':
+        specifier: workspace:*
+        version: link:../config-typescript
+      '@manablox/config-vitest':
+        specifier: workspace:*
+        version: link:../config-vitest
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.4.1
+      happy-dom:
+        specifier: 'catalog:'
+        version: 21.0.4
+      rolldown:
+        specifier: 'catalog:'
+        version: 1.2.16
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.23.0(@volar/typescript@2.4.28(typescript@7.0.2))(oxc-resolver@11.24.2)(tsx@4.23.13)(typescript@7.0.2)(vue-tsc@3.3.11(typescript@7.0.2))
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.13
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
@@ -12955,7 +13290,6 @@ snapshots:
       '@vue/shared': 3.5.42
     optionalDependencies:
       typescript: 7.0.2
-    optional: true
 
   w3c-keyname@2.2.8: {}
 

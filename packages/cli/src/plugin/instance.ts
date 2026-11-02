@@ -16,7 +16,7 @@ export interface PluginContext {
   cwd: string;
   /** `null` without a terminal; install then takes the defaults, uninstall needs `--yes`. */
   prompter: Prompter | null;
-  /** Whether stdout is a terminal: spinners, and a browser for the license purchase. */
+  /** Whether stdout is a terminal: spinners. */
   tty: boolean;
   out: { write(text: string): unknown };
   err: { write(text: string): unknown };

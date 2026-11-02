@@ -82,6 +82,12 @@ services:
       STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
       STORAGE_LOCAL_PATH: /data/uploads
       STORAGE_LOCAL_PUBLIC_URL: ${STORAGE_LOCAL_PUBLIC_URL:-}
+      # The site process, which the admin frames for the design canvas, and the secret it
+      # forwards form submissions with. Both stay empty without designed sites.
+      SITE_URL: ${SITE_URL:-}
+      SITE_FORMS_SECRET: ${SITE_FORMS_SECRET:-}
+      # Private-network hosts a self-hosted AI provider may reach, as `host` or `host:port`.
+      AI_ALLOWED_HOSTS: ${AI_ALLOWED_HOSTS:-}
       NODE_ENV: production
     volumes:
       - uploads:/data/uploads
@@ -122,6 +128,38 @@ services:
       - uploads:/data/uploads:ro
     ports:
       - '${PUBLIC_API_PORT:-3001}:3100'
+
+  # Designed sites, by the `Host` a visitor asks for. `--profile site` starts it; an instance
+  # without designed spaces does not need it. It mounts no API, no login and no uploads.
+  site:
+    profiles: [site]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.site
+    image: ${IMAGE_PREFIX:-manablox}/site:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    environment:
+      # Like the public API it only reads, so a read-only role is enough.
+      DATABASE_URL: ${SITE_DATABASE_URL:-postgres://${DATABASE_APP_USER:-manablox_app}:${DATABASE_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-manablox}}
+      REDIS_URL: redis://valkey:6379
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+      PUBLIC_URL: ${SITE_URL:-http://localhost:3003}
+      # The admin's origin: the only page allowed to frame the design canvas.
+      SITE_EDITOR_ORIGIN: ${SITE_EDITOR_ORIGIN:-}
+      SITE_FORMS_API_URL: http://api:3000
+      SITE_FORMS_SECRET: ${SITE_FORMS_SECRET:-}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_PATH: /data/uploads
+      STORAGE_LOCAL_PUBLIC_URL: ${STORAGE_LOCAL_PUBLIC_URL:-}
+      NODE_ENV: production
+    volumes:
+      - uploads:/data/uploads:ro
+    ports:
+      - '${SITE_PORT:-3003}:3200'
 
   admin:
     build:

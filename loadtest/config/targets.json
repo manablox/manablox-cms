@@ -26,6 +26,11 @@
 
   "frontends": [],
 
+  "$site": "Paths the site suite visits on every host besides the ones its /sitemap.xml lists.",
+  "site": {
+    "paths": ["/"]
+  },
+
   "$controls": "With CONTROLS=on, controls.settings (a control API settings body) replaces the built-in set in scripts/lib/controls.js, e.g. { \"settings\": { \"rateLimits\": { \"delivery.space\": { \"max\": 100000, \"windowSeconds\": 60 } } } }.",
 
   "$paths": "Any path may carry a {permalink} placeholder, which is replaced with a permalink discovered from the public API, e.g. \"/blog/{permalink}\".",

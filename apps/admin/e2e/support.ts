@@ -1,4 +1,10 @@
-import { type APIRequestContext, expect, type Page, type TestInfo } from '@playwright/test';
+import {
+  type APIRequestContext,
+  expect,
+  type Locator,
+  type Page,
+  type TestInfo,
+} from '@playwright/test';
 
 /** Fixed, not stamped: a retry worker would re-stamp it and the second test would sign in as nobody. */
 export const account = {
@@ -11,6 +17,9 @@ type Info = Pick<TestInfo, 'config'>;
 
 export const apiUrl = (info: Info) =>
   String(info.config.metadata.apiUrl ?? 'http://localhost:3000');
+
+export const siteUrl = (info: Info) =>
+  String(info.config.metadata.siteUrl ?? 'http://localhost:3506');
 
 /** Management RPC call through the browser session. */
 export const rpc = async (page: Page, path: string, input: unknown): Promise<unknown> => {
@@ -25,6 +34,13 @@ export async function signIn(page: Page) {
   await page.getByLabel('Password').fill(account.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).not.toHaveURL(/\/login/);
+}
+
+/** Picks the website plugin's "Own frontend" when the space form offers it. */
+export async function ownFrontend(scope: Page | Locator): Promise<void> {
+  const radio = scope.getByRole('radio', { name: /Own frontend/ });
+  await radio.waitFor({ timeout: 3_000 }).catch(() => {});
+  if (await radio.isVisible()) await radio.check();
 }
 
 /** Control API call with the key the config gives the API; throws on a non-2xx answer. */

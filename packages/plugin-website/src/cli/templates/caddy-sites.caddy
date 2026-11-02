@@ -1,0 +1,18 @@
+# Designed sites: any host not matched above. Without `includeSubDomains`, since the
+# domains belong to the site owners.
+https:// {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	tls {
+		on_demand
+	}
+	request_body {
+		max_size 1MB
+	}
+	reverse_proxy site:3200 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

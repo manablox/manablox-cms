@@ -15,7 +15,9 @@ const IMPORT = /from\s+'([^']+)'|import\(\s*'([^']+)'\s*\)/g;
 
 /** Admin plugin sources, each built into its own bundle. */
 const PLUGIN_ROOTS = [
+  'packages/plugin-ai/src/admin',
   'packages/plugin-webhooks/src/admin',
+  'packages/plugin-website/src/admin',
   'packages/plugin-workflows/src/admin',
 ].map((dir) => resolve(dir));
 
@@ -25,6 +27,8 @@ const PLUGIN_PACKAGES = new Set([
   '@manablox/admin-plugin',
   '@manablox/core',
   '@manablox/live-preview',
+  // The design types and validation, bundled by the website plugin.
+  '@manablox/site',
   '@tanstack/vue-query',
   // The workflow canvas, bundled by the workflows plugin.
   '@vue-flow/background',

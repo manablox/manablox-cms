@@ -71,13 +71,13 @@ describe('createTestSession', () => {
   it('switches features off, with a lock or hidden', () => {
     createTestSession(
       { role: 'superadmin' },
-      { locked: ['plugins.seo'], hidden: ['menus'], message: 'Add a license key.' },
+      { locked: ['plugins.seo'], hidden: ['menus'], message: 'Not in your plan.' },
     );
     const session = useSessionStore();
     expect(session.feature('plugins.seo' as never, 's1')).toMatchObject({
       enabled: false,
       locked: true,
-      message: 'Add a license key.',
+      message: 'Not in your plan.',
     });
     expect(session.feature('menus', null)).toMatchObject({ enabled: false, hidden: true });
     expect(session.feature('tags', 's1').enabled).toBe(true);
@@ -113,11 +113,11 @@ describe('useTestSpace', () => {
 
 describe('setupAdminTest', () => {
   it('starts each test with a fresh store, cache and plugin apis', () => {
-    exposePluginApi('ai', { wand: true });
+    exposePluginApi('acme.seo', { wand: true });
     queryClient.setQueryData(['x'], 1);
     useSessionStore().me = testMe();
     setupAdminTest();
-    expect(usePluginApi('ai')).toBeUndefined();
+    expect(usePluginApi('acme.seo')).toBeUndefined();
     expect(queryClient.getQueryData(['x'])).toBeUndefined();
     expect(useSessionStore().me).toBeNull();
   });

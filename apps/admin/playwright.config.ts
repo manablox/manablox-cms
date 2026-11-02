@@ -21,6 +21,11 @@ import { defineConfig, devices } from '@playwright/test';
  * `E2E_CORE_URL` (default 3505), with the prebuilt admin the plugins instance builds. External
  * runs skip it unless `E2E_CORE_URL` is set.
  *
+ * `designed-site.spec.ts` designs and publishes a site on the instance and reads it from the
+ * site process on `E2E_SITE_URL` (default 3506), which shares the API's database and Redis. A
+ * publish then purges the site's page cache; without Redis the site runs uncached and polls
+ * for new content types. External runs skip it unless `E2E_SITE_URL` is set.
+ *
  * The API migrates with its plugins (`@manablox/api migrate`), so their tables exist.
  */
 const external = process.env.E2E_EXTERNAL === '1';
@@ -34,6 +39,8 @@ const pluginsUrl = process.env.E2E_PLUGINS_URL ?? 'http://localhost:3504';
 const runtimePlugins = !external || Boolean(process.env.E2E_PLUGINS_URL);
 const coreUrl = process.env.E2E_CORE_URL ?? 'http://localhost:3505';
 const coreOnly = !external || Boolean(process.env.E2E_CORE_URL);
+const siteUrl = process.env.E2E_SITE_URL ?? 'http://localhost:3506';
+const designedSite = !external || Boolean(process.env.E2E_SITE_URL);
 
 const serverUrl =
   process.env.DATABASE_URL ?? 'postgres://manablox:manablox@localhost:5432/manablox';
@@ -43,6 +50,8 @@ const coreDatabaseUrl = serverUrl.replace(/\/[^/?]*(\?.*)?$/, `/${databaseName}_
 const scratch = mkdtempSync(join(tmpdir(), 'manablox-e2e-'));
 
 const authSecret = 'e2e-secret-not-for-production';
+// The site process forwards form submissions to the API with it.
+const formsSecret = 'e2e-forms-secret-not-for-production';
 
 export default defineConfig({
   testDir: './e2e',
@@ -72,6 +81,16 @@ export default defineConfig({
       dependencies: ['setup'],
       use: { ...devices['Desktop Chrome'], viewport: { width: 1600, height: 1000 } },
     },
+    ...(designedSite
+      ? [
+          {
+            name: 'site',
+            testMatch: 'designed-site.spec.ts',
+            dependencies: ['setup'],
+            use: { ...devices['Desktop Chrome'], viewport: { width: 1600, height: 1000 } },
+          },
+        ]
+      : []),
     ...(runtimePlugins
       ? [
           {
@@ -99,7 +118,7 @@ export default defineConfig({
         ]
       : []),
   ],
-  metadata: { apiUrl, controlKey },
+  metadata: { apiUrl, controlKey, siteUrl },
   ...(external
     ? {}
     : {
@@ -118,7 +137,7 @@ export default defineConfig({
               STORAGE_LOCAL_PATH: join(scratch, 'uploads'),
               LOG_LEVEL: 'warn',
               NODE_ENV: 'test',
-              ...(redis ? { REDIS_URL: redisUrl } : {}),
+              ...(redis ? { REDIS_URL: redisUrl } : { CACHE_SYNC_INTERVAL: '1' }),
               PUBLIC_URL: apiUrl,
               CORS_ORIGINS: adminUrl,
               MEDIA_CACHE_PATH: join(scratch, 'media-cache'),
@@ -127,7 +146,36 @@ export default defineConfig({
               // The management preset plus the control API.
               SCOPES: 'rpc,auth,uploads,media,graphql,control',
               CONTROL_API_KEY: controlKey,
+              // The admin frames the site process for the design canvas.
+              SITE_URL: siteUrl,
+              SITE_FORMS_SECRET: formsSecret,
               PORT: new URL(apiUrl).port || '3000',
+            },
+          },
+          // After the instance, whose command creates and migrates the database it reads.
+          {
+            command: 'pnpm --filter @manablox/site-app start',
+            url: `${siteUrl}/healthz`,
+            timeout: 120_000,
+            reuseExistingServer: false,
+            stdout: 'ignore',
+            stderr: 'pipe',
+            env: {
+              DATABASE_URL: databaseUrl,
+              AUTH_SECRET: authSecret,
+              SITE_FORMS_SECRET: formsSecret,
+              STORAGE_LOCAL_PATH: join(scratch, 'uploads'),
+              LOG_LEVEL: 'warn',
+              NODE_ENV: 'test',
+              ...(redis
+                ? { REDIS_URL: redisUrl }
+                : { CACHE_ENABLED: 'false', CACHE_SYNC_INTERVAL: '1' }),
+              PUBLIC_URL: siteUrl,
+              SITE_EDITOR_ORIGIN: adminUrl,
+              SITE_FORMS_API_URL: apiUrl,
+              MEDIA_CACHE_PATH: join(scratch, 'media-cache-site'),
+              RATE_LIMIT: 'off',
+              PORT: new URL(siteUrl).port || '3506',
             },
           },
           {

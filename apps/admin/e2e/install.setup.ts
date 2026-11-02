@@ -1,5 +1,5 @@
 import { expect, test as setup } from '@playwright/test';
-import { account, signIn } from './support';
+import { account, ownFrontend, signIn } from './support';
 
 /**
  * The install wizard on an empty instance: the account every test signs in as, and the
@@ -23,6 +23,7 @@ setup('installs the instance', async ({ page }) => {
   await page.getByRole('button', { name: /Create a space/ }).click();
   await page.getByLabel('Name', { exact: true }).fill('Smoke Site');
   await expect(page.getByLabel('Technical name')).toHaveValue('smoke-site');
+  await ownFrontend(page);
   await page.getByRole('radio', { name: /Empty space/ }).check();
   await page.getByRole('button', { name: 'Create space' }).click();
 

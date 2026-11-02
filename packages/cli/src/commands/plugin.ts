@@ -46,7 +46,7 @@ type Logging = NonNullable<ManabloxConfig['logging']>;
 
 /**
  * The config's logging with its console output on stderr: a plugin command's stdout is its
- * answer (`manablox license status --json` for scripts), and the booted instance's log is
+ * answer (`--json` output for scripts), and the booted instance's log is
  * not part of it. Other destinations stay as they are.
  */
 function logsOnStderr(logging: Logging | undefined): Logging {
@@ -140,29 +140,6 @@ async function commandContext(
     await shutdown?.();
   };
   return { context, close };
-}
-
-/**
- * Runs a plugin's command by its words, as `manablox <plugin id> <words>` would; for the CLI's
- * own flows, e.g. the license prompt after an install. Resolves to the exit code.
- */
-async function runPluginCommand(
-  plugin: CliPlugin,
-  argv: readonly string[],
-  values: CliValues,
-  setup: PluginCommandSetup,
-): Promise<number> {
-  const found = findCommand(plugin, argv);
-  if (!found) throw new Error(`the ${plugin.id} plugin has no command '${argv.join(' ')}'`);
-  const { context, close } = await commandContext(plugin, setup, {
-    positionals: found.rest,
-    values,
-  });
-  try {
-    return await found.command.run(context);
-  } finally {
-    await close();
-  }
 }
 
 /** `manablox <plugin id> <words> [args]`: runs a plugin's command against the instance. */

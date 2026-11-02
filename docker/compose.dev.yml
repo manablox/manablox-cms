@@ -1,13 +1,13 @@
 name: manablox-cms-dev
 
 # The development environment. `pnpm dev:up` brings up the backing services, the local npm
-# registry *and* every app - api, public api and admin - so every developer runs the same
+# registry *and* every app - api, public api, admin and site - so every developer runs the same
 # Node, the same pnpm and the same installed binaries regardless of their host.
 #
 # The ports are fixed per repository so every Manablox repository's stack can run side by
 # side (the other repositories keep clear of these):
 #
-#   api 3000   public api 3001   admin 3002   postgres 5432   valkey 6379
+#   api 3000   public api 3001   admin 3002   site 3003   postgres 5432   valkey 6379
 #   mailpit smtp 1025, ui 8025   verdaccio 4873 (127.0.0.1)
 #
 # The repository is bind-mounted and nothing is masked over it: `pnpm install` runs in the
@@ -139,6 +139,8 @@ services:
       PUBLIC_URL: http://localhost:3000
       # Every browser-facing origin in the stack: the admin.
       CORS_ORIGINS: http://localhost:3002
+      # The site process, which the admin frames for the design canvas.
+      SITE_URL: http://localhost:3003
     ports: ['3000:3000']
     # The admin's Vite proxy is serving long before the API process binds, so without a
     # readiness gate the first request out of a freshly opened admin - creating the very
@@ -192,6 +194,38 @@ services:
     networks:
       default:
         aliases: [public-api.localhost]
+
+  # Designed sites, by Host. Add the domain `localhost` to a designed space and open
+  # http://localhost:3003. It reads the API's file first: same instance, so the database,
+  # cache, storage and auth secret have to match.
+  site:
+    <<: *app
+    command: ['pnpm', '--filter', '@manablox/site-app', 'dev']
+    env_file:
+      - ../apps/api/.env
+      - ../apps/site/.env
+    environment:
+      <<: *watch-env
+      PORT: '3003'
+      PUBLIC_URL: http://localhost:3003
+      SITE_EDITOR_ORIGIN: http://localhost:3002
+      SITE_FORMS_API_URL: http://api:3000
+    ports: ['3003:3003']
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3003/healthz').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 3s
+      timeout: 3s
+      retries: 40
+      start_period: 5s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
 
   admin:
     <<: *app

@@ -1,0 +1,72 @@
+import {
+  cacheConfigFromEnv,
+  databaseConfigFromEnv,
+  defineConfig,
+  envList,
+  envNumber,
+  envOptional,
+  envOptionalNumber,
+  envString,
+  loggingConfigFromEnv,
+  mediaConfigFromEnv,
+  requireEnv,
+  storageConfigFromEnv,
+} from '@manablox/core';
+import { websitePlugin } from '@manablox/plugin-website';
+import { contentTypes, plugins } from './content-model.ts';
+
+/**
+ * The website process: every space switched to a designed site, rendered as HTML and picked
+ * by the domain a visitor asks for (the space's domains in the admin). `server.mode:
+ * 'website'` mounts the pages and `/media` and nothing else: no auth, no API, no uploads.
+ *
+ * Start it with `manablox start --config manablox.site.config.ts`. `SITE_`-prefixed
+ * variables override their management counterparts, so one `.env` drives every process.
+ */
+const cacheTtl = envOptionalNumber('SITE_CACHE_TTL');
+const formsApiUrl = envOptional('SITE_FORMS_API_URL');
+const formsSecret = envOptional('SITE_FORMS_SECRET');
+const publicUrl = envString('PUBLIC_URL', '__ADMIN_URL__');
+
+export default defineConfig({
+{{#if sqlite}}
+  // The management instance's file; SQLite has no read-only role.
+  database: databaseConfigFromEnv(),
+{{#else}}
+  // PUBLIC_DATABASE_URL, ideally a read-only role, else DATABASE_URL. The site never writes.
+  database: databaseConfigFromEnv({ urlVar: 'PUBLIC_DATABASE_URL' }),
+{{/if}}
+
+  server: {
+    host: envString('HOST', '0.0.0.0'),
+    port: envNumber('SITE_PORT', __SITE_PORT__),
+    publicUrl: envString('SITE_URL', 'http://localhost:__SITE_PORT__'),
+    mode: 'website',
+    rateLimit: envOptional('RATE_LIMIT') === 'off' ? false : { window: 60_000, max: 1200 },
+  },
+
+  // Verifies share links and signs media URLs; must match the management instance.
+  auth: { secret: requireEnv('AUTH_SECRET') },
+
+  storage: storageConfigFromEnv(),
+
+  media: mediaConfigFromEnv({
+    cachePathVar: 'SITE_MEDIA_CACHE_PATH',
+    cachePath: './data/media-cache-site',
+  }),
+
+  cache: cacheConfigFromEnv(300, { ttlVar: 'SITE_CACHE_TTL' }),
+
+  plugins: [
+    ...plugins,
+    websitePlugin({
+      // The admin, the only page allowed to frame the design canvas.
+      editorOrigin: envList('SITE_EDITOR_ORIGIN', [publicUrl]),
+      ...(cacheTtl !== undefined ? { cacheTtl } : {}),
+      // Form submissions, forwarded to the management API; forms are off without both.
+      ...(formsApiUrl && formsSecret ? { forms: { apiUrl: formsApiUrl, secret: formsSecret } } : {}),
+    }),
+  ],
+  contentTypes,
+  logging: loggingConfigFromEnv(),
+});

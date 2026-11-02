@@ -21,6 +21,17 @@ const PLUGINS = [
     names:
       /defineWebhook\b|webhookTrigger\(|webhookAbort\(|WEBHOOK_RESOURCE_KIND|WebhookService\b|WebhookRepository|webhookAuditor|webhookRepos|WebhookView\b|WebhookDeliveryView|webhookDeliveries|webhooks_deliveries|webhookDeliveriesDays|repos\.webhooks\b|\btable\(\s*['"]webhooks['"]|\/api\/hooks\/|hooks\.incoming|features\.webhooks\b|limits\.webhooks\b|plugins\.webhooks\b|['"]webhooks\.(?:webhook|webhooks)['"]|['"]webhooks?:(?:read|write|deliver|beforeCreate|received)['"]|(?:get|isOn|has|usePluginApi)(?:<[^>]*>)?\(\s*['"]webhooks['"]/,
   },
+  {
+    packages: ['plugin-ai'],
+    names:
+      /AiAdminApi\b|features\.ai\b|plugins\.ai\b|\btable\(\s*['"]ai_|(?:get|isOn|has|usePluginApi)(?:<[^>]*>)?\(\s*['"]ai['"]/,
+  },
+  {
+    // `site` and `site-renderer` are the website plugin's own libraries.
+    packages: ['plugin-website', 'site', 'site-renderer'],
+    names:
+      /\brunWebsite\b|websiteProcessConfig\b|features\.website\b|plugins\.website\b|\btable\(\s*['"]website_|(?:get|isOn|has|usePluginApi)(?:<[^>]*>)?\(\s*['"]website['"]/,
+  },
 ];
 
 /** Every plugin package. */
@@ -35,7 +46,8 @@ const IMPORT = new RegExp(
   `(?:from\\s+|import\\s*\\(\\s*|require\\s*\\(\\s*)['"]@manablox\\/(${[...PLUGIN_PACKAGES].join('|')})(?:\\/[^'"]*)?['"]`,
 );
 const EXTENSIONS = /\.(?:ts|mts|mjs|js|vue)$/;
-const SKIP = new Set(['node_modules', 'dist', '.turbo', 'coverage']);
+// Fixtures stand in for plugins; the CLI's write the imports of a generated instance.
+const SKIP = new Set(['node_modules', 'dist', '.turbo', 'coverage', 'fixtures']);
 
 function* files(dir) {
   for (const name of readdirSync(dir)) {

@@ -17,6 +17,7 @@
       "!**/migrations",
       "!**/migrations-sqlite",
       "!packages/cli/templates",
+      "!packages/plugin-website/src/cli/templates",
       "!**/*.md"
     ]
   },

@@ -1,0 +1,37 @@
+# --- Designed sites ----------------------------------------------------------------------
+{{#if caddy}}
+# The site process answers every domain added to a space in the admin; point those
+# domains at this host and Caddy fetches their certificates on the first request.
+# SITE_URL is where the admin reaches the site process for the design canvas, e.g. one of
+# those domains; empty until the first one exists.
+SITE_URL=
+{{/if}}
+{{#if nginx}}
+# The site process answers every domain added to a space in the admin; point those
+# domains at this host. nginx serves them over plain http unless you add a server block
+# with their certificates. SITE_URL is where the admin reaches the site process for the
+# design canvas, e.g. one of those domains; empty until the first one exists.
+SITE_URL=
+{{/if}}
+{{#if ports}}
+# The site process answers every domain added to a space in the admin; your proxy sends
+# those domains to SITE_PORT. SITE_URL is where the admin reaches the site process for
+# the design canvas.
+SITE_PORT=__SITE_PORT__
+SITE_URL=__SITE_URL__
+{{/if}}
+{{#if local}}
+# The site process (`pnpm dev:site`) answers every domain added to a space in the admin.
+# For a local try-out add the domain `localhost` there and open SITE_URL. SITE_URL is also
+# where the admin reaches the site process for the design canvas.
+SITE_PORT=__SITE_PORT__
+SITE_URL=__SITE_URL__
+# Where the site process hands form submissions to the management API.
+SITE_FORMS_API_URL=__ADMIN_URL__
+{{/if}}
+# Seconds a page is cached, and its s-maxage. A publish purges it earlier.
+SITE_CACHE_TTL=300
+# Forms on designed sites: the site process hands submissions to the API with this shared
+# secret. Forms answer "not available" while it is empty. At least 16 characters; generate
+# one with `openssl rand -hex 32`.
+SITE_FORMS_SECRET=__SITE_FORMS_SECRET__

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { apiUrl, rpc, signIn } from './support';
+import { apiUrl, ownFrontend, rpc, signIn } from './support';
 
 /** The release path, from a type to a delivery read. Runs on the instance `install.setup.ts` made. */
 
@@ -220,6 +220,7 @@ test('creates a space with the basic setup', async ({ page }) => {
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('radio', { name: /Preconfigured/ })).toBeChecked();
   await dialog.getByLabel('Name', { exact: true }).fill('Starter Site');
+  await ownFrontend(dialog);
   await dialog.getByRole('button', { name: 'Next: website type' }).click();
   await expect(dialog.getByRole('radio', { name: /Basic setup/ })).toBeChecked();
   await dialog.getByRole('button', { name: 'Create space' }).click();

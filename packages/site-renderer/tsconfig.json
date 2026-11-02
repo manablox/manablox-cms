@@ -1,0 +1,6 @@
+{
+  "extends": "@manablox/config-typescript/library.json",
+  // The canvas and islands run in a browser; the renderer and asset loader in Node.
+  "compilerOptions": { "lib": ["ES2023", "DOM", "DOM.Iterable"] },
+  "include": ["src", "test", "scripts/*.ts"]
+}

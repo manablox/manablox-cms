@@ -35,7 +35,7 @@
     "licenses:check": "node scripts/sync-licenses.mjs --check",
     "bench": "./scripts/bench.sh",
     "perf": "./scripts/perf.sh",
-    "db:generate": "pnpm --filter @manablox/db --filter @manablox/plugin-workflows --filter @manablox/plugin-webhooks generate",
+    "db:generate": "pnpm --filter @manablox/db --filter @manablox/plugin-workflows --filter @manablox/plugin-webhooks --filter @manablox/plugin-ai --filter @manablox/plugin-website generate",
     "db:migrate": "pnpm --filter @manablox/api migrate",
     "db:reset": "./scripts/db-reset.sh",
     "clean": "./scripts/clean.sh",

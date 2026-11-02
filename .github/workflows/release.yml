@@ -14,7 +14,7 @@ on:
         type: boolean
         default: true
       images:
-        description: 'Also build and push the api and admin images to ghcr.io/manablox'
+        description: 'Also build and push the cms-api, cms-admin and site images to ghcr.io/manablox'
         type: boolean
         default: true
 
@@ -108,8 +108,9 @@ jobs:
           find dist-packages -name '*.tgz' -printf 'packed: %f\n' 2>/dev/null | sort >> "$GITHUB_STEP_SUMMARY" || true
 
   # The production images at the release's version: ghcr.io/manablox/cms-api (the management
-  # API, the public API and the migrations) and ghcr.io/manablox/cms-admin. `latest` moves
-  # only with the npm `latest` tag, so a prerelease never becomes what `docker pull` gets.
+  # API, the public API and the migrations), ghcr.io/manablox/cms-admin and
+  # ghcr.io/manablox/site (the site process). `latest` moves only with the npm `latest` tag,
+  # so a prerelease never becomes what `docker pull` gets.
   images:
     name: image - ${{ matrix.image }}
     if: inputs.images
@@ -117,7 +118,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [api, admin]
+        include:
+          - image: cms-api
+            dockerfile: docker/Dockerfile.api
+          - image: cms-admin
+            dockerfile: docker/Dockerfile.admin
+          - image: site
+            dockerfile: docker/Dockerfile.site
     steps:
       - uses: actions/checkout@v5
 
@@ -137,7 +144,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/${{ github.repository_owner }}/cms-${{ matrix.image }}
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
           tags: |
             type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }}
@@ -146,7 +153,7 @@ jobs:
       - uses: docker/build-push-action@v7
         with:
           context: .
-          file: docker/Dockerfile.${{ matrix.image }}
+          file: ${{ matrix.dockerfile }}
           push: ${{ !inputs.dry-run }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

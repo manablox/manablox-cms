@@ -6,7 +6,7 @@ Manablox in a project of your own.
 There are only three files worth reading:
 
 - `config.ts` builds the configuration, mostly from environment variables
-- `plugins.ts` lists the plugins (the fields, workflows and webhooks); the migrate command reads it without the rest of the config
+- `plugins.ts` lists the plugins (the fields, workflows, webhooks, AI and the website); the migrate command reads it without the rest of the config
 - `main.ts` hands that config to `run()` from `@manablox/server`
 
 Everything else is in the packages. This app also carries the scripts that only make
@@ -22,7 +22,7 @@ to `manablox docs generate`), the repository version of `push:keys` and the inst
 ## Depends on
 
 @manablox/server, @manablox/core, @manablox/fields, @manablox/plugin-workflows,
-@manablox/plugin-webhooks
+@manablox/plugin-webhooks, @manablox/plugin-ai, @manablox/plugin-website
 
 ## Test
 

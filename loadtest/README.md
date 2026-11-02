@@ -38,6 +38,7 @@ profile with a flat run, `-e LOCALE=de` overrides one variable.
 | `api` | `scripts/public-api.js` | Two scenarios side by side. **REST**: menu, then the home page or a permalink, a pause, then a list, a document by id, a search or a deliberate miss. **GraphQL**: one page query (document plus menu), a pause, then a list, a document or a search. |
 | `frontends` | `scripts/frontends.js` | Picks a site by weight, visits two to four of its paths with pauses, and fetches each page's same-origin scripts and stylesheets the way a browser would. |
 | `all` | `scripts/all.js` | All at once, sharing one profile: the frontends' server-side requests land on the same API the direct visitors are hitting. |
+| `site` | `scripts/site.js` | Designed sites on the site process. **Pages**: picks a site's host, visits two to four paths from its sitemap, fetches the first page's stylesheet, island scripts, fonts and images, revalidates a page seen before with `If-None-Match`, and now and then reads `/sitemap.xml` or `/robots.txt`. **Renders** (with `SITE_SHARE_URL`): pages rendered fresh on every request. |
 
 The API suite discovers its request mix at setup: `/v1/types` for the content types,
 two pages of `/v1/content` for ids and permalinks, and the menus named in
@@ -210,6 +211,26 @@ For a persistent dashboard across runs:
 Grafana is provisioned with the datasource and a dashboard (requests per second, VUs,
 error rate, p95 per API request and per frontend site) and needs no login.
 
+### The site process
+
+`SITE_URL` is the base URL of the site process: `http://host.docker.internal:3003` for the
+dev stack, as the runner sees the host. The process picks the space by the `Host` header, so
+`SITE_HOSTS` lists the domains added to the spaces in the admin; the suite sends each as
+`Host` and needs no DNS. Every host must answer its home page with 200 at setup, which means
+the space is designed, published and has that domain. Paths come from each host's
+`/sitemap.xml`, plus `site.paths` in `config/targets.json`.
+
+A page is cached per revision and path, so after the first visit the **pages** scenario
+measures cache hits. For the cost of a render, create a share link in the admin (a document's
+"Share preview") and set it as `SITE_SHARE_URL`: the suite opens it once, and its cookie makes
+the site render every page fresh in the **renders** scenario, reported as
+`http_req_duration{surface:site,kind:render}`. Links expire, so create one per session.
+Running the site process with `CACHE_ENABLED=false` makes every scenario uncached instead.
+
+The site process rate limits per IP at 1200 requests a minute; start it with `RATE_LIMIT=off`
+for anything beyond `smoke`. Its thresholds are `SITE_P95_MS`, `SITE_P99_MS` and
+`SITE_RENDER_P95_MS`.
+
 ## Reaching the targets
 
 By default the runner is on its own network and reaches the host as
@@ -234,6 +255,7 @@ loadtest/
   scripts/public-api.js    suite: REST + GraphQL
   scripts/frontends.js     suite: frontends
   scripts/all.js           suite: all of them
+  scripts/site.js          suite: designed sites on the site process
   scripts/lib/             config, profiles, request helpers, the visitor models, controls, summary
   grafana/                 provisioning and the dashboard
   results/                 one JSON per run (gitignored)

@@ -4,15 +4,16 @@
 #   api    docker/Dockerfile.api    the management API, the public API (same image, other
 #                                   entrypoint) and the migrations
 #   admin  docker/Dockerfile.admin  the prebuilt admin behind nginx
+#   site   docker/Dockerfile.site   the site process: designed sites by Host
 #
-# Images are named <prefix>/cms-<image>:<tag>, ghcr.io/manablox/cms-api:0.50.0 by default - the
-# names the release workflow pushes. CI builds with the docker actions instead, for the
-# layer cache; the Dockerfiles are the same.
+# Images are named <prefix>/cms-api:<tag>, <prefix>/cms-admin:<tag> and <prefix>/site:<tag>,
+# ghcr.io/manablox/cms-api:0.50.0 by default - the names the release workflow pushes. CI builds
+# with the docker actions instead, for the layer cache; the Dockerfiles are the same.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
 cd "$ROOT"
 
-ALL_IMAGES=(api admin)
+ALL_IMAGES=(api admin site)
 
 prefix="${IMAGE_PREFIX:-ghcr.io/manablox}"
 tag=""
@@ -23,7 +24,7 @@ usage() {
   cat <<'USAGE'
 Usage: scripts/docker-build.sh [options] [image...]
 
-  image             api, admin (default: both)
+  image             api, admin, site (default: all of them)
   --tag <tag>       image tag (default: the workspace version, e.g. 0.50.0)
   --prefix <name>   registry and namespace (default: $IMAGE_PREFIX or ghcr.io/manablox)
   --push            push each image after building it (log in to the registry first)
@@ -58,7 +59,10 @@ require_docker
 
 built=()
 for image in "${images[@]}"; do
-  name="$prefix/cms-$image:$tag"
+  case "$image" in
+    site) name="$prefix/site:$tag" ;;
+    *) name="$prefix/cms-$image:$tag" ;;
+  esac
   log "building $name from docker/Dockerfile.$image"
   DOCKER_BUILDKIT=1 docker build \
     --file "docker/Dockerfile.$image" \

@@ -5,6 +5,10 @@
 # in `node_modules`. Without this a host `pnpm <script>` (and the pre-commit hook with it)
 # sees a mismatch and tries to purge and reinstall.
 verifyDepsBeforeRun: false
+# pnpm's bin shims put the hoisted store on NODE_PATH. A workspace package there resolves from
+# anywhere: the CLI would find the real website and AI plugins, which are not its dependencies,
+# instead of the stand-ins its tests install into the plugin cache.
+hoistWorkspacePackages: false
 
 packages:
   - apps/*
@@ -28,6 +32,7 @@ catalog:
   simple-git-hooks: ^2.13.0
   knip: ^6.37.0
   tsdown: ^0.23.0
+  rolldown: ^1.2.7
   tsx: ^4.20.7
   '@clack/prompts': ^1.7.0
   picocolors: ^1.1.1

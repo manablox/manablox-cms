@@ -54,7 +54,9 @@
   "devDependencies": {
     "@manablox/config-typescript": "workspace:*",
     "@manablox/config-vitest": "workspace:*",
+    "@manablox/plugin-ai": "workspace:*",
     "@manablox/plugin-webhooks": "workspace:*",
+    "@manablox/plugin-website": "workspace:*",
     "@manablox/plugin-workflows": "workspace:*",
     "@playwright/test": "catalog:",
     "@tailwindcss/vite": "catalog:",

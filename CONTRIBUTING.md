@@ -53,8 +53,6 @@ each time) and install them there; README.md, "The local registry", has the `.np
 Node 24 (`.node-version`) and pnpm (pinned by `packageManager`). VS Code users get the
 recommended extensions prompt; Biome formats on save.
 
-The AI and website plugins live in their own repositories and install from npm by name.
-
 If the dev containers or their network disappear (a Docker Desktop reset, a prune, a
 deleted network), run `pnpm dev:up` again. It removes containers still attached to a
 network that no longer exists and recreates what is missing; volumes, and with them the
@@ -74,7 +72,9 @@ database, are kept. `pnpm dev:reset` is the last resort: it deletes the volumes 
 | `apps/api` | The repository's management instance: its config and entrypoint, booting `@manablox/server`. |
 | `apps/admin` | The admin SPA. `features/<name>/` per feature, `components/ui/` for presentational controls, `components/` for the shell and the field set. `pnpm admin:layout` checks the boundaries. |
 | `apps/public-api` | The same code as `apps/api` with the hardened configuration. |
-| `packages/plugin-workflows` - `plugin-webhooks` | The first-party plugins that live here. `pnpm plugins:boundary` keeps the core from importing them. |
+| `apps/site` | The site process: `@manablox/server` in the website plugin's `website` mode. |
+| `packages/site` - `site-renderer` | The website plugin's libraries: designs, themes and validation, and the HTML renderer. |
+| `packages/plugin-workflows` - `plugin-webhooks` - `plugin-ai` - `plugin-website` | The first-party plugins. `pnpm plugins:boundary` keeps the core from importing them. |
 | `packages/admin-plugin` - `admin-sdk` | What admin plugins build on. |
 | `packages/docs-theme` | The Starlight theme the documentation sites install. |
 | `loadtest/` | The k6 suite for the public API and frontends. |
@@ -183,9 +183,7 @@ The CMS is one of several repositories. They share one set of conventions:
 
   | Repository | Ports |
   | --- | --- |
-  | manablox-cms | api 3000, public api 3001, admin 3002, postgres 5432, valkey 6379, mailpit 1025/8025, verdaccio 4873 |
-  | manablox-plugin-website | site 3003, instance api 3100, admin 3102, postgres 5442 |
-  | manablox-plugin-ai | instance api 3200, admin 3202, postgres 5452 |
+  | manablox-cms | api 3000, public api 3001, admin 3002, site 3003, postgres 5432, valkey 6379, mailpit 1025/8025, verdaccio 4873 |
   | manablox-website | 3005 |
   | manablox-dev-docs | 3004 |
   | manablox-user-docs | 3008 |

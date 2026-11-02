@@ -60,6 +60,17 @@ export const config = {
 
   maxErrorRate: number('MAX_ERROR_RATE', 0.01),
 
+  // The site process: one base URL, the Host headers of the designed spaces behind it.
+  site: {
+    url: stripSlash(__ENV.SITE_URL || ''),
+    hosts: list('SITE_HOSTS'),
+    shareUrl: __ENV.SITE_SHARE_URL || '',
+    paths: targets.site?.paths?.length ? targets.site.paths : ['/'],
+    p95: number('SITE_P95_MS', 500),
+    p99: number('SITE_P99_MS', 1500),
+    renderP95: number('SITE_RENDER_P95_MS', 2000),
+  },
+
   // Control settings for the run; see controls.js.
   controls: {
     enabled: bool('CONTROLS', false),

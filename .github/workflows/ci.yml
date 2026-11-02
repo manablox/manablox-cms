@@ -130,9 +130,27 @@ jobs:
       - name: Package runtime imports are dependencies
         run: pnpm deps:check
 
+      # What an entry point check cannot see: the CLI templates, the admin bundle and the
+      # migrations a feature plugin needs in its tarball.
+      - name: Plugin tarballs are complete
+        run: |
+          set -euo pipefail
+          for plugin in plugin-ai plugin-website; do
+            pnpm --filter "@manablox/$plugin" pack --out "$RUNNER_TEMP/$plugin.tgz"
+            listing=$(tar -tzf "$RUNNER_TEMP/$plugin.tgz")
+            for file in package/dist/index.js package/dist/cli.js package/dist/admin/manifest.json \
+                        package/migrations/meta/_journal.json \
+                        package/migrations-sqlite/meta/_journal.json package/LICENSE; do
+              grep -qx "$file" <<< "$listing" || { echo "::error::$file is missing from $plugin"; exit 1; }
+            done
+          done
+          tar -tzf "$RUNNER_TEMP/plugin-ai.tgz" | grep -qx package/dist/cli/templates/env \
+            || { echo "::error::the AI plugin's CLI templates are missing"; exit 1; }
+
   # The browser tests: sign up, create a space, a type, a document, publish, read it back;
-  # runtime plugin bundles and an instance without the feature plugins. They boot the API
-  # and the admin on the runner against Postgres, a few minutes on every pull request and
+  # runtime plugin bundles, an instance without the feature plugins, and a site designed and
+  # published through the site process. They boot the API, the admin and the site process
+  # on the runner against Postgres, a few minutes on every pull request and
   # push. Independent of the checks: it shares no output with them, so serialising them
   # would only lengthen the critical path.
   e2e:
@@ -234,7 +252,7 @@ jobs:
           fi
 
           include=()
-          # add <image> <dockerfile> <path pattern>...
+          # add <image name> <dockerfile> <path pattern>...
           add() {
             local image="$1" dockerfile="$2"; shift 2
             if changed "$@"; then
@@ -242,17 +260,19 @@ jobs:
             fi
           }
           # `api` also runs the public delivery API: one image, two entrypoints.
-          add api Dockerfile.api \
+          add cms-api Dockerfile.api \
             '^apps/api/' '^apps/public-api/' '^docker/Dockerfile\.api$' '^docker/dist-exports\.mjs$'
-          add admin Dockerfile.admin \
+          add cms-admin Dockerfile.admin \
             '^apps/admin/' '^docker/Dockerfile\.admin$' '^docker/nginx\.admin\.conf$'
+          add site Dockerfile.site \
+            '^apps/site/' '^docker/Dockerfile\.site$' '^docker/dist-exports\.mjs$'
 
           joined=$(IFS=,; echo "${include[*]:-}")
           echo "matrix={\"include\":[$joined]}" >> "$GITHUB_OUTPUT"
           echo "any=$([ ${#include[@]} -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
   # A pull request builds the images it touches without pushing them, so a broken
-  # Dockerfile fails before the merge; main and tags push to ghcr.io/manablox/cms-<image>.
+  # Dockerfile fails before the merge; main and tags push to ghcr.io/manablox/<image>.
   # Releases push the version tags from release.yml.
   images:
     name: image - ${{ matrix.image }}
@@ -278,7 +298,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/${{ github.repository_owner }}/cms-${{ matrix.image }}
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch

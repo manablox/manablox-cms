@@ -8,6 +8,7 @@ together.
 ### Open source
 
 - **Every plugin is MIT licensed.** AI and the website designer are free and open source now, like the rest of Manablox. They need no license key or subscription, on any instance.
+- **One repository.** AI and the website designer live in this repository now, next to workflows and webhooks. They keep their npm packages and their place in `manablox create`, and every package is released together. The `cms-api` image runs all four plugins, and the `site` image is built from here. The `plugin-ai-demo` and `website-demo` images are gone.
 - **No more licensing code.** `@manablox/plugin-license`, `@manablox/license` and the `manablox license` commands are gone. A database that had them keeps an unused `license_activations` table.
 
 ### Spaces without a website
