@@ -3,7 +3,7 @@
 All `@manablox/*` packages of this repository share one version number and are released
 together.
 
-## 0.50.2 - unreleased
+## 0.52.0 - 2026-11-02
 
 ### Open source
 
