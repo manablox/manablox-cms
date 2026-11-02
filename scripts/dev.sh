@@ -9,7 +9,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
 
 # Started and stopped on their own so the apps can run on the host against them. The
 # registry is one of them: the other repositories install from it with or without the apps.
-INFRA_SERVICES=(postgres valkey minio mailpit verdaccio)
+INFRA_SERVICES=(postgres valkey mailpit verdaccio)
 
 # Emptied by `reset`: the uploads and media cache of the API's local storage driver.
 DATA_DIRS=(docker/data/uploads docker/data/media-cache)
@@ -21,10 +21,10 @@ Usage: scripts/dev.sh <command> [docker compose args...]
   up               build and start the whole stack in the background
   down             stop the stack, keep volumes
   logs             follow the logs of all services
-  reset            stop the stack and delete its volumes: the database, the object
-                   store, the cache and the local registry's packages; and empty
-                   docker/data/uploads and docker/data/media-cache
-  services:up      start only postgres, valkey, minio, mailpit and verdaccio
+  reset            stop the stack and delete its volumes: the database, the cache and
+                   the local registry's packages; and empty docker/data/uploads and
+                   docker/data/media-cache
+  services:up      start only postgres, valkey, mailpit and verdaccio
   services:down    stop the stack (same as `down`)
   publish          build every publishable package and publish it to the local
                    registry (scripts/dev-publish.sh; `publish --help` for its options)
@@ -33,7 +33,7 @@ Usage: scripts/dev.sh <command> [docker compose args...]
   -h, --help       this message
 
 Ports: api 3000, public api 3001, admin 3002, postgres 5432, valkey 6379,
-minio 9000 (console 9001), mailpit 1025 (ui 8025), verdaccio 4873.
+mailpit 1025 (ui 8025), verdaccio 4873.
 USAGE
 }
 
@@ -75,7 +75,6 @@ where() {
   public api   http://localhost:3001   (starts once the instance has a space)
   admin        http://localhost:3002
   mailpit      http://localhost:8025
-  minio        http://localhost:9001   (manablox / manablox123)
   verdaccio    http://localhost:4873   (pnpm dev:publish fills it)
 WHERE
 }

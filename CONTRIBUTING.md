@@ -40,7 +40,7 @@ backing services and use the workspace directly:
 
 ```sh
 pnpm install
-pnpm dev:services  # postgres, valkey, minio, mailpit, verdaccio
+pnpm dev:services  # postgres, valkey, mailpit, verdaccio
 pnpm db:migrate
 pnpm dev           # every app, through turbo
 ```
@@ -188,7 +188,7 @@ The CMS is one of several repositories. They share one set of conventions:
 
   | Repository | Ports |
   | --- | --- |
-  | manablox-cms | api 3000, public api 3001, admin 3002, postgres 5432, valkey 6379, minio 9000/9001, mailpit 1025/8025, verdaccio 4873 |
+  | manablox-cms | api 3000, public api 3001, admin 3002, postgres 5432, valkey 6379, mailpit 1025/8025, verdaccio 4873 |
   | manablox-plugin-website | site 3003, instance api 3100, admin 3102, postgres 5442 |
   | manablox-plugin-ai | instance api 3200, admin 3202, postgres 5452 |
   | manablox-license-portal | license server 3110, portal 5174, postgres 5462, mailpit 8026 |

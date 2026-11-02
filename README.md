@@ -108,17 +108,16 @@ all Manablox repositories run side by side:
 | admin | 3002 | the admin in Vite's dev server |
 | postgres | 5432 | `manablox` / `manablox`, database `manablox` |
 | valkey | 6379 | |
-| minio | 9000, console 9001 | `manablox` / `manablox123` |
 | mailpit | SMTP 1025, UI 8025 | |
 | verdaccio | 4873 | the local npm registry, on `127.0.0.1` only; `verdaccio:4873` on the docker network `manablox-registry` |
 
 | Command | What it does |
 | --- | --- |
 | `pnpm dev:up` | Build and start everything, apps included (`pnpm install` and the migrations run in the stack) |
-| `pnpm dev:services` | Only postgres, valkey, minio, mailpit and verdaccio, to run the apps on the host with `pnpm dev` |
+| `pnpm dev:services` | Only postgres, valkey, mailpit and verdaccio, to run the apps on the host with `pnpm dev` |
 | `pnpm dev:logs [service]` | Follow the logs |
 | `pnpm dev:down` | Stop, keep the data |
-| `pnpm dev:reset` | Stop and delete every volume: database, object store, cache and the registry's packages; empty `docker/data/uploads` and `docker/data/media-cache` |
+| `pnpm dev:reset` | Stop and delete every volume: database, cache and the registry's packages; empty `docker/data/uploads` and `docker/data/media-cache` |
 | `pnpm dev:publish` | Build every package and publish it to the local registry |
 
 ### The local registry

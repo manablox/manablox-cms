@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Drop the development database and migrate it back to an empty instance.
 #
-# Narrower than `dev:reset`, which throws away every volume: this keeps the object store,
-# the cache and the installed dependencies, and only takes the database back to the state
-# a fresh clone starts in - no content, no users, so the next account you create is the
-# instance superadmin again.
+# Narrower than `dev:reset`, which throws away every volume: this keeps the cache and the
+# installed dependencies, and only takes the database back to the state a fresh clone
+# starts in - no content, no users, so the next account you create is the instance
+# superadmin again.
 #
 # Everything goes through `scripts/dev.sh`, which owns the compose invocation.
 set -euo pipefail
@@ -28,7 +28,7 @@ Usage: scripts/db-reset.sh [options]
   -y, --yes        do not ask for confirmation
   -h, --help       this message
 
-To throw away the object store and the cache as well, use `pnpm dev:reset`.
+To throw away the cache and the registry's packages as well, use `pnpm dev:reset`.
 USAGE
 }
 

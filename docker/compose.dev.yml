@@ -8,7 +8,7 @@ name: manablox-cms-dev
 # side (the other repositories keep clear of these):
 #
 #   api 3000   public api 3001   admin 3002   postgres 5432   valkey 6379
-#   minio 9000 (console 9001)    mailpit smtp 1025, ui 8025   verdaccio 4873 (127.0.0.1)
+#   mailpit smtp 1025, ui 8025   verdaccio 4873 (127.0.0.1)
 #
 # The repository is bind-mounted and nothing is masked over it: `pnpm install` runs in the
 # container, writes into the working copy, and the host reads the same `node_modules`. One
@@ -74,21 +74,6 @@ services:
       - valkey-data:/data
     healthcheck:
       test: ['CMD', 'valkey-cli', 'ping']
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: manablox
-      MINIO_ROOT_PASSWORD: manablox123
-    ports: ['9000:9000', '9001:9001']
-    volumes:
-      - minio-data:/data
-    healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
       interval: 5s
       timeout: 3s
       retries: 20
@@ -236,5 +221,4 @@ networks:
 volumes:
   postgres-data:
   valkey-data:
-  minio-data:
   verdaccio-storage:
