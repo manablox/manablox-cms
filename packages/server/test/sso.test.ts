@@ -765,6 +765,26 @@ describe('IdP-initiated SAML sign-in', () => {
     expect(await runtime.repos.users.findByEmail('un@corp.test')).toBeNull();
   });
 
+  it('allows for an IdP clock up to five minutes ahead', async () => {
+    await samlProvider();
+    const metadata = await spMetadata();
+    const errorFromClockAhead = async (ms: number) => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(Date.now() + ms);
+      try {
+        const posted = await saml.unsolicited({ spMetadata: metadata, nameId: 'skew@corp.test' });
+        vi.useRealTimers();
+        const refused = await samlPost(new Jar(), posted);
+        return new URL(refused.headers.get('location') ?? '').searchParams.get('error');
+      } finally {
+        vi.useRealTimers();
+      }
+    };
+    // Past the time checks, this response is refused for being unsolicited.
+    expect(await errorFromClockAhead(6_000)).toBe('unsolicited_response');
+    expect(await errorFromClockAhead(6 * 60_000)).toBe('saml_error');
+  });
+
   it('signs in once at the landing path, refusing replays and other audiences', async () => {
     await samlProvider({ idpInitiated: true, landingPath: '/spaces' });
     const xml = await spMetadata();

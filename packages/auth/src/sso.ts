@@ -313,6 +313,9 @@ export class SsoService {
         providersLimit: 0,
         // Read per response: unsolicited responses only for providers that accept them.
         saml: {
+          // better-auth's own default, set so it also reaches samlify, which allows no skew
+          // and checks first: an IdP clock a moment ahead would fail every sign-in.
+          clockSkew: 5 * 60_000,
           get allowIdpInitiated() {
             return acs()?.idpInitiated === true;
           },

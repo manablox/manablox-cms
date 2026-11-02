@@ -17,6 +17,10 @@ together.
 - **On the command line.** `manablox space create` without `--url` creates a space without a website. `manablox create --no-space-url`, or `none` at the address question, does the same for the first space.
 - **For developers.** A space's `url` can now be `null` in the APIs, in `space:afterCreate`, `space:afterUpdate` and `space:afterDelete`, and in space exports. The Control API no longer falls back to the public URL. Workflows see an empty `space.url`. The admin SDK's API level is now 2.
 
+### Single sign-on
+
+- **SAML allows for clock differences.** A sign-in no longer fails when the identity provider's clock runs a little ahead. Up to five minutes are accepted in either direction.
+
 ## 0.50.0 - 2026-09-30
 
 Manablox is a headless CMS: you write and organise your content in a web admin, and your website or app fetches it over an API. It is free and open source (MIT), and it runs on your own server or with a hosting provider.
