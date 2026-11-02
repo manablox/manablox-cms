@@ -61,7 +61,8 @@ export interface CliPrompter {
 export interface CliSpaceCreateContext {
   readonly name: string;
   readonly machineName: string;
-  readonly url: string;
+  /** `null` without a frontend. */
+  readonly url: string | null;
   readonly locales: readonly string[];
 }
 
@@ -73,7 +74,7 @@ export interface CliSpaceCreateOptions {
   /** The plugin's data for `spaces.create` (`plugins.<id>`), `undefined` for none; may be a promise. */
   apply(space: CliSpaceCreateContext, values: CliValues): unknown;
   /** Lines for the summary once the space exists. */
-  report?(data: unknown, space: { url: string; warnings: readonly string[] }): string[];
+  report?(data: unknown, space: { url: string | null; warnings: readonly string[] }): string[];
 }
 
 /** The instance `manablox create` writes, as the core options resolved it. */

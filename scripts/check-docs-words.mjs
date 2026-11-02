@@ -2,7 +2,7 @@
 // Keeps upgrade history out of the repository: nothing is released yet, so docs describe what
 // is, not what changed.
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { lineOf, report } from './lib/scan.mjs';
 
 /** Wording that describes a change rather than the current state, in docs and READMEs. */
@@ -34,7 +34,8 @@ const files = execFileSync(
   },
 )
   .split('\0')
-  .filter((path) => path && PROSE(path));
+  // A file deleted but not committed yet is still in the index.
+  .filter((path) => path && PROSE(path) && existsSync(path));
 
 const findings = [];
 for (const path of files) {

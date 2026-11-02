@@ -13,7 +13,6 @@ const roots = (
     : [
         'apps/admin/src',
         'packages/admin-sdk/src',
-        'packages/plugin-license/src/admin',
         'packages/plugin-webhooks/src/admin',
         'packages/plugin-workflows/src/admin',
       ]

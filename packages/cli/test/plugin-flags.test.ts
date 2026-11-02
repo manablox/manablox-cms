@@ -103,7 +103,7 @@ describe('manablox plugin enable and disable', () => {
   it('lists the configured plugins with their flags from the database', async () => {
     const listed = await plugin(['list']);
     expect(listed.code, listed.err).toBe(0);
-    expect(listed.out).toMatch(/^demo +no +yes +- +on +- +-$/m);
+    expect(listed.out).toMatch(/^demo +no +yes +- +on$/m);
     expect(listed.out).not.toContain('unknown');
   });
 });

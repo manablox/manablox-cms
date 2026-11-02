@@ -14,7 +14,7 @@ defineProps<{
   /** The draft as plugin views see it. */
   editorDraft: ContentEditorDraft;
   /** Offers the visual editor. */
-  hasBlockField: boolean;
+  offersVisual: boolean;
   closeView: () => void;
 }>();
 
@@ -38,7 +38,7 @@ const draft = useDraftStore();
       <Icon name="redo" />
     </button>
   </div>
-  <FeatureGate v-if="hasBlockField" feature="visualEditor" label="Visual" trigger-class="mb-btn-ghost">
+  <FeatureGate v-if="offersVisual" feature="visualEditor" label="Visual" trigger-class="mb-btn-ghost">
     <button class="mb-btn-ghost" title="Edit against the live site" @click="emit('visual')">
       <Icon name="eye" /> Visual
     </button>

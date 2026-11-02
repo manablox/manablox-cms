@@ -65,7 +65,8 @@ export interface CreateOptions {
   space: boolean;
   spaceName: string;
   /** Empty until `finalizeOptions` fills in the default. */
-  spaceUrl: string;
+  /** The first space's website; `''` until decided, `null` for none. */
+  spaceUrl: string | null;
   spaceLocales: string[];
   spaceStarter: SpaceTemplateId | null;
   /** The sections of the `custom` type; `null` takes its defaults. */
@@ -198,6 +199,7 @@ export function optionsFromArgs(
     out.spaceName = validSpaceName('space-name', options['space-name']);
   if (options['space-url'] !== undefined)
     out.spaceUrl = validUrl('space-url', options['space-url']);
+  if (flags['no-space-url']) out.spaceUrl = null;
   if (options['space-locales'] !== undefined)
     out.spaceLocales = validLocales('space-locales', options['space-locales']);
 
@@ -258,7 +260,7 @@ function featureList(value: string, pluginIds: readonly string[]): string[] {
 export function finalizeOptions(options: CreateOptions): CreateOptions {
   const finalized = { ...options };
   if (finalized.preset === 'local') finalized.proxy = 'none';
-  finalized.spaceUrl ||= defaultSpaceUrl(finalized);
+  if (finalized.spaceUrl === '') finalized.spaceUrl = defaultSpaceUrl(finalized);
   return finalized;
 }
 
@@ -272,7 +274,7 @@ export function firstSpace(options: CreateOptions): SpaceOptions {
   return {
     name: options.spaceName,
     machineName: machineNameFrom(options.spaceName),
-    url: options.spaceUrl || defaultSpaceUrl(options),
+    url: options.spaceUrl === '' ? defaultSpaceUrl(options) : options.spaceUrl,
     locales: options.spaceLocales,
     starter: options.spaceStarter,
     blocks: options.spaceStarter === 'custom' ? (options.spaceBlocks ?? null) : null,

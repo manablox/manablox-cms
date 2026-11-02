@@ -20,7 +20,7 @@ export interface OpenEnvironment {
 }
 
 /** The platform's command that opens a URL in the default browser. */
-export function browserCommand(
+function browserCommand(
   url: string,
   environment: Pick<OpenEnvironment, 'platform' | 'procVersion' | 'onPath'>,
 ): [command: string, args: string[]] {

@@ -62,13 +62,12 @@ describe('manablox create: arguments', () => {
 
   it('picks the exact list of --features, and refuses it mixed with the switches', () => {
     const picked = (features: string) => optionsFromArgs({ features }, {}, [], '/work').plugins;
-    const none = { website: false, ai: false, workflows: false, webhooks: false, license: false };
-    // The license plugin the AI plugin requires is added once the choice is applied.
+    const none = { website: false, ai: false, workflows: false, webhooks: false };
     expect(picked('ai,workflows')).toEqual({ ...none, ai: true, workflows: true });
     expect(picked('none')).toEqual(none);
     expect(picked('')).toEqual(none);
     expect(() => picked('ai,shop')).toThrow(
-      "--features: 'shop' is not one of website, ai, workflows, webhooks, license (or none for the core alone)",
+      "--features: 'shop' is not one of website, ai, workflows, webhooks (or none for the core alone)",
     );
     expect(() => picked('ai, ai')).toThrow("--features names 'ai' twice");
     expect(() => optionsFromArgs({ features: 'ai' }, { 'no-website': true }, [], '/')).toThrow(
@@ -106,7 +105,6 @@ describe('manablox create: arguments', () => {
       ai: false,
       workflows: false,
       webhooks: false,
-      license: false,
     });
   });
 

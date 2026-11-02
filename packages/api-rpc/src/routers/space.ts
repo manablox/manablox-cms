@@ -56,7 +56,7 @@ const spaceFields = z.object({
   name: z.string().min(1).max(200),
   machineName,
   description: z.string().nullable().optional(),
-  url: z.string().url(),
+  url: z.string().url().nullable().optional(),
   defaultLocale: locale,
   locales: localeList,
   settings: z.record(z.string(), z.unknown()).optional(),

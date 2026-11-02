@@ -1,7 +1,6 @@
 import type { ManabloxConfig } from '@manablox/core';
 import type { ParsedArgs } from '../args.js';
-import { LICENSE_PLUGIN, licenseStates, type PremiumProduct } from '../license.js';
-import { FIRST_PARTY_PLUGINS, firstPartyPlugins } from '../plugins.js';
+import { FIRST_PARTY_PLUGINS } from '../plugins.js';
 import {
   configuredIds,
   databaseReachable,
@@ -19,10 +18,6 @@ interface Row {
   configured: boolean;
   migrations: string;
   flag: string;
-  /** The premium product it sells, `-` for none. */
-  premium: string;
-  /** Its product's license state, `-` for a plugin that is not premium or not configured. */
-  license: string;
 }
 
 /** What the database says per plugin id; empty maps and a reason without one. */
@@ -88,7 +83,6 @@ export async function listCommandRun(args: ParsedArgs, context: PluginContext): 
   const dir = context.cwd;
   const installed = await installedPlugins(dir);
   let configured = configuredIds(dir);
-  let licenses: Map<PremiumProduct, string> | null = null;
   let state: Awaited<ReturnType<typeof databaseState>> = {
     migrations: new Map(),
     flags: new Map(),
@@ -104,9 +98,6 @@ export async function listCommandRun(args: ParsedArgs, context: PluginContext): 
       flags: new Map(),
       reason: `the database could not be read (${(error as Error).message})`,
     }));
-    if (!state.reason && state.migrations.get(LICENSE_PLUGIN) === 'up to date') {
-      licenses = await instanceLicenses(dir, args.options.config, context);
-    }
   } catch (error) {
     state.reason = `the config does not load (${(error as Error).message.split('\n')[0]})`;
   }
@@ -126,22 +117,10 @@ export async function listCommandRun(args: ParsedArgs, context: PluginContext): 
       configured: configured.includes(id),
       migrations: state.migrations.get(id) ?? (state.reason ? '?' : '-'),
       flag: state.flags.get(id) ?? (state.reason ? '?' : '-'),
-      premium: known?.premium ?? '-',
-      license:
-        known?.premium && configured.includes(id) ? (licenses?.get(known.premium) ?? '?') : '-',
     };
   });
   const table = [
-    [
-      'plugin',
-      'package',
-      'installed',
-      'configured',
-      'migrations',
-      'instance flag',
-      'premium',
-      'license',
-    ],
+    ['plugin', 'package', 'installed', 'configured', 'migrations', 'instance flag'],
     ...rows.map((row) => [
       row.id,
       row.package,
@@ -149,8 +128,6 @@ export async function listCommandRun(args: ParsedArgs, context: PluginContext): 
       row.configured ? 'yes' : 'no',
       row.migrations,
       row.flag,
-      row.premium,
-      row.license,
     ]),
   ];
   const widths =
@@ -175,28 +152,5 @@ export async function listCommandRun(args: ParsedArgs, context: PluginContext): 
   if (state.reason) {
     context.out.write(`\nMigrations and flags are unknown: ${state.reason}.\n`);
   }
-  if (rows.some((row) => row.license !== '-')) {
-    context.out.write('\nLicenses: manablox license status; buy one with manablox license buy\n');
-  }
   return 0;
-}
-
-/** The license state of each premium product, from the license plugin; `null` when unknown. */
-async function instanceLicenses(
-  dir: string,
-  config: string | undefined,
-  context: PluginContext,
-): Promise<Map<PremiumProduct, string> | null> {
-  const license = (await firstPartyPlugins(dir)).find((plugin) => plugin.id === LICENSE_PLUGIN);
-  if (!license) return null;
-  return licenseStates({
-    cwd: dir,
-    config,
-    out: context.out,
-    err: context.err,
-    prompter: null,
-    tty: false,
-    license,
-    ready: true,
-  });
 }

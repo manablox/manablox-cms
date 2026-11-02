@@ -3,12 +3,12 @@ export const VERSIONS = {
   // The engines floor (`node >=24`), not the repo's newer Node.
   '@types/node': '^24.0.0',
   typescript: '^7.0.2',
-  vite: '^8.2.2',
+  vite: '^8.3.5',
   vue: '^3.5.42',
   'vue-router': '^5.3.1',
   'vue-tsc': '^3.3.11',
   '@vitejs/plugin-vue': '^6.0.8',
-  astro: '^7.3.1',
+  astro: '^7.4.4',
   '@astrojs/check': '^0.9.10',
   // Not in the catalog.
   '@astrojs/node': '^11.1.5',

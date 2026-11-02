@@ -275,8 +275,10 @@ export async function askMissing(
   await plugins?.apply(options);
   if (options.space) {
     if (given.spaceUrl === undefined) {
-      options.spaceUrl = await ask('Address of the website', defaultSpaceUrl(options), (raw) =>
-        validUrl('space-url', raw),
+      options.spaceUrl = await ask(
+        'Address of the website ("none" for a data-only space)',
+        defaultSpaceUrl(options),
+        (raw) => (raw.trim().toLowerCase() === 'none' ? null : validUrl('space-url', raw)),
       );
     }
     if (given.spaceStarter === undefined) {

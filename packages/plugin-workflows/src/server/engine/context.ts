@@ -84,7 +84,7 @@ export async function spaceInfo(
 ): Promise<WorkflowRunContext['space']> {
   const space = await ctx.repos.spaces.findById(spaceId);
   return space
-    ? { id: space.id, name: space.name, machineName: space.machineName, url: space.url }
+    ? { id: space.id, name: space.name, machineName: space.machineName, url: space.url ?? '' }
     : { id: spaceId, name: '', machineName: '', url: '' };
 }
 

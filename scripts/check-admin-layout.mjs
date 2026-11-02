@@ -15,7 +15,6 @@ const IMPORT = /from\s+'([^']+)'|import\(\s*'([^']+)'\s*\)/g;
 
 /** Admin plugin sources, each built into its own bundle. */
 const PLUGIN_ROOTS = [
-  'packages/plugin-license/src/admin',
   'packages/plugin-webhooks/src/admin',
   'packages/plugin-workflows/src/admin',
 ].map((dir) => resolve(dir));

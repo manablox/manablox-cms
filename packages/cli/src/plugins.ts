@@ -34,10 +34,6 @@ export interface FirstPartyPlugin {
   enhances: readonly string[];
   /** Plugins it cannot run without; the first-party ones come along with it. */
   requires: readonly string[];
-  /** The premium product it sells (`@manablox/license`); it needs a license key. */
-  premium?: 'ai' | 'website';
-  /** Comes with the plugins that require it; `manablox create` does not offer it on its own. */
-  implied?: boolean;
 }
 
 export const FIRST_PARTY_PLUGINS: readonly FirstPartyPlugin[] = [
@@ -49,8 +45,7 @@ export const FIRST_PARTY_PLUGINS: readonly FirstPartyPlugin[] = [
     hint: 'Spaces designed in the admin, served by the site process',
     default: false,
     enhances: ['ai'],
-    requires: ['license'],
-    premium: 'website',
+    requires: [],
   },
   {
     id: 'ai',
@@ -60,8 +55,7 @@ export const FIRST_PARTY_PLUGINS: readonly FirstPartyPlugin[] = [
     hint: 'Text, image and model generation with your own provider keys',
     default: false,
     enhances: ['workflows', 'website'],
-    requires: ['license'],
-    premium: 'ai',
+    requires: [],
   },
   {
     id: 'workflows',
@@ -82,17 +76,6 @@ export const FIRST_PARTY_PLUGINS: readonly FirstPartyPlugin[] = [
     default: false,
     enhances: ['workflows'],
     requires: [],
-  },
-  {
-    id: 'license',
-    package: '@manablox/plugin-license',
-    cli: '@manablox/plugin-license/cli',
-    label: 'Licenses',
-    hint: 'License keys for the premium plugins',
-    default: false,
-    enhances: [],
-    requires: [],
-    implied: true,
   },
 ];
 

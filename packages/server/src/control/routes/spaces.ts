@@ -37,7 +37,7 @@ export const spaceRoutes = {
           .regex(/^[a-z][a-z0-9_-]*$/)
           .max(64),
         description: z.string().max(2000).nullable().optional(),
-        url: z.url().optional().describe('Frontend origin; defaults to the public URL.'),
+        url: z.url().nullable().optional().describe('Frontend origin; none for a data-only space.'),
         defaultLocale: locale.default('en'),
         locales: z.array(locale).min(1).optional(),
         starter: z
@@ -66,10 +66,9 @@ export const spaceRoutes = {
       }),
     )
     .handler(({ input, context }) => {
-      const { locales, url, ...rest } = input;
+      const { locales, ...rest } = input;
       return context.api.createSpace({
         ...rest,
-        url: url ?? context.runtime.manablox.config.server.publicUrl,
         locales: locales ?? [input.defaultLocale],
       });
     }),

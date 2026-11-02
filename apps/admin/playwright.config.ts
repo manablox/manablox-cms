@@ -21,8 +21,7 @@ import { defineConfig, devices } from '@playwright/test';
  * `E2E_CORE_URL` (default 3505), with the prebuilt admin the plugins instance builds. External
  * runs skip it unless `E2E_CORE_URL` is set.
  *
- * The API migrates with its plugins (`@manablox/api migrate`), so their tables exist, and runs
- * with a test license (`start:licensed`), the way the premium plugins' repositories run it.
+ * The API migrates with its plugins (`@manablox/api migrate`), so their tables exist.
  */
 const external = process.env.E2E_EXTERNAL === '1';
 const adminUrl = process.env.E2E_ADMIN_URL ?? 'http://localhost:3002';
@@ -107,7 +106,7 @@ export default defineConfig({
         webServer: [
           {
             command:
-              'pnpm --filter @manablox/db create-db --fresh && pnpm --filter @manablox/api migrate && pnpm --filter @manablox/api start:licensed',
+              'pnpm --filter @manablox/db create-db --fresh && pnpm --filter @manablox/api migrate && pnpm --filter @manablox/api start',
             url: `${apiUrl}/healthz`,
             timeout: 120_000,
             reuseExistingServer: false,

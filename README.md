@@ -13,9 +13,8 @@ feature can be switched on or off and limited from the outside, so a hosting or 
 system can offer Manablox in plans.
 
 This repository holds the CMS: the packages published to npm as `@manablox/*`, the admin, and
-the apps it runs in development. The premium plugins (AI and the website designer), the
-license portal, the marketing website and both documentation sites live in their own
-repositories and depend on these packages by name.
+the apps it runs in development. The AI and website plugins, the marketing website and both
+documentation sites live in their own repositories and depend on these packages by name.
 
 - **Developer documentation:** <https://dev.manablox.io>
 - **User guide:** <https://docs.manablox.io>
@@ -31,11 +30,10 @@ cd my-cms
 pnpm services:up && pnpm migrate && pnpm dev   # local preset: API and admin on http://localhost:3000
 ```
 
-`manablox create` asks which features a project gets. Workflows and webhooks are free
-plugins from this repository; AI and the website designer are premium plugins installed from
-npm (`@manablox/plugin-ai`, `@manablox/plugin-website`); they run without a license key on a
-local development instance, and production needs a subscription. `manablox plugin install`,
-`uninstall`, `enable` and `disable` change them later.
+`manablox create` asks which features a project gets. Workflows and webhooks are plugins from
+this repository; AI and the website designer are plugins installed from npm
+(`@manablox/plugin-ai`, `@manablox/plugin-website`). All of them are MIT licensed.
+`manablox plugin install`, `uninstall`, `enable` and `disable` change them later.
 
 The same CLI writes a frontend that reads from it:
 
@@ -69,8 +67,6 @@ pnpm dlx @manablox/cli frontend my-site --framework astro   # or plain, react-ss
 | `@manablox/nuxt` | The Nuxt module, with live preview built in |
 | `@manablox/plugin-workflows` | Automations editors build in the admin |
 | `@manablox/plugin-webhooks` | Outgoing calls when content changes, and incoming endpoints |
-| `@manablox/plugin-license` | License keys of the premium plugins: activations and signed leases |
-| `@manablox/license` | The license key and lease format the license plugin and server share |
 | `@manablox/config-typescript` | Shared TypeScript and build settings |
 | `@manablox/config-vitest` | Shared vitest settings, for plugin tests too |
 | `@manablox/docs-theme` | The Starlight theme of the documentation sites |
@@ -122,8 +118,8 @@ all Manablox repositories run side by side:
 
 ### The local registry
 
-The other Manablox repositories (the premium plugins, the license portal, the
-documentation sites) depend on these packages by name. In development they install them
+The other Manablox repositories (the AI and website plugins, the documentation sites)
+depend on these packages by name. In development they install them
 from the Verdaccio in this stack rather than from npmjs:
 
 ```sh
@@ -246,9 +242,8 @@ pushes `main` and tags to ghcr.io; `release.yml` pushes the version tags.
 ## Licence
 
 Manablox is open source under the [MIT licence](./LICENSE): the CMS, the admin, the CLI,
-the SDKs, the workflows, webhooks and license plugins, and the projects the CLI scaffolds.
-The premium plugins (AI and the website) live in their own repositories under a commercial
-license.
+the SDKs, the workflows and webhooks plugins, and the projects the CLI scaffolds. The AI and
+website plugins live in their own repositories, also under the MIT licence.
 
 [`TRADEMARKS.md`](./TRADEMARKS.md) covers the name and logo, which the MIT licence does not.
 Contributions are accepted under the [CLA](./CLA.md). Release notes are in

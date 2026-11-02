@@ -14,7 +14,7 @@ Please give us a reasonable time to release the fix before you disclose the prob
 
 This covers everything in this repository: the `@manablox/*` packages published from it,
 the admin, and the images `ghcr.io/manablox/cms-api` and `ghcr.io/manablox/cms-admin`. A problem in
-a premium plugin goes to that plugin's own repository.
+the AI or website plugin goes to that plugin's own repository.
 
 ## Supported versions
 

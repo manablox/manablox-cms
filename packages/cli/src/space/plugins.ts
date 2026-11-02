@@ -2,7 +2,7 @@ import type { CliSpaceCreateOptions, CliValues } from '@manablox/core';
 import type { CliPlugin } from '../plugins.js';
 import type { SpaceOptions } from './options.js';
 
-type Report = (space: { url: string; warnings: readonly string[] }) => string[];
+type Report = (space: { url: string | null; warnings: readonly string[] }) => string[];
 
 /**
  * The plugins' data for `spaces.create`: `--plugin-data` plus what each plugin makes of its

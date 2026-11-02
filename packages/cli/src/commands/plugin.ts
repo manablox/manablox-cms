@@ -27,7 +27,7 @@ function findCommand(
 }
 
 /** Where a plugin's command runs and how it talks. */
-export interface PluginCommandSetup {
+interface PluginCommandSetup {
   /** The instance folder. */
   cwd: string;
   /** `--config`. */
@@ -49,7 +49,7 @@ type Logging = NonNullable<ManabloxConfig['logging']>;
  * answer (`manablox license status --json` for scripts), and the booted instance's log is
  * not part of it. Other destinations stay as they are.
  */
-export function logsOnStderr(logging: Logging | undefined): Logging {
+function logsOnStderr(logging: Logging | undefined): Logging {
   const adapters = logging?.adapters?.length ? logging.adapters : [{ type: 'console' }];
   return {
     ...logging,
@@ -146,7 +146,7 @@ async function commandContext(
  * Runs a plugin's command by its words, as `manablox <plugin id> <words>` would; for the CLI's
  * own flows, e.g. the license prompt after an install. Resolves to the exit code.
  */
-export async function runPluginCommand(
+async function runPluginCommand(
   plugin: CliPlugin,
   argv: readonly string[],
   values: CliValues,

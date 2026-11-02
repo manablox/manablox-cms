@@ -375,6 +375,7 @@ describe('spaces', () => {
     const space = await json(response);
     expect(space).toMatchObject({
       machineName: 'shop',
+      url: null,
       defaultLocale: 'en',
       locales: ['en', 'de'],
     });

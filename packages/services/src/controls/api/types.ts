@@ -81,7 +81,7 @@ export interface ControlSpaceView {
   name: string;
   machineName: string;
   description: string | null;
-  url: string;
+  url: string | null;
   defaultLocale: string;
   locales: string[];
   /** `ready`, or the import status while one runs or after it failed. */
@@ -113,7 +113,7 @@ export interface ControlSpaceInput {
   name: string;
   machineName: string;
   description?: string | null | undefined;
-  url: string;
+  url?: string | null | undefined;
   defaultLocale: string;
   locales: string[];
   /** A website type's starter; `true` is the basic one. */

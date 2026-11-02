@@ -271,8 +271,8 @@ export interface PluginCreatedSpace {
   readonly id: string;
   readonly name: string;
   readonly machineName: string;
-  /** The space's website address. */
-  readonly url: string;
+  /** The space's website address; `null` without a frontend. */
+  readonly url: string | null;
   readonly defaultLocale: string;
   readonly locales: readonly string[];
 }

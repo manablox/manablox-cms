@@ -34,8 +34,8 @@ export const spaces = table(
     name: text().notNull(),
     machineName: text().notNull(),
     description: text(),
-    /** Public frontend origin, used by the visual editor. */
-    url: text().notNull(),
+    /** Public frontend origin, used by the visual editor; `null` for a space without a frontend. */
+    url: text(),
     defaultLocale: text().notNull().default('en'),
     locales: json<string[]>().notNull().default(['en']),
     settings: json<Record<string, unknown>>().notNull().default({}),

@@ -56,7 +56,7 @@ export function resetAdminApi(): void {
 
 /** What `testMe` switches off, for the instance and every space without its own entry. */
 export interface TestFeatures {
-  /** Off with a lock, as without a license. */
+  /** Off with a lock, as a plugin's ceiling leaves it. */
   locked?: readonly string[];
   /** Off and hidden. */
   hidden?: readonly string[];

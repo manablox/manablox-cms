@@ -82,11 +82,6 @@ services:
       STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
       STORAGE_LOCAL_PATH: /data/uploads
       STORAGE_LOCAL_PUBLIC_URL: ${STORAGE_LOCAL_PUBLIC_URL:-}
-      # Premium plugin licenses; only the management API calls the license server.
-      MANABLOX_LICENSE_KEYS: ${MANABLOX_LICENSE_KEYS:-}
-      MANABLOX_LICENSE_SERVER: ${MANABLOX_LICENSE_SERVER:-https://licenses.manablox.io/api}
-      MANABLOX_LICENSE_KIND: ${MANABLOX_LICENSE_KIND:-auto}
-      MANABLOX_LICENSE_DEV_HOSTS: ${MANABLOX_LICENSE_DEV_HOSTS:-}
       NODE_ENV: production
     volumes:
       - uploads:/data/uploads

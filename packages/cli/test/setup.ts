@@ -1,4 +1,4 @@
-// The premium plugins (website, AI) install from npm and are not part of this repository. Their
+// The website and AI plugins install from npm and are not part of this repository. Their
 // stand-ins under `fixtures/packages/` are linked into a plugin cache of the CLI's version, where
 // `firstPartyPlugins` finds them by package name as it finds the published ones. The in-repo
 // plugins resolve beside the CLI, as before.

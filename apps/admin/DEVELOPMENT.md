@@ -66,7 +66,7 @@ pnpm --filter @manablox/admin test        # unit tests, Vitest and happy-dom
 pnpm --filter @manablox/admin test:e2e    # Playwright: install, the smoke test, controls, plugins
 ```
 
-`test:e2e` boots the API (with a test license, `start:licensed`) and the admin against a
+`test:e2e` boots the API and the admin against a
 throwaway `manablox_e2e` database, with Redis db 13 on localhost (`E2E_REDIS_URL`, `off`
 runs without). Two more instances serve the prebuilt admin: one with the fixture plugins of
 `e2e/fixtures/runtime-plugins`, whose bundles load at runtime, and one with the core alone.

@@ -68,7 +68,7 @@ export declare function useTestSpace(space?: Partial<Space>, options?: TestSpace
     contentTypes: import("vue").ComputedRef<import("@manablox/core").ContentTypeDefinition[]>;
     creatableKinds: import("vue").ComputedRef<import("@manablox/core").ContentTypeDefinition[]>;
     current: import("vue").ComputedRef<{
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;
@@ -121,7 +121,7 @@ export declare function useTestSpace(space?: Partial<Space>, options?: TestSpace
     refresh: () => Promise<void>;
     setHome: (contentId: string | null) => Promise<void>;
     spaces: import("vue").Ref<{
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;
@@ -160,9 +160,9 @@ export declare function useTestSpace(space?: Partial<Space>, options?: TestSpace
         name: string;
         settings: Record<string, unknown>;
         updatedAt: Date;
-        url: string;
+        url: string | null;
     }, "groupId">[] | {
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;
@@ -198,7 +198,7 @@ export declare function useTestSpace(space?: Partial<Space>, options?: TestSpace
     contentTypes: import("vue").ComputedRef<import("@manablox/core").ContentTypeDefinition[]>;
     creatableKinds: import("vue").ComputedRef<import("@manablox/core").ContentTypeDefinition[]>;
     current: import("vue").ComputedRef<{
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;
@@ -251,7 +251,7 @@ export declare function useTestSpace(space?: Partial<Space>, options?: TestSpace
     refresh: () => Promise<void>;
     setHome: (contentId: string | null) => Promise<void>;
     spaces: import("vue").Ref<{
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;
@@ -290,9 +290,9 @@ export declare function useTestSpace(space?: Partial<Space>, options?: TestSpace
         name: string;
         settings: Record<string, unknown>;
         updatedAt: Date;
-        url: string;
+        url: string | null;
     }, "groupId">[] | {
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;
@@ -328,7 +328,7 @@ export declare function useTestSpace(space?: Partial<Space>, options?: TestSpace
     contentTypes: import("vue").ComputedRef<import("@manablox/core").ContentTypeDefinition[]>;
     creatableKinds: import("vue").ComputedRef<import("@manablox/core").ContentTypeDefinition[]>;
     current: import("vue").ComputedRef<{
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;
@@ -381,7 +381,7 @@ export declare function useTestSpace(space?: Partial<Space>, options?: TestSpace
     refresh: () => Promise<void>;
     setHome: (contentId: string | null) => Promise<void>;
     spaces: import("vue").Ref<{
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;
@@ -420,9 +420,9 @@ export declare function useTestSpace(space?: Partial<Space>, options?: TestSpace
         name: string;
         settings: Record<string, unknown>;
         updatedAt: Date;
-        url: string;
+        url: string | null;
     }, "groupId">[] | {
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;

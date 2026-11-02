@@ -344,7 +344,7 @@ export class UsageReports {
         if (host) return host.spaceId;
       }
       for (const space of await this.repos.spaces.list()) {
-        if (hostOf(space.url) === hostname) return space.id;
+        if (space.url && hostOf(space.url) === hostname) return space.id;
       }
     }
     throw ManabloxError.notFound('space.notFound', { host: input.host });

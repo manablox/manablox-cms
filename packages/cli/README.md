@@ -45,7 +45,6 @@ project you run the command as `pnpm exec manablox ...` or through the scripts i
 | `manablox user create` | Creates an account, for example the first administrator |
 | `manablox space create` | Creates a space, with starter content and a designed site if you like |
 | `manablox <plugin> ...` | Commands a plugin adds, such as `manablox website ...` of the website plugin (see below) |
-| `manablox license ...` | License keys of the premium plugins: buy, add, status (see below) |
 | `manablox start` | Starts the CMS server |
 | `manablox push-keys` | Prints a key pair for web push notifications |
 | `manablox docs generate --out <dir>` | Writes the reference pages derived from the code (errors, HTTP API, hooks) |
@@ -182,7 +181,7 @@ frontmatter:
 - `extending/hooks.md`: every hook, its payload and context
 
 It loads the config (`--config`, else `manablox.config.ts`) to find the plugins, including
-premium plugins you installed, but does not boot the instance: no database is needed. The
+the ones you installed, but does not boot the instance: no database is needed. The
 developer documentation runs it against an instance with every plugin installed.
 
 ```sh
@@ -236,7 +235,7 @@ manablox space create --name Docs --locales en,de --url https://docs.example.com
 | --- | --- | --- |
 | `--name <name>` | required | The name of the space |
 | `--machine-name <name>` | made from the name | The technical name: a lowercase letter first, then letters, digits, `-` or `_`. The public API and GraphQL use it |
-| `--url <url>` | `http://localhost:3200` | The address of the website |
+| `--url <url>` | none | The address of the website. Without it the space has no frontend, for a data-only space used with workflows and webhooks |
 | `--locales <list>` | `en` | The languages, comma separated. The first one is the default language |
 | `--template <id>` | none | Fill the space as a website type: `business` (company website with services, a team, testimonials, questions and a contact form), `landing` (product or landing page with features, numbers, pricing and questions), `portfolio` (projects, a project grid, a gallery and a contact form), `blog` (posts, pages and a blogroll), `basic` (Page and Article types with a Teaser block) or `custom` (the sections from `--blocks`). Every type adds published example pages and a main menu |
 | `--blocks <list>` | `hero,text,media-text,gallery,quote,call-to-action` | The sections of the `custom` type, comma separated, and implies it: `hero`, `text`, `media-text`, `image`, `gallery`, `quote`, `features`, `stats`, `faq`, `pricing`, `testimonials`, `team`, `contact`, `call-to-action`. The site designs have a design for each |
@@ -317,6 +316,7 @@ And two databases:
 | `--space`, `--no-space` | `--space` | Create a first space. With `--start` it is created right after the database is ready; otherwise the next steps show the `manablox space create` command to run |
 | `--space-name <name>` | `My site` | The name of the first space. Giving any `--space-...` option means `--space`. With `--admin` the administrator owns it |
 | `--space-url <url>` | the site process, or `http://localhost:3005` | The address of the website. A designed site answers on its host. Behind Caddy or nginx the default is `https://www.example.com` |
+| `--no-space-url` | off | A first space without a website, for data only. At the prompt, `none` does the same |
 | `--space-locales <list>` | `en` | The languages of the first space, comma separated. The first one is the default |
 | `--space-template <id>` | `basic` | The first space's website type: `business`, `landing`, `portfolio`, `blog`, `basic` or `custom` |
 | `--space-blocks <list>` | none | The sections of the `custom` type, as `--blocks` of `manablox space create` |
@@ -355,7 +355,7 @@ manablox plugin disable ai --space blog
 
 | Command | What it does |
 | --- | --- |
-| `list` | The first-party plugins, the installed ones (dependencies with a `manablox` field) and the configured ones, with their migration status and instance flag when the database answers. The `premium` column names the product a premium plugin sells (`ai`, `website`), `license` its license state (`active`, `development`, `missing`, ...; `?` while the database does not answer). Library plugins, dependencies without a `manablox` field such as `@manablox/fields`, are left out |
+| `list` | The first-party plugins, the installed ones (dependencies with a `manablox` field) and the configured ones, with their migration status and instance flag when the database answers. `?` stands for what is unknown while the database does not answer. Library plugins, dependencies without a `manablox` field such as `@manablox/fields`, are left out |
 | `install <id\|package>...` | A first-party id (`website`, `ai`, `workflows`, `webhooks`) at the version of the project's other `@manablox/*` packages, or an npm package that declares itself a plugin. Asks the plugin's questions, adds the dependency, writes the plugin's marked parts, installs with the project's package manager (by its lockfile, the `packageManager` field, or the tool you ran) and migrates when the database answers. Says so for an installed plugin |
 | `uninstall <id>...` | Removes the marked parts, the plugin's files, scripts and dependency. Refused while another installed plugin requires it. The data stays in the database, and installing again brings it back |
 | `enable <id>`, `disable <id>` | Writes `features.plugins.<id>` for the whole instance, or with `--space <name>` for one space |
@@ -378,71 +378,11 @@ already have.
 Only whole marked parts are ever changed. Afterwards restart the CMS (`pnpm dev` restarts
 on its own); in the docker preset run `./scripts/lockfile.sh` and `docker compose up -d --build`.
 
-`ai` and `website` are premium plugins. They run without a license key on a development
-instance (not `NODE_ENV=production`, every URL and domain private, such as `localhost`); a
-production instance needs a subscription. When no license covers one after `install`, it
-asks once: start a 14-day trial (`manablox license buy --trial`) or buy a subscription
-(`buy`), enter a key you have (`manablox license add`), or later. On a local setup the
-question says that the plugin works there without a key and that production needs a
-subscription, and its default is "Continue without a key (development)", in place of later.
-The plugin is installed either way; on a production instance it stays locked until a license
-covers it. A migrated instance is asked for its license states (a product in the
-`development` state counts as local); before the first migration any key in
-`MANABLOX_LICENSE_KEYS` counts, a local setup is told by `.env` (`PUBLIC_URL` and
-`PUBLIC_API_URL` private, no `NODE_ENV=production` or `MANABLOX_LICENSE_KIND=production`, not
-the docker preset), and a new key only goes to `.env`, activated when the instance starts.
-With `--yes` or without a terminal it prints the commands instead. `manablox create` asks the
-same once at the end, for all premium plugins picked, before the instance first starts; the
-local preset counts as a local setup.
-
 ## Plugin commands
 
 A plugin can add commands of its own, `manablox <plugin> <command>`, such as
 `manablox website ...` of the website plugin (its README describes them). `manablox --help`
 lists the commands of the plugins your config includes.
-
-## `manablox license <command>`
-
-License keys for the premium plugins (`@manablox/plugin-license`, which `ai` and `website`
-bring along). Keys are secrets: the commands keep them in `MANABLOX_LICENSE_KEYS` in `.env`,
-never in the config. A development instance needs none: the premium plugins run there on
-private hosts without a key (the `development` state). A key on it activates as development
-unless `--production` says otherwise.
-
-```sh
-manablox license buy --plugins ai,website --yearly
-manablox license buy --plugins ai --trial --monthly
-manablox license add MBX-XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
-manablox license status
-manablox license remove XXXXX
-```
-
-| Command | What it does |
-| --- | --- |
-| `buy` | Asks for the plugins (both are the bundle) and monthly or yearly billing, with the prices and trials of the license server's catalogue ("price on request" where it has none). Then it opens the portal in the browser with a code to confirm, and waits until the purchase is done (up to 30 minutes; Ctrl-C stops waiting, exit code 130). The key arrives by itself and continues as `add`. Whether a trial applies, the portal decides |
-| `add <key>` | Checks the key offline, adds it to `MANABLOX_LICENSE_KEYS` in `.env` (once; without a `.env` it asks whether to create one or to print the line for the deployment's environment) and activates it, printing the products, the kind and when the period or trial ends. When every production seat is taken it lists the instances holding them and offers to deactivate one, to activate this one as development, or to stop |
-| `status` | A table of every key: products, kind, state, period end, lease expiry, last refresh and error, then each product's state: `development` for one that runs without a license on a development instance, with the buy link for production. Exit code 1 while a premium plugin of the config is `lapsed` or `missing` (not `development`), for CI and health checks. `--json` prints the overview as JSON |
-| `activate [<keyId>]` | Activates one key again, or every key: after a conflict (a copy of the instance refreshed it) or a restore |
-| `refresh` | Refreshes every lease now |
-| `remove <keyId>` | Frees the key's activation on the license server and takes it out of `.env`; a key added in the admin is removed from the database |
-| `open [billing]` | Opens the portal's subscriptions, or with `billing` the account |
-
-| Option | Default | Meaning |
-| --- | --- | --- |
-| `--plugins <list>` | asked | `buy`: `ai`, `website`, `ai,website` or `bundle`. Needed without a terminal |
-| `--yearly`, `--monthly` | asked | `buy`: the billing interval. Needed without a terminal |
-| `--trial` | off | `buy`: ask for the 14-day trial. The portal leads with it when the plan has one, and still checks that the trial is free (the install and create prompts' "Start a 14-day trial" sets it) |
-| `--dev`, `--production` | by the hostnames | `add`, `activate`: activate as development (no seat, private hostnames only) or production |
-| `--name <name>` | the admin's hostname and the instance id's first 6 characters, `localhost (3f9a2c)` | `add`: the instance's name in the portal; without an admin URL, the first public hostname |
-| `--no-activate` | activate | `buy`, `add`: only write the key to `.env`; the instance activates it when it starts. Nothing boots |
-| `--no-browser` | open it | `buy`, `open`: only print the address. Also without a terminal and over SSH |
-| `--json` | off | `status`: print JSON |
-| `--yes` | off | Ask nothing; the questions' answers must be given as options |
-| `--config <file>` | `manablox.config.ts` | The config file |
-
-`status`, `activate`, `refresh` and `remove` boot the instance, so they need its database.
-`buy` and `open` talk to `MANABLOX_LICENSE_SERVER` (default
-`https://licenses.manablox.io/api`), and the portal is its origin.
 
 ## `manablox frontend [dir]`
 
@@ -500,6 +440,6 @@ The config may be written in TypeScript; the command loads it without a build st
 | Code | Meaning |
 | --- | --- |
 | `0` | Success |
-| `1` | Error, or an unknown command or option; `license status`: a premium plugin is locked |
+| `1` | Error, or an unknown command or option |
 | `2` | `sync --dry-run` found changes, or `migrate-db` found a difference in the copy |
-| `130` | Cancelled with Ctrl+C: a question, or `license buy` while it waits |
+| `130` | Cancelled with Ctrl+C at a question |

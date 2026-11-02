@@ -76,6 +76,15 @@ describe('spaces', () => {
     expect((await ctx.repos.spaces.update(row.id, { description: null })).description).toBeNull();
   });
 
+  it('has a frontend URL only when given one, and can lose it', async () => {
+    const machineName = `space_${++counter}`;
+    const none = await ctx.repos.spaces.create({ name: 'Data', machineName });
+    expect(none.url).toBeNull();
+    const withUrl = await space();
+    expect((await ctx.repos.spaces.update(withUrl.id, { name: 'Kept' })).url).toBe('http://s.test');
+    expect((await ctx.repos.spaces.update(withUrl.id, { url: null })).url).toBeNull();
+  });
+
   it('update of an unknown space is not found', async () => {
     await expect(ctx.repos.spaces.update(crypto.randomUUID(), { name: 'x' })).rejects.toMatchObject(
       { key: 'space.notFound', kind: 'not_found' },

@@ -26,7 +26,7 @@ interface Draft {
 const editor = useDraftForm<Draft>();
 editor.load({
   name: props.space.name,
-  url: props.space.url,
+  url: props.space.url ?? '',
   defaultLocale: props.space.defaultLocale,
   locales: [...props.space.locales],
 });
@@ -49,7 +49,7 @@ async function save() {
     const { name, url, defaultLocale, locales } = form.value;
     await spaceActions.update(
       props.space.id,
-      props.part === 'identity' ? { name, url } : { defaultLocale, locales },
+      props.part === 'identity' ? { name, url: url.trim() || null } : { defaultLocale, locales },
     );
     editor.markSaved();
     toast.success(props.part === 'identity' ? 'Name and address saved' : 'Languages saved');
@@ -66,8 +66,7 @@ async function save() {
         v-model="form.url"
         label="Website address"
         type="url"
-        hint="Where the website that shows this content lives. Previews and the Visit site button open it."
-        required
+        hint="Where the website that shows this content lives. Previews and the Visit site button open it. Leave it empty for a space without a website."
       />
       <TextField
         label="Technical name"

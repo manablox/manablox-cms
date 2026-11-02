@@ -96,8 +96,8 @@ export interface SpaceAddressField {
   /** The admin's own default. */
   readonly default: string;
   set(value: string): void;
-  /** The field's label and hint; `null` restores the admin's own. */
-  describe(text: { label: string; hint: string } | null): void;
+  /** The field's label and hint, required when the plugin needs an address; `null` restores the admin's own. */
+  describe(text: { label: string; hint: string; required?: boolean } | null): void;
 }
 
 /** The props each slot hands its entries. */

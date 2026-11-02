@@ -30,6 +30,7 @@ import { useContentSave } from '~/features/content/useContentSave';
 import { useDocumentFieldContext } from '~/features/content/useDocumentFieldContext';
 import { useDraftStore } from '~/features/content/useDraftStore';
 import MenuAssignDialog from '~/features/menus/components/MenuAssignDialog.vue';
+import { useSlotItems } from '~/lib/plugins/registry';
 
 const router = useRouter();
 const draft = useDraftStore();
@@ -48,11 +49,14 @@ const closeView = () => {
 
 const contentType = computed(() => (draft.doc ? spaces.typeById(draft.doc.typeId) : null));
 
-// Needs a block canvas and a framable page, so never for templates.
-const hasBlockField = computed(
+const previewTargets = useSlotItems('content.preview.target');
+// Needs a block canvas and a framable page, so never for templates: a frontend to frame, or a
+// plugin that may frame its own.
+const offersVisual = computed(
   () =>
     Boolean(contentType.value?.hasSlug) &&
-    (contentType.value?.fields ?? []).some((field) => spaces.fieldTypeMeta(field.type)?.nested),
+    (contentType.value?.fields ?? []).some((field) => spaces.fieldTypeMeta(field.type)?.nested) &&
+    (Boolean(spaces.current?.url) || previewTargets.value.length > 0),
 );
 
 const { section, isNewRoute, backLabel } = useContentRoute();
@@ -161,7 +165,7 @@ function setField(name: string, value: unknown) {
           v-model:history="showHistory"
           :content-type="contentType"
           :editor-draft="editorDraft"
-          :has-block-field="hasBlockField"
+          :offers-visual="offersVisual"
           :close-view="closeView"
           @visual="showVisual = true"
           @view="openView = $event"

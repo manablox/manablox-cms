@@ -91,9 +91,9 @@ export const HOOK_DOCS: readonly HookDocSection[] = [
     hooks: [
       { name: "space:beforeCreate", payload: "SpaceCreateInput", context: "HookContextBase" },
       { name: "space:beforeLocalesChange", payload: "{ spaceId: string; locales: string[]; previous: string[] }", context: "HookContextBase" },
-      { name: "space:afterCreate", payload: "{ spaceId: string; url: string }", context: "HookContextBase" },
-      { name: "space:afterUpdate", payload: "{ spaceId: string; url: string; previousUrl: string }", context: "HookContextBase" },
-      { name: "space:afterDelete", payload: "{ spaceId: string; url: string }", context: "HookContextBase" },
+      { name: "space:afterCreate", payload: "{ spaceId: string; url: string | null }", context: "HookContextBase" },
+      { name: "space:afterUpdate", payload: "{ spaceId: string; url: string | null; previousUrl: string | null }", context: "HookContextBase" },
+      { name: "space:afterDelete", payload: "{ spaceId: string; url: string | null }", context: "HookContextBase" },
     ],
   },
   {

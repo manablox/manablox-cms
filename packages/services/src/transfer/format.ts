@@ -83,7 +83,7 @@ export interface SpaceExport {
     name: string;
     machineName: string;
     description: string | null;
-    url: string;
+    url: string | null;
     defaultLocale: string;
     locales: string[];
     settings: Record<string, unknown>;

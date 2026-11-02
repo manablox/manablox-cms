@@ -206,8 +206,7 @@ describe('manablox create: questions', () => {
       preset: 'local',
       proxy: 'none',
       publicApi: true,
-      // The premium plugins bring the license plugin, which is not offered on its own.
-      plugins: { website: true, ai: true, workflows: true, webhooks: true, license: true },
+      plugins: { website: true, ai: true, workflows: true, webhooks: true },
       adminPort: 3000,
       publicPort: 3101,
       postgresPort: 5432,
@@ -218,7 +217,6 @@ describe('manablox create: questions', () => {
       git: false,
     });
     expect(applied.map((plugin) => [plugin.id, plugin.result.values])).toEqual([
-      ['license', undefined],
       ['website', { sitePort: 3201 }],
       ['ai', undefined],
       ['workflows', undefined],

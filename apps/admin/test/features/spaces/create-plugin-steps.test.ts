@@ -140,17 +140,43 @@ describe('space create steps', () => {
     await form.submit();
     await flushPromises();
 
-    expect(stepProps).toHaveBeenCalledWith(
-      'space',
-      'http://localhost:3005',
-      'http://localhost:3005',
-    );
+    expect(stepProps).toHaveBeenCalledWith('space', '', '');
     expect(create).toHaveBeenCalledOnce();
     expect(create.mock.calls[0]?.[0]).toMatchObject({
       url: 'http://site.test',
       plugins: { site: { style: 'bold' } },
     });
     expect(info).toHaveBeenCalledWith('Check the site.');
+  });
+
+  it('creates an empty space without a frontend, and keeps a typed address', async () => {
+    const wrapper = mountForm();
+    await flushPromises();
+    await wrapper.find('#s-name').setValue('Data');
+    await submitAll(wrapper);
+    expect(create.mock.calls[0]?.[0]).toMatchObject({ url: null });
+
+    create.mockClear();
+    const typed = mountForm();
+    await flushPromises();
+    await typed.find('#s-name').setValue('Blog');
+    await typed.find('input[type="url"]').setValue('https://blog.test');
+    await submitAll(typed);
+    expect(create.mock.calls[0]?.[0]).toMatchObject({ url: 'https://blog.test' });
+  });
+
+  it('asks a preconfigured space for its address, and gives it back when left', async () => {
+    const wrapper = mountForm();
+    await flushPromises();
+    const url = () => wrapper.find<HTMLInputElement>('input[type="url"]');
+    expect(url().element.value).toBe('');
+    expect(url().element.required).toBe(false);
+    await pick(wrapper, 'Preconfigured');
+    expect(url().element.value).toBe('http://localhost:3005');
+    expect(url().element.required).toBe(true);
+    await pick(wrapper, 'Empty space');
+    expect(url().element.value).toBe('');
+    expect(url().element.required).toBe(false);
   });
 
   it('sends nothing for a step whose data is undefined', async () => {

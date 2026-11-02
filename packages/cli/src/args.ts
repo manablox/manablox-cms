@@ -76,6 +76,7 @@ const COMMAND_OPTIONS: Record<string, CommandOptions> = {
     ],
     switches: [
       ...negatable(['public', 'admin', 'space', 'space-starter', 'install', 'git', 'start']),
+      'no-space-url',
       // The first-party plugins, also where one is not installed.
       ...negatable(FIRST_PARTY_PLUGINS.map((plugin) => plugin.id)),
       'force',

@@ -23,14 +23,13 @@ export function workspacePackages() {
 }
 
 /**
- * The `/testing` subpaths that are published: the premium plugins' repositories run their
+ * The `/testing` subpaths that are published: the plugin repositories run their
  * tests with them. Every other `/testing` export stays workspace-only.
  */
 const PUBLISHED_TESTING = new Set([
   '@manablox/admin-sdk/testing',
   '@manablox/core/testing',
   '@manablox/db/testing',
-  '@manablox/plugin-license/testing',
   '@manablox/services/testing',
 ]);
 

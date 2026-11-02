@@ -43,7 +43,6 @@
     "@manablox/auth": "workspace:*",
     "@manablox/core": "workspace:*",
     "@manablox/db": "workspace:*",
-    "@manablox/license": "workspace:*",
     "@manablox/public-sdk": "workspace:*",
     "@manablox/server": "workspace:*",
     "@manablox/services": "workspace:*",
@@ -53,7 +52,6 @@
   "devDependencies": {
     "@manablox/config-typescript": "workspace:*",
     "@manablox/config-vitest": "workspace:*",
-    "@manablox/plugin-license": "workspace:*",
     "@manablox/plugin-webhooks": "workspace:*",
     "@manablox/plugin-workflows": "workspace:*",
     "@types/node": "catalog:",
@@ -62,14 +60,10 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@manablox/plugin-license": "workspace:*",
     "@manablox/plugin-webhooks": "workspace:*",
     "@manablox/plugin-workflows": "workspace:*"
   },
   "peerDependenciesMeta": {
-    "@manablox/plugin-license": {
-      "optional": true
-    },
     "@manablox/plugin-webhooks": {
       "optional": true
     },

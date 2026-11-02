@@ -18,12 +18,7 @@
       ],
       // Built as a shared module for plugin bundles (shared-modules.ts); the first-party
       // plugins' admin sources are listed by name for the dev server.
-      "ignoreDependencies": [
-        "reka-ui",
-        "@manablox/plugin-license",
-        "@manablox/plugin-webhooks",
-        "@manablox/plugin-workflows"
-      ]
+      "ignoreDependencies": ["reka-ui", "@manablox/plugin-webhooks", "@manablox/plugin-workflows"]
     },
     "packages/admin-plugin": {
       // Imported by tailwind.css, the optional Tailwind preset.
@@ -41,11 +36,7 @@
       // Fixtures are imported by path.
       "entry": ["bin/*.mjs", "test/fixtures/**/*.ts"],
       // Optional peers, loaded by module id as default plugins of `manablox create`.
-      "ignoreDependencies": [
-        "@manablox/plugin-license",
-        "@manablox/plugin-workflows",
-        "@manablox/plugin-webhooks"
-      ]
+      "ignoreDependencies": ["@manablox/plugin-workflows", "@manablox/plugin-webhooks"]
     },
     "packages/db": {
       "entry": ["drizzle.sqlite.config.ts"]
@@ -54,9 +45,6 @@
       // The fixture plugins export their classes so the build's declaration pass can name
       // their types (tsconfig includes test/); nothing imports those names.
       "entry": ["test/fixtures/**/*.ts"]
-    },
-    "packages/plugin-license": {
-      "entry": ["drizzle.sqlite.config.ts", "src/server/db/schema/sqlite.ts"]
     },
     "packages/plugin-workflows": {
       "entry": ["drizzle.sqlite.config.ts", "src/server/db/schema/sqlite.ts"],

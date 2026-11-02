@@ -28,7 +28,7 @@ export const spaceSchema = z.object({
   name: z.string(),
   machineName: z.string(),
   description: z.string().nullable(),
-  url: z.string(),
+  url: z.string().nullable(),
   defaultLocale: z.string(),
   locales: z.array(z.string()),
   status: z.string().describe('`ready`, `importing` or `failed`.'),

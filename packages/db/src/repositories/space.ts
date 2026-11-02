@@ -15,7 +15,7 @@ export interface SpaceWriteData {
   name: string;
   machineName: string;
   description?: string | null | undefined;
-  url: string;
+  url?: string | null | undefined;
   defaultLocale?: string | undefined;
   locales?: string[] | undefined;
   settings?: Record<string, unknown> | undefined;
@@ -73,7 +73,7 @@ export class SpaceRepository extends Repository {
           name: data.name,
           machineName: data.machineName,
           description: data.description ?? null,
-          url: data.url,
+          url: data.url ?? null,
           defaultLocale: data.defaultLocale ?? 'en',
           locales: data.locales ?? [data.defaultLocale ?? 'en'],
           settings: data.settings ?? {},

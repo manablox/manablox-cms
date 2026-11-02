@@ -3,6 +3,19 @@
 All `@manablox/*` packages of this repository share one version number and are released
 together.
 
+## 0.50.2 - unreleased
+
+### Open source
+
+- **Every plugin is MIT licensed.** AI and the website designer are free and open source now, like the rest of Manablox. They need no license key or subscription, on any instance.
+- **No more licensing code.** `@manablox/plugin-license`, `@manablox/license` and the `manablox license` commands are gone. A database that had them keeps an unused `license_activations` table.
+
+### Spaces without a website
+
+- **The frontend URL is optional.** A space can hold data alone, for example for workflows and webhooks. An empty space starts without a URL, a preconfigured one still asks for it. Without a URL, Visit site and the preview are not offered.
+- **On the command line.** `manablox space create` without `--url` creates a space without a website. `manablox create --no-space-url`, or `none` at the address question, does the same for the first space.
+- **For developers.** A space's `url` can now be `null` in the APIs, in `space:afterCreate`, `space:afterUpdate` and `space:afterDelete`, and in space exports. The Control API no longer falls back to the public URL. Workflows see an empty `space.url`. The admin SDK's API level is now 2.
+
 ## 0.50.0 - 2026-09-30
 
 Manablox is a headless CMS: you write and organise your content in a web admin, and your website or app fetches it over an API. It is free and open source (MIT), and it runs on your own server or with a hosting provider.
@@ -95,9 +108,9 @@ Manablox is a headless CMS: you write and organise your content in a web admin, 
 
 - **Plugins.** Add your own field types, workflow steps, admin screens, database tables, permissions and commands. Workflows and webhooks are built as plugins too.
 - **Hooks.** Run your own code when something happens, for example before a page is published.
-- **Testing helpers.** Ready-made test databases, a test license and a mocked admin make plugin tests quick to write.
+- **Testing helpers.** Ready-made test databases and a mocked admin make plugin tests quick to write.
 - **Reference docs.** `manablox docs generate` writes the API, error and hook reference for your installation, plugins included.
 
-### Premium plugins
+### Optional plugins
 
-- **AI and the website designer.** Two optional plugins, installed like any other. Try them for free on your own computer. A live website needs a subscription.
+- **AI and the website designer.** Two optional plugins, installed like any other.

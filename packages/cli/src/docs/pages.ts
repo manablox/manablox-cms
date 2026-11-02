@@ -371,9 +371,8 @@ ${await apiTable(publicRouter, '/v1', { title: 'Manablox Delivery API' })}
 
 A plugin's router answers under \`plugins.<id>\` of the management API, with the same
 authentication, environments and error body. While the plugin is off for the instance or the
-space it answers 404 \`route.notFound\` when hidden and 403 \`control.feature\` when locked (a
-premium plugin on a production instance without an active subscription, say; a development
-instance runs them without a key). The plugins of the default instance:
+space it answers 404 \`route.notFound\` when hidden and 403 \`control.feature\` when locked.
+The plugins of the default instance:
 
 ${await pluginTables(plugins)}
 `,

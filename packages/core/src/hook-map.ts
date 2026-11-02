@@ -110,7 +110,7 @@ export interface SpaceCreateInput {
   id?: string | undefined;
   name: string;
   machineName: string;
-  url: string;
+  url?: string | null | undefined;
   defaultLocale?: string | undefined;
   locales?: string[] | undefined;
 }
@@ -224,11 +224,14 @@ export interface ManabloxHooks {
     HookContextBase,
   ];
   /** A space created or imported, once committed. Handler errors are logged only. */
-  'space:afterCreate': [{ spaceId: string; url: string }, HookContextBase];
+  'space:afterCreate': [{ spaceId: string; url: string | null }, HookContextBase];
   /** A space's settings changed, once committed; `previousUrl` is its URL before. Logged only. */
-  'space:afterUpdate': [{ spaceId: string; url: string; previousUrl: string }, HookContextBase];
+  'space:afterUpdate': [
+    { spaceId: string; url: string | null; previousUrl: string | null },
+    HookContextBase,
+  ];
   /** A space deleted, once committed. Handler errors are logged only. */
-  'space:afterDelete': [{ spaceId: string; url: string }, HookContextBase];
+  'space:afterDelete': [{ spaceId: string; url: string | null }, HookContextBase];
 
   // API hosts
   /** An API host added to a space, once committed. Handler errors are logged only. */

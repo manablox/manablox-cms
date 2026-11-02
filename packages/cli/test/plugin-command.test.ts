@@ -134,28 +134,6 @@ describe('manablox plugin install and uninstall', () => {
     expect(gone.out).toContain('the webhooks plugin is not installed');
   });
 
-  it('installs the license plugin with a premium plugin, and only once', async () => {
-    const dir = await instance({ features: 'none' });
-    const result = await plugin(dir, ['install', 'ai', '--no-install', '--no-migrate']);
-    expect(result.code, result.err).toBe(0);
-    expect(result.out).toContain('installing the license plugin too; ai requires it');
-    expect(result.out).toContain('installed the license plugin (@manablox/plugin-license@^0.4.0)');
-    expect(result.out).toContain('installed the ai plugin');
-    const plugins = readFileSync(join(dir, 'manablox.plugins.ts'), 'utf8');
-    expect(plugins.indexOf('licensePlugin()')).toBeGreaterThan(-1);
-    expect(plugins.indexOf('licensePlugin()')).toBeLessThan(plugins.indexOf('aiPlugin('));
-    expect(readFileSync(join(dir, '.env'), 'utf8')).toContain('\nMANABLOX_LICENSE_KEYS=\n');
-
-    const website = await plugin(dir, ['install', 'website', '--no-install', '--no-migrate']);
-    expect(website.out).not.toContain('installing the license plugin too');
-    // A premium plugin picked in create brings it as well.
-    const created = readFileSync(
-      join(await instance({ features: 'website' }), 'manablox.plugins.ts'),
-      'utf8',
-    );
-    expect(created).toContain('licensePlugin()');
-  });
-
   it('runs the package manager of the instance and names the next steps', async () => {
     const dir = await instance({ preset: 'docker', proxy: 'caddy' });
     writeFileSync(join(dir, 'package-lock.json'), '{}');
@@ -173,14 +151,11 @@ describe('manablox plugin install and uninstall', () => {
 
   it('asks the plugin its install questions and to confirm an uninstall', async () => {
     const dir = await instance({});
-    const asked = scriptedPrompter(['3301', 'development']);
+    const asked = scriptedPrompter(['3301']);
     expect(
       (await plugin(dir, ['install', 'website', '--no-install', '--no-migrate'], asked)).code,
     ).toBe(0);
-    expect(asked.asked()).toEqual([
-      'Port of the site process',
-      'Website is a premium plugin. On this local instance it runs without a license key; production needs a subscription. License it now?',
-    ]);
+    expect(asked.asked()).toEqual(['Port of the site process']);
     expect(readFileSync(join(dir, '.env'), 'utf8')).toContain('\nSITE_PORT=3301\n');
     expect(readFileSync(join(dir, 'README.md'), 'utf8')).toContain('## Designed sites');
 
@@ -205,17 +180,14 @@ describe('manablox plugin install and uninstall', () => {
 
   it("takes a plugin's create options without asking, and refuses others", async () => {
     const dir = await instance({});
-    const asked = scriptedPrompter(['development']);
+    const asked = scriptedPrompter([]);
     const given = await plugin(
       dir,
       ['install', 'website', '--site-port', '3302', '--no-install', '--no-migrate'],
       asked,
     );
     expect(given.code, given.err).toBe(0);
-    // Only the license question: the site port was given.
-    expect(asked.asked()).toEqual([
-      'Website is a premium plugin. On this local instance it runs without a license key; production needs a subscription. License it now?',
-    ]);
+    expect(asked.asked()).toEqual([]);
     expect(readFileSync(join(dir, '.env'), 'utf8')).toContain('\nSITE_PORT=3302\n');
 
     const other = await instance({});
@@ -309,10 +281,10 @@ describe('manablox plugin install and uninstall', () => {
     const listed = await plugin(dir, ['list']);
     expect(listed.code).toBe(0);
     expect(listed.out).toMatch(
-      /^plugin +package +installed +configured +migrations +instance flag +premium +license$/m,
+      /^plugin +package +installed +configured +migrations +instance flag$/m,
     );
-    expect(listed.out).toMatch(/^workflows +@manablox\/plugin-workflows +yes +yes +\? +\? +- +-$/m);
-    expect(listed.out).toMatch(/^ai +@manablox\/plugin-ai +no +no +\? +\? +ai +-$/m);
+    expect(listed.out).toMatch(/^workflows +@manablox\/plugin-workflows +yes +yes +\? +\?$/m);
+    expect(listed.out).toMatch(/^ai +@manablox\/plugin-ai +no +no +\? +\?$/m);
     expect(listed.out).toContain('Available: manablox plugin install <id>');
     expect(listed.out).toContain('Migrations and flags are unknown:');
   });

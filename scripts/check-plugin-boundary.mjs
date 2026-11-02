@@ -17,11 +17,6 @@ const PLUGINS = [
       /WorkflowService\b|WorkflowEngine|workflowRepos|\btable\(\s*['"]workflows['"]|WorkflowRegistry|WorkflowActionRegistry|defineWorkflow(?:Action|Trigger|AbortTrigger)?\b|workflowRuns|workflows_runs|workflowVersions|workflows_versions|activeWorkflows|workflowHttp|workflowMail|@vue-flow|features\.workflows\b|plugins\.workflows\b|['"]workflows?:(?:read|write|run|pruneRuns|live|(?:before|after)[A-Z]\w*)['"]|(?:get|isOn|has|usePluginApi)(?:<[^>]*>)?\(\s*['"]workflows['"]/,
   },
   {
-    packages: ['plugin-license'],
-    names:
-      /LicenseService\b|licenseRepos|LicenseActivationRepository|license_activations|licenseActivations|features\.plugins\.license\b|plugins\.license\b|(?:get|isOn|has|require|usePluginApi)(?:<[^>]*>)?\(\s*['"]license['"]/,
-  },
-  {
     packages: ['plugin-webhooks'],
     names:
       /defineWebhook\b|webhookTrigger\(|webhookAbort\(|WEBHOOK_RESOURCE_KIND|WebhookService\b|WebhookRepository|webhookAuditor|webhookRepos|WebhookView\b|WebhookDeliveryView|webhookDeliveries|webhooks_deliveries|webhookDeliveriesDays|repos\.webhooks\b|\btable\(\s*['"]webhooks['"]|\/api\/hooks\/|hooks\.incoming|features\.webhooks\b|limits\.webhooks\b|plugins\.webhooks\b|['"]webhooks\.(?:webhook|webhooks)['"]|['"]webhooks?:(?:read|write|deliver|beforeCreate|received)['"]|(?:get|isOn|has|usePluginApi)(?:<[^>]*>)?\(\s*['"]webhooks['"]/,
@@ -33,14 +28,7 @@ const PLUGIN_PACKAGES = new Set(PLUGINS.flatMap((plugin) => plugin.packages));
 
 /** Allowed without an import: the CLI's optional peers, whose CLI modules it loads by id. */
 const DEPENDING = new Map([
-  [
-    'cli',
-    new Set([
-      '@manablox/plugin-license',
-      '@manablox/plugin-workflows',
-      '@manablox/plugin-webhooks',
-    ]),
-  ],
+  ['cli', new Set(['@manablox/plugin-workflows', '@manablox/plugin-webhooks'])],
 ]);
 
 const IMPORT = new RegExp(

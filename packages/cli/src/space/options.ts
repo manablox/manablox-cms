@@ -12,8 +12,8 @@ export interface SpaceOptions {
   name: string;
   /** Lower case, letter first; keys the GraphQL schema and the public instance's pin. */
   machineName: string;
-  /** The website's address. */
-  url: string;
+  /** The website's address; `null` for a space without a frontend. */
+  url: string | null;
   /** The first one is the default locale. */
   locales: string[];
   /** The website type it starts with: a content model, published pages and a main menu. */
@@ -29,9 +29,6 @@ export interface SpaceOptions {
   /** Plugin options, passed through as given. */
   extraArgs?: string[] | undefined;
 }
-
-/** The default website address. */
-const DEFAULT_SPACE_URL = 'http://localhost:3200';
 
 /** Comma separated catalog blocks, e.g. `hero,text,gallery`. */
 function validBlocks(option: string, value: string): SpaceBlockId[] {
@@ -143,7 +140,7 @@ export function spaceOptionsFromArgs(
   return {
     name,
     machineName: validMachineName('machine-name', options['machine-name'] ?? machineNameFrom(name)),
-    url: validUrl('url', options.url ?? DEFAULT_SPACE_URL),
+    url: options.url === undefined ? null : validUrl('url', options.url),
     locales: validLocales('locales', options.locales ?? 'en'),
     starter: picked.starter ?? null,
     ...(picked.blocks ? { blocks: picked.blocks } : {}),
@@ -158,16 +155,8 @@ export function spaceOptionsFromArgs(
 
 /** The arguments of `manablox space create` for these options, quoted for a shell where needed. */
 export function spaceCreateArgs(space: SpaceOptions): string[] {
-  const args = [
-    'space',
-    'create',
-    '--name',
-    space.name,
-    '--machine-name',
-    space.machineName,
-    '--url',
-    space.url,
-  ];
+  const args = ['space', 'create', '--name', space.name, '--machine-name', space.machineName];
+  if (space.url) args.push('--url', space.url);
   if (space.locales.join(',') !== 'en') args.push('--locales', space.locales.join(','));
   if (space.starter) args.push('--template', space.starter);
   if (space.starter === 'custom' && space.blocks?.length)

@@ -63,8 +63,8 @@ files, fragments for the slots, its own flags, tokens and secrets, and processes
 tokens and flags never depend on a plugin, so a plugin's part is exactly its marked regions:
 its processes become regions too (`EXPOSE` in the Dockerfile, the restore script's process
 list), and the read-only database role exists on Postgres either way. The plugin list lives
-in `manablox.plugins.ts`, one import anchor for both configs. The premium plugins (website,
-AI) are not in this repository; the tests use stand-ins for their packages
+in `manablox.plugins.ts`, one import anchor for both configs. The website and AI plugins
+are not in this repository; the tests use stand-ins for their packages
 (`test/fixtures/packages/`, linked into the plugin cache by `test/setup.ts`) and render with
 the website stand-in (`render()` in `test/helpers/create.ts`) and without it.
 

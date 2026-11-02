@@ -64,7 +64,7 @@ export function triggerHints(
   const common: PlaceholderHint[] = [
     { path: 'event', hint: 'content.created, content.updated, ..., schedule, call, manual' },
     { path: 'space.name', hint: 'The space' },
-    { path: 'space.url', hint: 'Its public origin' },
+    { path: 'space.url', hint: 'Its public origin; empty without a frontend' },
     { path: 'workflow.name', hint: 'This workflow' },
     { path: 'at', hint: 'When the run started, ISO 8601' },
   ];

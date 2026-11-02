@@ -119,9 +119,8 @@ describe('CLI contributions: loading', () => {
       ['ai', false],
       ['workflows', false],
       ['webhooks', false],
-      ['license', false],
     ]);
-    // Loaded by package name, in the catalogue's order; the premium ones from npm.
+    // Loaded by package name, in the catalogue's order; website and AI from npm.
     expect((await plugins()).map((plugin) => plugin.id)).toEqual(
       FIRST_PARTY_PLUGINS.map((plugin) => plugin.id),
     );
@@ -171,8 +170,9 @@ describe('CLI contributions: first-party plugins', () => {
   };
 
   it('declares every contribution in package.json, where the CLI reads it', async () => {
-    // The premium plugins live in their own repositories, which check the same of theirs.
-    for (const plugin of FIRST_PARTY_PLUGINS.filter((entry) => !entry.premium)) {
+    // Website and AI live in their own repositories, which check the same of theirs.
+    const inRepository = ['workflows', 'webhooks'];
+    for (const plugin of FIRST_PARTY_PLUGINS.filter((entry) => inRepository.includes(entry.id))) {
       // The manifest names the plugin and its CLI module; `manablox create` knows the same.
       expect(manifestOf(plugin.package).manablox).toEqual({ plugin: plugin.id, cli: plugin.cli });
       // configPlugins pairs a configured plugin with its package by the plugin's id; the

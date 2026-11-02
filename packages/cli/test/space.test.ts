@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseArgs } from '../src/args.js';
 import { finalizeOptions, optionsFromArgs } from '../src/create/index.js';
+import { firstSpace } from '../src/create/options.js';
 import {
   machineNameFrom,
   shellQuote,
@@ -16,7 +17,7 @@ describe('manablox space create', () => {
     expect(spaceOptionsFromArgs(args.options, args.flags)).toEqual({
       name: 'Über Blog',
       machineName: 'ueber-blog',
-      url: 'http://localhost:3200',
+      url: null,
       locales: ['en'],
       starter: 'basic',
     });
@@ -97,7 +98,7 @@ describe('manablox space create', () => {
         .join(' '),
     ).toBe(
       "space create --name 'Anna'\\''s site' --machine-name anna-s-site" +
-        ' --url http://localhost:3200 --locales de,en --website designed --plan types.json',
+        ' --locales de,en --website designed --plan types.json',
     );
   });
 });
@@ -127,5 +128,25 @@ describe('manablox create: first space', () => {
     expect(finalizeOptions({ ...options(), spaceUrl: 'https://acme.test' }).spaceUrl).toBe(
       'https://acme.test',
     );
+  });
+
+  it('creates a first space without a website when told to', () => {
+    const given = optionsFromArgs({}, { 'no-space-url': true }, [], '/tmp');
+    expect(given.spaceUrl).toBeNull();
+    const finalized = finalizeOptions({ ...options(), ...given });
+    expect(finalized.spaceUrl).toBeNull();
+    expect(firstSpace(finalized).url).toBeNull();
+  });
+
+  it('leaves --url out for a space without a website', () => {
+    const space = spaceOptionsFromArgs({ name: 'Data' }, {});
+    expect(spaceCreateArgs(space)).toEqual([
+      'space',
+      'create',
+      '--name',
+      'Data',
+      '--machine-name',
+      'data',
+    ]);
   });
 });

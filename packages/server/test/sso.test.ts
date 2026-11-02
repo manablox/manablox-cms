@@ -784,7 +784,7 @@ describe('IdP-initiated SAML sign-in', () => {
     const elsewhere = await saml.unsolicited({ spMetadata: other, nameId: 'idp@corp.test' });
     const wrongAudience = await samlPost(new Jar(), elsewhere);
     expect(new URL(wrongAudience.headers.get('location') ?? '').searchParams.get('error')).toBe(
-      'invalid_saml_response',
+      'saml_error',
     );
   });
 

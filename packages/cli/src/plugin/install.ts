@@ -3,16 +3,8 @@ import { join } from 'node:path';
 import type { CliContribution, CliValues } from '@manablox/core';
 import { optionsBeyondCore, optionValues, type ParsedArgs } from '../args.js';
 import { generateSecrets } from '../create/index.js';
-import {
-  LICENSE_PLUGIN,
-  licenseSteps,
-  type PremiumProduct,
-  premiumProducts,
-  premiumPrompt,
-  uncovered,
-} from '../license.js';
 import { addCommand, installCommand, removeCommand } from '../package-manager.js';
-import { type CliPlugin, firstParty, firstPartyPlugins, withRequired } from '../plugins.js';
+import { firstParty, firstPartyPlugins, withRequired } from '../plugins.js';
 import { planInstall } from './edit.js';
 import {
   applyEdit,
@@ -212,7 +204,6 @@ export async function installCommandRun(args: ParsedArgs, context: PluginContext
 
   const configured = new Set(configuredIds(dir));
   const nextSteps: string[] = [];
-  const added: string[] = [];
   let manual = 0;
   let changed = 0;
   let manifestChanged = false;
@@ -256,7 +247,6 @@ export async function installCommandRun(args: ParsedArgs, context: PluginContext
       );
     }
     nextSteps.push(...(answers.nextSteps ?? []));
-    added.push(target.id);
   }
 
   // Installed already when the packages came in first; again only for what the parts changed.
@@ -275,49 +265,13 @@ export async function installCommandRun(args: ParsedArgs, context: PluginContext
   }
 
   if (changed) {
-    const migrated = await migrateAfterInstall(args, context, options, {
+    await migrateAfterInstall(args, context, options, {
       install,
       installed: installedNow,
       manager,
-    });
-    await licensePremium(premiumProducts(added), context, {
-      config: args.options.config,
-      migrated,
-      license: contributions.find((loaded) => loaded.id === LICENSE_PLUGIN),
     });
     const steps = [...restartSteps(options, manager, !install), ...nextSteps];
     context.out.write(`\nNext steps\n${steps.map((line) => `  ${line}`).join('\n')}\n`);
   }
   return manual && args.flags.strict ? 1 : 0;
-}
-
-/** The premium plugins just installed: the license prompt for those no license covers. */
-async function licensePremium(
-  products: readonly PremiumProduct[],
-  context: PluginContext,
-  state: { config: string | undefined; migrated: boolean; license: CliPlugin | undefined },
-): Promise<void> {
-  if (!products.length) return;
-  if (!state.license) {
-    context.out.write(
-      `\nPremium plugins need a license:\n${licenseSteps(products)
-        .map((line) => `  ${line}\n`)
-        .join('')}`,
-    );
-    return;
-  }
-  const setup = {
-    cwd: context.cwd,
-    config: state.config,
-    out: context.out,
-    err: context.err,
-    prompter: context.prompter,
-    tty: context.tty,
-    license: state.license,
-    ready: state.migrated,
-  };
-  const missing = await uncovered(products, setup);
-  if (!missing.products.length) return;
-  context.out.write('\n');
-  await premiumPrompt(missing.products, { ...setup, development: missing.development });
 }

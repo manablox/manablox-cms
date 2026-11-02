@@ -49,17 +49,19 @@ const FRONTEND_URL = 'http://localhost:3005';
 const form = ref({
   name: '',
   machineName: '',
-  url: FRONTEND_URL,
+  url: props.starter ? FRONTEND_URL : '',
   defaultLocale: 'en',
   locales: ['en'],
 });
 /** The address field's label and hint, as a plugin step describes it. */
-const addressText = ref<{ label: string; hint: string } | null>(null);
+const addressText = ref<{ label: string; hint: string; required?: boolean } | null>(null);
 const address: SpaceAddressField = {
   get value() {
     return form.value.url;
   },
-  default: FRONTEND_URL,
+  get default() {
+    return defaultUrl.value;
+  },
   set(value) {
     form.value.url = value;
   },
@@ -83,6 +85,13 @@ const STARTS = [
 ] as const;
 type Start = (typeof STARTS)[number]['value'];
 const start = ref<Start>(props.starter ? 'preset' : 'empty');
+/** A preconfigured website has an address; an empty space may do without a frontend. */
+const defaultUrl = computed(() => (start.value === 'preset' ? FRONTEND_URL : ''));
+const urlRequired = computed(() => start.value === 'preset' || !!addressText.value?.required);
+// The address follows the start; a hand-typed one stays.
+watch(defaultUrl, (next, previous) => {
+  if (form.value.url === previous) form.value.url = next;
+});
 
 const siteType = ref<SiteType>(props.starter ? 'basic' : 'business');
 const chosenType = computed(() => SPACE_TEMPLATES.find((entry) => entry.id === siteType.value));
@@ -191,6 +200,7 @@ async function submit(): Promise<boolean> {
       const types = picked ? (picked.entry.plan?.(starterDraft(picked)) ?? []) : [];
       const space = await spaces.create({
         ...form.value,
+        url: form.value.url.trim() || null,
         ...starterInput.value,
         ...pluginInput.value,
         ...(types.length ? { plan: { types } } : {}),
@@ -238,12 +248,15 @@ defineExpose({ busy, submit, stage, stages, stageLabel, stageIntro, nextLabel, f
     </div>
     <TextField
       v-model="form.url"
-      :label="addressText?.label ?? 'Frontend URL'"
       type="url"
-      required
+      :required="urlRequired"
       field-class="sm:col-span-2"
-      :hint="addressText?.hint ?? 'Used by the visual editor\'s preview iframe.'"
-    />
+      :hint="addressText?.hint ?? (urlRequired ? 'Used by the visual editor\'s preview iframe.' : 'Leave it empty if no website shows this content.')"
+    >
+      <template #label>
+        {{ addressText?.label ?? 'Frontend URL' }}<span v-if="!urlRequired" class="font-normal text-surface-400"> (optional)</span>
+      </template>
+    </TextField>
     <FormField label="Locales" v-slot="{ id }">
       <LocalePicker :id="id" v-model="form.locales" />
     </FormField>

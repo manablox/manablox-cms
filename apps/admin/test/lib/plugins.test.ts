@@ -96,7 +96,7 @@ describe('compatibleSdk', () => {
 
   it('supports the SDK level this admin ships', () => {
     expect(compatibleSdk(SDK_API_LEVEL, SUPPORTED_SDK_LEVELS)).toBe(true);
-    expect(SUPPORTED_SDK_LEVELS).toEqual({ min: 1, current: 1 });
+    expect(SUPPORTED_SDK_LEVELS).toEqual({ min: 1, current: 2 });
   });
 });
 

@@ -3007,7 +3007,7 @@ export declare function isNotFound(error: unknown): boolean;
 ## lib/api-level.d.ts
 
 ```ts
-export declare const SDK_API_LEVEL = 1;
+export declare const SDK_API_LEVEL = 2;
 ```
 
 ## lib/api-types.d.ts
@@ -4350,7 +4350,7 @@ export declare const useSpaceStore: import("pinia").SetupStoreDefinition<"space"
     contentTypes: import("vue").ComputedRef<import("@manablox/core").ContentTypeDefinition[]>;
     creatableKinds: import("vue").ComputedRef<import("@manablox/core").ContentTypeDefinition[]>;
     current: import("vue").ComputedRef<{
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;
@@ -4403,7 +4403,7 @@ export declare const useSpaceStore: import("pinia").SetupStoreDefinition<"space"
     refresh: () => Promise<void>;
     setHome: (contentId: string | null) => Promise<void>;
     spaces: import("vue").Ref<{
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;
@@ -4442,9 +4442,9 @@ export declare const useSpaceStore: import("pinia").SetupStoreDefinition<"space"
         name: string;
         settings: Record<string, unknown>;
         updatedAt: Date;
-        url: string;
+        url: string | null;
     }, "groupId">[] | {
-        url: string;
+        url: string | null;
         name: string;
         id: string;
         updatedAt: Date;

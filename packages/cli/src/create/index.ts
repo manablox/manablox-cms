@@ -3,7 +3,6 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import type { CliContribution, CliCreateResult, CliValues } from '@manablox/core';
 import { optionValues } from '../args.js';
-import { LICENSE_PLUGIN, licenseSteps, premiumProducts, premiumPrompt } from '../license.js';
 import { installCommand } from '../package-manager.js';
 import { type CliPlugin, FIRST_PARTY_PLUGINS, withRequired } from '../plugins.js';
 import { initGit, runAttached, runCommand, writeFiles } from '../scaffold.js';
@@ -225,34 +224,6 @@ export async function create(
     }
   }
 
-  // Premium plugins: one license prompt for all of them, before the instance first starts,
-  // which activates the key the prompt writes to `.env`.
-  const premium = premiumProducts(applied.map((plugin) => plugin.id));
-  const license = applied.find((plugin) => plugin.id === LICENSE_PLUGIN);
-  const licenseLater =
-    premium.length && !(license && context.prompter)
-      ? [
-          ...(resolved.preset === 'local'
-            ? ['# the premium plugins run locally without a key; production needs a license:']
-            : []),
-          ...licenseSteps(premium, 'pnpm exec manablox'),
-        ]
-      : [];
-  if (premium.length && license && context.prompter) {
-    await premiumPrompt(premium, {
-      cwd: resolved.dir,
-      out: context.out,
-      err: context.out,
-      prompter: context.prompter,
-      tty: context.reporter !== undefined,
-      license: { id: license.id, name: license.id, contribution: license.contribution },
-      ready: false,
-      // A local instance runs on localhost: the premium plugins run there without a key.
-      development: resolved.preset === 'local',
-      runtime: () => Promise.reject(new Error('the new instance does not run yet')),
-    });
-  }
-
   if (resolved.git && !existsSync(join(resolved.dir, '.git'))) {
     const git = await initGit(resolved.dir);
     if (git.ok) reporter.step(git.message);
@@ -266,10 +237,7 @@ export async function create(
     else reporter.warn('Not starting the instance: the dependencies are not installed');
   }
 
-  const pluginSteps = [
-    ...applied.flatMap(({ result }) => result.nextSteps?.({ started }) ?? []),
-    ...licenseLater,
-  ];
+  const pluginSteps = applied.flatMap(({ result }) => result.nextSteps?.({ started }) ?? []);
   reporter.note('Next steps', nextSteps(resolved, shown, installed, started, pluginSteps));
   if (started && generatedPassword) {
     reporter.note('Administrator', [
@@ -307,7 +275,7 @@ export async function answerOptions(
   const apply = async (current: CreateOptions) => {
     // The choice is made: options of what was left out are refused, what is missing loads.
     refuseLeftOut(plugins, current.plugins, loading?.args ?? { options: {}, flags: {} });
-    // What the picked plugins require comes along, such as the license plugin.
+    // What the picked plugins require comes along.
     const picked = withRequired(Object.keys(current.plugins).filter((id) => current.plugins[id]));
     for (const id of picked) current.plugins[id] = true;
     const missing = picked.filter((id) => !plugins.some((plugin) => plugin.id === id));
@@ -329,7 +297,7 @@ export async function answerOptions(
   if (prompter) {
     answered = await askMissing({ ...given, plugins: included }, defaults, prompter, {
       given: given.plugins ?? {},
-      features: FIRST_PARTY_PLUGINS.filter((plugin) => !plugin.implied),
+      features: FIRST_PARTY_PLUGINS,
       apply,
     });
   } else {

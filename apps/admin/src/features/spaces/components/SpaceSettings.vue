@@ -24,7 +24,8 @@ const canWrite = computed(() => session.can('space:write', props.space.id));
 
 const open = ref<string[]>(['identity']);
 
-const host = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+const host = (url: string | null) =>
+  url ? url.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'no website';
 
 const uploadSummary = computed(() => {
   const own = props.space.settings?.assets as
