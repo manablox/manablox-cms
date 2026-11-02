@@ -24,6 +24,15 @@ export type FieldMapper = (
   // biome-ignore lint/suspicious/noExplicitAny: the returned field map is equally shape-dependent
 ) => any;
 
+/** A field's parent: a document, or a block or item it holds, with the document's locale. */
+const localeOf = (parent: never) => (parent as { locale?: string }).locale;
+
+/** Hands `parent`'s locale to the values nested in it, for the `filter` relations inside. */
+function withLocale<T extends object>(values: T[], parent: never): T[] {
+  const locale = localeOf(parent);
+  return locale === undefined ? values : values.map((value) => ({ ...value, locale }));
+}
+
 /** The refs field values resolve to. */
 export interface FieldRefs {
   assetRef: ObjectRefOf<AssetRow>;
@@ -84,7 +93,7 @@ export function fieldMapper(manablox: Manablox, refs: FieldRefs): FieldMapper {
               const target = spec.type.kind === 'ref' ? spec.type.target : 'content';
               // A `filter` relation stores nothing; its query runs on every read.
               return isFilterRelation(field.settings)
-                ? resolveRelationQuery(ctx, target, field.id, field.settings)
+                ? resolveRelationQuery(ctx, target, field.id, field.settings, localeOf(parent))
                 : resolveReference(ctx, target, pick(parent)[field.name], spec.list ?? false);
             },
           });
@@ -107,14 +116,17 @@ export function fieldMapper(manablox: Manablox, refs: FieldRefs): FieldMapper {
                   const value = pick(parent)[field.name];
                   return {
                     grid: blockGridOf(value),
-                    blocks: fieldBlocks(fieldType, value, field.settings),
+                    blocks: withLocale(fieldBlocks(fieldType, value, field.settings), parent),
                   };
                 },
               })
             : t.field({
                 type: blockInterface,
                 nullable: !field.required,
-                resolve: (parent: never) => pick(parent)[field.name] ?? null,
+                resolve: (parent: never) => {
+                  const block = pick(parent)[field.name] as BlockShape | null | undefined;
+                  return block ? withLocale([block], parent)[0] : null;
+                },
               });
           break;
 
@@ -129,7 +141,7 @@ export function fieldMapper(manablox: Manablox, refs: FieldRefs): FieldMapper {
               const row = await ctx.reader.byId(id);
               if (!row) return { grid: null, blocks: [] };
               const value = readTemplateBlocks(ctx.manablox.contentTypes, row);
-              return { grid: blockGridOf(value), blocks: value?.blocks ?? [] };
+              return { grid: blockGridOf(value), blocks: withLocale(value?.blocks ?? [], parent) };
             },
           });
           break;
@@ -141,7 +153,7 @@ export function fieldMapper(manablox: Manablox, refs: FieldRefs): FieldMapper {
             type: [item.ref],
             nullable: false,
             resolve: (parent: never) =>
-              fieldItems(fieldType, pick(parent)[field.name], field.settings),
+              withLocale(fieldItems(fieldType, pick(parent)[field.name], field.settings), parent),
           });
           break;
         }

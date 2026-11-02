@@ -21,6 +21,7 @@ import {
 } from '../migrate-db.js';
 import { postgresTable } from '../postgres/table.js';
 import { AuditRepository } from '../repositories/audit.js';
+import { INSTANCE_ID_META_KEY } from '../repositories/instance-meta.js';
 import { appRolesOf, grantAppRole } from '../roles.js';
 import { createSqliteDatabase, sqliteFile } from './client.js';
 import { sqliteTable } from './table.js';
@@ -111,7 +112,12 @@ async function tablesWithRows(handle: PostgresHandle): Promise<string[]> {
     select tablename as name from pg_tables where schemaname = 'public' order by tablename`;
   const filled: string[] = [];
   for (const { name } of tables) {
-    const [row] = await handle.sql.unsafe(`select exists (select 1 from ${quote(name)}) as found`);
+    // The instance id `manablox migrate` stores does not make a database hold content.
+    const rows =
+      name === definitions.instanceMeta.name ? ` where key <> '${INSTANCE_ID_META_KEY}'` : '';
+    const [row] = await handle.sql.unsafe(
+      `select exists (select 1 from ${quote(name)}${rows}) as found`,
+    );
     if (row?.found) filled.push(name);
   }
   return filled;
@@ -363,6 +369,8 @@ async function copyInto(
 
     log(`migrating ${redactUrl(options.target)}`);
     await runMigrations(target, options.plugins);
+    // The source's id replaces any `manablox migrate` stored here.
+    await target.sql`delete from instance_meta where key = ${INSTANCE_ID_META_KEY}`;
     for (const role of appRoles) {
       log(`granting ${role}`);
       await grantAppRole(target.sql, role);

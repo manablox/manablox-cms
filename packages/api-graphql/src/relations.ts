@@ -1,14 +1,15 @@
 import type { LinkValue } from '@manablox/core';
 import type { GraphQLContext } from './context.js';
 
-/** A `filter` relation's rows, once per field per request. */
+/** A `filter` relation's rows in `locale`, once per field and locale per request. */
 export async function resolveRelationQuery(
   ctx: GraphQLContext,
   target: 'content' | 'asset' | 'user',
   fieldId: string,
   settings: Record<string, unknown>,
+  locale: string | undefined,
 ) {
-  return (await ctx.reader.relation(fieldId, target, settings)).items;
+  return (await ctx.reader.relation(fieldId, target, settings, locale)).items;
 }
 
 /** The document an internal link points at. */

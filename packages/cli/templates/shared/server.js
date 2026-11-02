@@ -60,7 +60,8 @@ app.use('*all', async (req, res) => {
         // a page that could not be rendered must not be held at all.
         'cache-control': status >= 500 ? 'no-store' : 'public, max-age=0, s-maxage=300',
       })
-      .end(template.replace('<!--app-head-->', head).replace('<!--app-html-->', html));
+      // Replacer functions: in a plain string, a `$&` in a code sample would be expanded.
+      .end(template.replace('<!--app-head-->', () => head).replace('<!--app-html-->', () => html));
   } catch (error) {
     vite?.ssrFixStacktrace(error);
     console.error(error);

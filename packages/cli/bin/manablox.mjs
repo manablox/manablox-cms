@@ -15,5 +15,6 @@ main(process.argv.slice(2))
     const params = error?.details?.[0]?.params;
     const about = params ? ` ${JSON.stringify(params)}` : '';
     process.stderr.write(`manablox: ${error instanceof Error ? error.message : error}${about}\n`);
-    process.exitCode = 1;
+    // Not `exitCode`: the connections a failed start leaves open would keep the process up.
+    process.exit(1);
   });

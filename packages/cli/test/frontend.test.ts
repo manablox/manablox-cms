@@ -192,6 +192,12 @@ describe('manablox frontend: the templates on disk', () => {
     expect(file(files, 'vite.config.ts')).toContain('port: 4321');
   });
 
+  it('inserts the rendered page as is, whatever `$` patterns its text holds', () => {
+    const server = file(renderFrontendFiles(options('react-ssr')), 'server.js');
+    expect(server).toContain("replace('<!--app-head-->', () => head)");
+    expect(server).toContain("replace('<!--app-html-->', () => html)");
+  });
+
   /** Both SSR frameworks share one Express server; only the entry differs. */
   it('gives the two SSR frameworks the same server, pointed at their own entry', () => {
     // Same port, since their defaults differ.

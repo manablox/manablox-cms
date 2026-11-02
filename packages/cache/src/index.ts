@@ -81,6 +81,7 @@ class RedisCache implements TaggedCache {
   constructor(
     target: string | Redis,
     private readonly defaultTtl: number,
+    private readonly onWriteError?: (error: unknown) => void,
   ) {
     this.owned = typeof target === 'string';
     const redis = typeof target === 'string' ? createRedis(target, 'cache') : target;
@@ -101,14 +102,19 @@ class RedisCache implements TaggedCache {
   ): Promise<void> {
     const ttl = options.ttl ?? this.defaultTtl;
     const tags = [...new Set(options.tags ?? [])].map((tag) => `${TAG}${tag}`);
-    await this.redis.cacheSet(
-      1 + tags.length,
-      `${ENTRY}${key}`,
-      ...tags,
-      JSON.stringify(value),
-      ttl,
-      key,
-    );
+    try {
+      await this.redis.cacheSet(
+        1 + tags.length,
+        `${ENTRY}${key}`,
+        ...tags,
+        JSON.stringify(value),
+        ttl,
+        key,
+      );
+    } catch (error) {
+      if (!this.onWriteError) throw error;
+      this.onWriteError(error);
+    }
   }
 
   async purge(tags: string[]): Promise<number> {
@@ -229,15 +235,20 @@ class NullCache implements TaggedCache {
 
 /**
  * The tagged cache `config` asks for: none when off, Redis with a URL (on `options.redis`, a
- * shared connection such as `redisHub`'s, when given), else in memory.
+ * shared connection such as `redisHub`'s, when given), else in memory. With `onWriteError` a
+ * refused Redis write is reported, not thrown: Redis at its memory limit still answers reads
+ * but rejects writes, which must not fail the response being stored.
  */
 export function createCache(
   config: CacheConfig & { ttl: number; enabled: boolean },
-  options: { redis?: Redis | null | undefined } = {},
+  options: {
+    redis?: Redis | null | undefined;
+    onWriteError?: ((error: unknown) => void) | undefined;
+  } = {},
 ): TaggedCache {
   if (!config.enabled) return new NullCache();
   if (!config.redisUrl) return new MemoryCache(config.ttl);
-  return new RedisCache(options.redis ?? config.redisUrl, config.ttl);
+  return new RedisCache(options.redis ?? config.redisUrl, config.ttl, options.onWriteError);
 }
 
 /**

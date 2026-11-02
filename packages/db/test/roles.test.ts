@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { ContentTypeRegistry, FieldTypeRegistry } from '@manablox/core';
 import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createPostgresDatabase, type PostgresHandle } from '../src/client.js';
+import { createDatabase, createPostgresDatabase, type PostgresHandle } from '../src/client.js';
 import { migrateDatabase, migrationStatus } from '../src/migrate.js';
 import { migrateSqliteToPostgres } from '../src/migrate-db.js';
 import {
@@ -10,6 +10,7 @@ import {
   databaseContextOf,
   type Repositories,
 } from '../src/repositories/index.js';
+import { INSTANCE_ID_META_KEY, InstanceMetaRepository } from '../src/repositories/instance-meta.js';
 import { databaseRoleWarning } from '../src/roles.js';
 import {
   createTestDatabase,
@@ -153,6 +154,64 @@ describe.skipIf(TEST_DIALECT === 'sqlite')('separate owner and app roles', () =>
     expect((await migrationStatus(app, [notesPlugin()])).plugins[0]?.pending).toBe(0);
     expect(await refusal(app.sql`drop table notes_items`)).toMatch(/must be owner/);
     await repos.spaces.delete(space.id);
+  });
+
+  it('stores the instance id, which a read-only role then only reads', async () => {
+    const stored = await repos.instanceMeta.get<string>(INSTANCE_ID_META_KEY);
+    expect(stored).toEqual(expect.any(String));
+    await migrateDatabase(config());
+    expect(await repos.instanceMeta.get(INSTANCE_ID_META_KEY)).toBe(stored);
+
+    const readOnly = `${appRole}_read`;
+    await admin.unsafe(`create role "${readOnly}" login password 'secret'`);
+    await owner.sql.unsafe(`grant select on all tables in schema public to "${readOnly}"`);
+    const reader = createPostgresDatabase({ url: as(readOnly), max: 1 });
+    try {
+      const { instanceMeta } = createRepositories(
+        reader,
+        new ContentTypeRegistry(new FieldTypeRegistry()),
+      );
+      expect(await instanceMeta.setIfAbsent(INSTANCE_ID_META_KEY, 'unused')).toBe(stored);
+      expect(await refusal(instanceMeta.setIfAbsent('meta-new', 'x'))).toMatch(/instance_meta/);
+    } finally {
+      await reader.close();
+      await owner.sql.unsafe(`revoke all on all tables in schema public from "${readOnly}"`);
+      await admin.unsafe(`drop role "${readOnly}"`);
+    }
+  });
+
+  it('moves into a database that only ran the migrations, taking the source id', async () => {
+    const target = `${name}_migrated`;
+    const url = new URL(as(ownerRole));
+    url.pathname = `/${target}`;
+    await admin.unsafe(`create database "${target}" owner "${ownerRole}"`);
+    const from = await createTestDatabase('roles_migrated', { dialect: 'sqlite' });
+    const sqlite = await createDatabase({ url: from.url });
+    await new InstanceMetaRepository(sqlite).set(INSTANCE_ID_META_KEY, 'from-source');
+    await sqlite.close();
+    const handle = createPostgresDatabase({ url: url.href, max: 1 });
+    const move = () =>
+      migrateSqliteToPostgres({
+        source: { url: from.url },
+        target: url.href,
+        forceOffline: true,
+        settleMs: 0,
+      });
+    try {
+      await migrateDatabase({ url: url.href });
+      expect((await move()).ok).toBe(true);
+      expect(await handle.sql`select key, value from instance_meta`).toEqual([
+        { key: INSTANCE_ID_META_KEY, value: 'from-source' },
+      ]);
+
+      await handle.sql`insert into spaces (id, name, machine_name, url)
+        values (gen_random_uuid(), 'Filled', 'filled', 'x')`;
+      await expect(move()).rejects.toThrow(/not empty \(spaces\)/);
+    } finally {
+      await handle.close();
+      await from.drop();
+      await admin.unsafe(`drop database if exists "${target}" with (force)`);
+    }
   });
 
   it('refuses an app role that is the owner or a superuser', async () => {

@@ -205,19 +205,25 @@ export class DeliveryReader {
     return rows;
   }
 
-  /** A `filter` relation's rows, once per field per request. Users are never listed. */
+  /**
+   * A `filter` relation's rows, once per field and locale per request. `locale` is that of the
+   * document carrying the field, the space's default when absent; assets have none. Users are
+   * never listed.
+   */
   async relation(
     fieldId: string,
     target: 'content' | 'asset' | 'user',
     settings: RelationQuerySettings,
+    locale?: string | null,
   ): Promise<DeliveryRelation> {
     const spaceId = this.spaceId;
     if (!spaceId || target === 'user') return { target: 'content', items: [] };
 
-    const key = `${target}:${fieldId}`;
+    const inLocale = target === 'content' ? (locale ?? undefined) : undefined;
+    const key = `${target}:${fieldId}:${inLocale ?? ''}`;
     let pending = this.relations.get(key);
     if (!pending) {
-      pending = this.relationRows(fieldId, target, settings, spaceId);
+      pending = this.relationRows(fieldId, target, settings, spaceId, inLocale);
       this.relations.set(key, pending);
     }
     return pending;
@@ -228,6 +234,7 @@ export class DeliveryReader {
     target: 'content' | 'asset',
     settings: RelationQuerySettings,
     spaceId: string,
+    locale: string | undefined,
   ): Promise<DeliveryRelation> {
     if (!(await this.isReady(spaceId))) return { target, items: [] };
     if (target === 'content') {
@@ -235,14 +242,21 @@ export class DeliveryReader {
       const request: ContentListRequest = {
         kind: 'relation',
         typeIds: [...typeIds],
-        locale: null,
+        locale: locale ?? null,
         fieldId,
       };
       if (!(await this.beforeList(spaceId, request))) return { target, items: [] };
     }
     const environmentId = this.scopeFor(spaceId)?.environmentId;
     return this.loaders.relationQuery
-      .load({ fieldId, target, settings, spaceId, ...(environmentId ? { environmentId } : {}) })
+      .load({
+        fieldId,
+        target,
+        settings,
+        spaceId,
+        ...(environmentId ? { environmentId } : {}),
+        ...(locale ? { locale } : {}),
+      })
       .then(async (result) => {
         if (result.target === 'asset') {
           trackAssetList(this.touched);

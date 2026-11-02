@@ -1,3 +1,4 @@
+import type { Redis } from 'ioredis';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createCache, MemoryCache, REDIS_PREFIX } from '../src/index.js';
 
@@ -71,6 +72,27 @@ describe('tagged cache', () => {
     await cache.set('a', 1, { tags: ['t'] });
     expect(await cache.get('a')).toBeNull();
     expect(await cache.purge(['t'])).toBe(0);
+  });
+});
+
+describe('a Redis write that is refused', () => {
+  const oom = new Error("OOM command not allowed when used memory > 'maxmemory'.");
+  const full = () =>
+    ({ defineCommand: () => {}, cacheSet: () => Promise.reject(oom) }) as unknown as Redis;
+  const config = { enabled: true, ttl: 60, redisUrl: 'redis://unused' };
+
+  it('is reported instead of thrown with `onWriteError`', async () => {
+    const errors: unknown[] = [];
+    const cache = createCache(config, {
+      redis: full(),
+      onWriteError: (error) => errors.push(error),
+    });
+    await expect(cache.set('a', 1, {})).resolves.toBeUndefined();
+    expect(errors).toEqual([oom]);
+  });
+
+  it('throws without it', async () => {
+    await expect(createCache(config, { redis: full() }).set('a', 1, {})).rejects.toBe(oom);
   });
 });
 

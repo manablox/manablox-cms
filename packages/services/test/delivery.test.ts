@@ -40,6 +40,38 @@ afterAll(async () => {
   await ctx?.close();
 });
 
+describe('filter relations', () => {
+  const settings = (ctxTypes: string[]) => ({
+    multiple: true,
+    selection: 'filter',
+    types: ctxTypes,
+    limit: 100,
+  });
+
+  it('lists the locale asked for, the space default without one', async () => {
+    await ctx.content.create({
+      spaceId: ctx.spaceId,
+      typeId: ctx.ids.article as string,
+      locale: 'de',
+      title: 'Artikel',
+      slug: 'artikel',
+      fields: {},
+    });
+    const query = settings([ctx.ids.article as string]);
+    const read = reader();
+    const titles = async (locale?: string) => {
+      const result = await read.relation('latest', 'content', query, locale);
+      return result.items.map((row) => (row as { title: string }).title);
+    };
+
+    expect(await titles('de')).toEqual(['Artikel']);
+    const english = await titles();
+    expect(english).toContain('Related');
+    expect(english).not.toContain('Artikel');
+    expect(await titles('en')).toEqual(english);
+  });
+});
+
 /** A draft reader, so rows need no publish. */
 const reader = (touched = createTouchedIds()) =>
   new DeliveryReader({

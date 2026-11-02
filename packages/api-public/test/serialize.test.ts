@@ -38,6 +38,17 @@ beforeAll(async () => {
         ],
       },
       {
+        name: 'news_block',
+        kind: 'block',
+        fields: [
+          {
+            name: 'latest',
+            type: 'content',
+            settings: { multiple: true, selection: 'filter', limit: 2, sortBy: 'title' },
+          },
+        ],
+      },
+      {
         name: 'templated',
         fields: [{ name: 'layout', type: 'template', settings: {} }],
       },
@@ -146,9 +157,13 @@ function context(): PublicContext {
   // Only the list queries `filter` relations use.
   const repos = {
     content: {
-      page: async (filter: unknown, pagination: { limit: number; offset: number }) => {
+      page: async (filter: { locale: string }, pagination: { limit: number; offset: number }) => {
         queries.push({ kind: 'content', filter, pagination });
-        return { items: [related(ids.doc), related(ids.otherDoc)], total: 2, ...pagination };
+        const items =
+          filter.locale === 'de'
+            ? [related(ids.otherDoc)]
+            : [related(ids.doc), related(ids.otherDoc)];
+        return { items, total: items.length, ...pagination };
       },
     },
     assets: {
@@ -492,6 +507,57 @@ describe('filter relations', () => {
   it('inlines the matches when the field is expanded', async () => {
     const [result] = await serializeContents([listing()], context(), parseExpand('latest'));
     expect(result?.fields.latest).toMatchObject([{ id: ids.doc }, { id: ids.otherDoc }]);
+  });
+
+  const locales = () =>
+    queries.flatMap((query) =>
+      query.kind === 'content' ? [(query.filter as { locale: string }).locale] : [],
+    );
+
+  it('lists the locale of the document carrying the field', async () => {
+    const page = { typeId: manablox.contentTypes.getByName('listing').id, fields: {} };
+    const [german] = await serializeContents(
+      [row({ ...page, locale: 'de' })],
+      context(),
+      parseExpand(undefined),
+    );
+    expect(german?.fields.latest).toEqual([ids.otherDoc]);
+    expect(locales()).toEqual(['de']);
+  });
+
+  it('gives documents of two locales one query each, assets one for both', async () => {
+    const page = { typeId: manablox.contentTypes.getByName('listing').id, fields: {} };
+    const [english, german] = await serializeContents(
+      [row({ ...page, id: 'en' }), row({ ...page, id: 'de', locale: 'de' })],
+      context(),
+      parseExpand(undefined),
+    );
+    expect(english?.fields.latest).toEqual([ids.doc, ids.otherDoc]);
+    expect(german?.fields.latest).toEqual([ids.otherDoc]);
+    expect(locales().sort()).toEqual(['de', 'en']);
+    expect(queries.filter((query) => query.kind === 'asset')).toHaveLength(1);
+  });
+
+  it('hands the locale down to blocks', async () => {
+    const landing = row({
+      typeId: manablox.contentTypes.getByName('landing').id,
+      locale: 'de',
+      fields: {
+        body: {
+          blocks: [
+            {
+              blockId: 'b1',
+              type: manablox.contentTypes.getByName('news_block').id,
+              fields: {},
+            },
+          ],
+        },
+      },
+    });
+    const [result] = await serializeContents([landing], context(), parseExpand(undefined));
+    const body = result?.fields.body as { blocks: { fields: { latest: string[] } }[] };
+    expect(body.blocks[0]?.fields.latest).toEqual([ids.otherDoc]);
+    expect(locales()).toEqual(['de']);
   });
 });
 

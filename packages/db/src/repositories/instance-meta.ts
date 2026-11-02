@@ -37,9 +37,13 @@ export class InstanceMetaRepository extends Repository {
 
   /**
    * Stores `value` unless the key holds one; returns what the key holds after. Of processes
-   * racing to store one, the first write wins and all return it.
+   * racing to store one, the first write wins and all return it. A key that holds a value is
+   * only read, so a read-only role can call this.
    */
   async setIfAbsent<T>(key: string, value: T): Promise<T> {
+    const held = await this.get<T>(key);
+    if (held !== null) return held;
+
     const { instanceMeta } = this.t;
     await this.db
       .insert(instanceMeta)

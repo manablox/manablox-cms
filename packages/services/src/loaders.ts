@@ -23,7 +23,7 @@ export interface Loaders {
   contentTags: DataLoader<string, TagRow[]>;
   /** An asset's tags, keyed by asset id. */
   assetTags: DataLoader<string, TagRow[]>;
-  /** A `filter` relation's rows, run once per field and space. */
+  /** A `filter` relation's rows, run once per field, space and locale. */
   relationQuery: DataLoader<RelationQueryKey, RelationQueryResult, string>;
 }
 
@@ -34,6 +34,8 @@ export interface RelationQueryKey {
   spaceId: string;
   /** The space's production environment when absent. */
   environmentId?: string | undefined;
+  /** The space's default locale when absent; assets ignore it. */
+  locale?: string | undefined;
 }
 
 export type RelationQueryResult =
@@ -151,7 +153,7 @@ export function createLoaders(
     const query = contentRelationQuery(key.settings, {
       spaceId: key.spaceId,
       environmentId: key.environmentId,
-      locale: await defaultLocaleOf(loaders, key.spaceId),
+      locale: key.locale ?? (await defaultLocaleOf(loaders, key.spaceId)),
     });
     const page = await repos.content.page(query.filter, query.pagination, query.sorts, published);
     return { target: 'content', items: page.items, typeIds: query.typeIds };
@@ -193,7 +195,8 @@ export function createLoaders(
       return assetIds.map((id) => grouped.get(id) ?? []);
     }),
     relationQuery: new DataLoader((keys) => Promise.all(keys.map(runRelationQuery)), {
-      cacheKeyFn: (key) => `${key.target}:${key.spaceId}:${key.environmentId ?? ''}:${key.fieldId}`,
+      cacheKeyFn: (key) =>
+        `${key.target}:${key.spaceId}:${key.environmentId ?? ''}:${key.fieldId}:${key.locale ?? ''}`,
     }),
   };
   return loaders;

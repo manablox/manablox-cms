@@ -43,6 +43,10 @@ describe('manablox create: files', () => {
     expect(compose).not.toContain('\\${');
     expect(compose).not.toMatch(/^\s+ports:\n\s+- '\$\{ADMIN_PORT/m);
     expect(compose).toContain("- '443:443'");
+    // Postgres 18 refuses to start with a mount at `.../data`.
+    expect(compose).toMatch(/postgres-data:\/var\/lib\/postgresql$/m);
+    // The job queue lives in Valkey, so nothing may be evicted.
+    expect(compose).toContain("'--maxmemory-policy', 'noeviction'");
 
     const env = file(files, '.env');
     expect(env).toContain('ADMIN_DOMAIN=cms.acme.test');
@@ -308,6 +312,8 @@ describe('manablox create: files', () => {
     expect(compose).toContain(`- '\${POSTGRES_PORT:-5433}:5432'`);
     expect(compose).toContain(`- '\${VALKEY_PORT:-6380}:6379'`);
     expect(compose).not.toContain('api:');
+    expect(compose).toMatch(/postgres-data:\/var\/lib\/postgresql$/m);
+    expect(compose).toContain("'--maxmemory-policy', 'noeviction'");
 
     const env = file(files, '.env');
     expect(env).toContain('\nDATABASE_URL=postgres://manablox_app:APPPW@localhost:5433/manablox\n');

@@ -2,9 +2,11 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { type DatabaseConfig, type ManabloxPlugin, pluginId } from '@manablox/core';
+import { uuidv7 } from '@manablox/core/node';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { applyBootstrapSql } from './bootstrap.js';
 import { createDatabase, type DatabaseHandle, dialectOf } from './client.js';
+import { INSTANCE_ID_META_KEY, InstanceMetaRepository } from './repositories/instance-meta.js';
 import { assertAppRole, grantAppRole, roleOf } from './roles.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -98,6 +100,7 @@ export interface MigrateDatabaseOptions {
 /**
  * Migrates the database `config` names. With `migrationUrl` on Postgres the migrations run as
  * that owner role, which then grants the role of `url` its privileges; SQLite ignores it.
+ * Stores the instance id too, so a process on a read-only role finds it at its first boot.
  */
 export async function migrateDatabase(
   config: DatabaseConfig,
@@ -115,6 +118,7 @@ export async function migrateDatabase(
     if (appRole && handle.kind === 'postgres') await assertAppRole(handle.sql, appRole);
     await runMigrations(handle, options.plugins);
     if (appRole && handle.kind === 'postgres') await grantAppRole(handle.sql, appRole);
+    await new InstanceMetaRepository(handle).setIfAbsent(INSTANCE_ID_META_KEY, uuidv7());
   } finally {
     await handle.close();
   }

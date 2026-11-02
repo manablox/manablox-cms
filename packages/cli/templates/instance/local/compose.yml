@@ -40,7 +40,7 @@ services:
     ports:
       - '${POSTGRES_PORT:-__POSTGRES_PORT__}:5432'
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U manablox -d manablox']
@@ -52,7 +52,9 @@ services:
   valkey:
     image: valkey/valkey:8-alpine
     restart: unless-stopped
-    command: ['valkey-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru']
+    # noeviction: the job queue lives here, and evicting its keys would lose jobs. When full,
+    # Valkey refuses writes: pages go uncached and new jobs fail until cache entries expire.
+    command: ['valkey-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'noeviction']
     ports:
       - '${VALKEY_PORT:-__VALKEY_PORT__}:6379'
     volumes:

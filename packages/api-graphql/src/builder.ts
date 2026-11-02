@@ -35,6 +35,8 @@ export interface BlockShape {
   fields: Record<string, unknown>;
   layout?: BlockLayout;
   ext?: Record<string, unknown>;
+  /** The locale of the document holding the block, see `withLocale`. */
+  locale?: string;
 }
 
 /** `meta_description` -> `metaDescription`, so the schema reads as idiomatic GraphQL. */

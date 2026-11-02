@@ -19,15 +19,26 @@ export interface Collected {
   content: Set<string>;
   asset: Set<string>;
   user: Set<string>;
-  /** `filter` relations by field id, queried once each. */
-  queries: Map<string, { target: 'content' | 'asset'; settings: Record<string, unknown> }>;
+  /** `filter` relations by `relationKey`, queried once each. */
+  queries: Map<string, CollectedRelation>;
 }
+
+interface CollectedRelation {
+  fieldId: string;
+  /** The locale of the document carrying the field. */
+  locale: string;
+  target: 'content' | 'asset';
+  settings: Record<string, unknown>;
+}
+
+/** A `filter` relation in `Collected.queries` and `Resolved.queries`: one per field and locale. */
+export const relationKey = (fieldId: string, locale: string) => `${fieldId}:${locale}`;
 
 export interface Resolved {
   content: Map<string, ContentRow>;
   asset: Map<string, AssetRow>;
   user: Map<string, UserRow>;
-  /** Matched ids per `filter` relation, in delivery order. */
+  /** Matched ids by `relationKey`, in delivery order. */
   queries: Map<string, string[]>;
   /** Tags by localization group, for every document built here. */
   contentTags: Map<string, PublicTag[]>;
@@ -76,7 +87,7 @@ export async function resolveInRounds(
       if (!type || walked.has(id)) continue;
       if (isTemplateType(type)) {
         walked.add(id);
-        collectFields(type, row.fields, ctx.manablox, expand, collected, 0);
+        collectFields(type, row.fields, row.locale, ctx.manablox, expand, collected, 0);
       } else if (ctx.relatedFields) {
         // Only the assets of a related document, which delivery inlines with its fields.
         walked.add(id);
@@ -86,7 +97,7 @@ export async function resolveInRounds(
           user: new Set(),
           queries: new Map(),
         };
-        collectFields(type, row.fields, ctx.manablox, assetFields(type), own, 0);
+        collectFields(type, row.fields, row.locale, ctx.manablox, assetFields(type), own, 0);
         for (const asset of own.asset) collected.asset.add(asset);
       }
     }
@@ -107,13 +118,13 @@ async function runRelationQueries(
   ctx: PublicContext,
 ): Promise<void> {
   await Promise.all(
-    [...collected.queries].map(async ([fieldId, { target, settings }]) => {
-      const result = await ctx.reader.relation(fieldId, target, settings);
+    [...collected.queries].map(async ([key, { fieldId, locale, target, settings }]) => {
+      const result = await ctx.reader.relation(fieldId, target, settings, locale);
       const rows: Map<string, AssetRow | ContentRow> =
         result.target === 'asset' ? resolved.asset : resolved.content;
       for (const row of result.items) rows.set(row.id, row);
       resolved.queries.set(
-        fieldId,
+        key,
         result.items.map((row) => row.id),
       );
     }),
@@ -155,12 +166,13 @@ export function collectRow(
 ): void {
   const type = manablox.contentTypes.tryGet(row.typeId);
   if (!type) return;
-  collectFields(type, row.fields, manablox, expand, into, 0);
+  collectFields(type, row.fields, row.locale, manablox, expand, into, 0);
 }
 
 function collectFields(
   type: ContentTypeDefinition,
   values: Record<string, unknown>,
+  locale: string,
   manablox: Manablox,
   expand: ExpandSet,
   into: Collected,
@@ -178,7 +190,12 @@ function collectFields(
 
     if (spec.type.kind === 'ref') {
       if (spec.type.target !== 'user' && isFilterRelation(field.settings)) {
-        into.queries.set(field.id, { target: spec.type.target, settings: field.settings });
+        into.queries.set(relationKey(field.id, locale), {
+          fieldId: field.id,
+          locale,
+          target: spec.type.target,
+          settings: field.settings,
+        });
       } else if (expand.has(field.name)) {
         for (const id of toIds(value)) into[spec.type.target].add(id);
       }
@@ -199,7 +216,7 @@ function collectFields(
       for (const block of fieldBlocks(fieldType, value, field.settings)) {
         const blockType = manablox.contentTypes.tryGet(block.type);
         if (blockType) {
-          collectFields(blockType, block.fields, manablox, expand, into, depth + 1);
+          collectFields(blockType, block.fields, locale, manablox, expand, into, depth + 1);
         }
       }
     }
@@ -208,7 +225,7 @@ function collectFields(
     if (subFields) {
       const itemType = itemsContentType(type, field, subFields);
       for (const item of fieldItems(fieldType, value, field.settings)) {
-        collectFields(itemType, item.fields, manablox, expand, into, depth + 1);
+        collectFields(itemType, item.fields, locale, manablox, expand, into, depth + 1);
       }
     }
   }

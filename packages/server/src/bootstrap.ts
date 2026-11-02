@@ -77,7 +77,11 @@ export async function bootstrap(config: ManabloxConfig): Promise<Runtime> {
     addMembers: (...args) => services.spaces.addMembers(...args),
   });
 
-  const cache = createCache(manablox.config.cache, { redis: redisHub(manablox)?.command });
+  const cache = createCache(manablox.config.cache, {
+    redis: redisHub(manablox)?.command,
+    // A response is served whether it was stored or not.
+    onWriteError: (error) => manablox.logger.warn({ err: error }, 'cache entry not stored'),
+  });
   attachCache(manablox, cache);
   const controlStore = installControls(manablox, repos);
   controlStore.rates = rateLimitStore;

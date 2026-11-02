@@ -11,7 +11,7 @@ import {
 import type { ContentRow } from '@manablox/db';
 import { blockGridOf, deliveredBlockData } from '@manablox/services';
 import { type AssetVariantSpec, serializeAsset } from './asset.js';
-import { asLink, assetFields, type Resolved, toIds } from './collect.js';
+import { asLink, assetFields, type Resolved, relationKey, toIds } from './collect.js';
 import type { PublicContext } from './context.js';
 import type {
   ExpandSet,
@@ -42,7 +42,7 @@ export function buildContent(
     parentId: row.parentId,
     publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
     updatedAt: row.updatedAt.toISOString(),
-    fields: type ? buildFields(type, row.fields, ctx, expand, resolved, 0) : {},
+    fields: type ? buildFields(type, row.fields, row.locale, ctx, expand, resolved, 0) : {},
     tags: resolved.contentTags.get(row.localizationId) ?? [],
   };
 }
@@ -50,6 +50,7 @@ export function buildContent(
 function buildFields(
   type: ContentTypeDefinition,
   values: Record<string, unknown>,
+  locale: string,
   ctx: PublicContext,
   expand: ExpandSet,
   resolved: Resolved,
@@ -71,6 +72,7 @@ function buildFields(
     if (fieldType.nested) {
       const blocks = buildBlocks(
         fieldBlocks(fieldType, value, field.settings),
+        locale,
         ctx,
         expand,
         resolved,
@@ -90,7 +92,7 @@ function buildFields(
         (item) =>
           ({
             itemId: item.itemId,
-            fields: buildFields(itemType, item.fields, ctx, expand, resolved, depth + 1),
+            fields: buildFields(itemType, item.fields, locale, ctx, expand, resolved, depth + 1),
           }) satisfies PublicItem,
       );
       continue;
@@ -103,7 +105,7 @@ function buildFields(
       const blocksValue = readTemplateBlocks(ctx.manablox.contentTypes, template ?? null);
       out[field.name] = {
         grid: blockGridOf(blocksValue),
-        blocks: buildBlocks(blocksValue?.blocks ?? [], ctx, expand, resolved, depth),
+        blocks: buildBlocks(blocksValue?.blocks ?? [], locale, ctx, expand, resolved, depth),
       } satisfies PublicBlocks;
       continue;
     }
@@ -130,9 +132,9 @@ function buildFields(
     }
 
     // A `filter` relation delivers its query's matches.
-    if (spec.type.kind === 'ref' && resolved.queries.has(field.id)) {
+    const ids = resolved.queries.get(relationKey(field.id, locale));
+    if (spec.type.kind === 'ref' && ids) {
       const target = spec.type.target;
-      const ids = resolved.queries.get(field.id) ?? [];
       out[field.name] = expand.has(field.name)
         ? ids
             .map((id) => inline(target, id, ctx, resolved, field.settings))
@@ -166,6 +168,7 @@ function buildFields(
 
 function buildBlocks(
   blocks: BlockValue[],
+  locale: string,
   ctx: PublicContext,
   expand: ExpandSet,
   resolved: Resolved,
@@ -177,7 +180,7 @@ function buildBlocks(
       blockId: block.blockId,
       type: blockType?.name ?? 'unknown',
       fields: blockType
-        ? buildFields(blockType, block.fields, ctx, expand, resolved, depth + 1)
+        ? buildFields(blockType, block.fields, locale, ctx, expand, resolved, depth + 1)
         : {},
       ...(block.layout ? { layout: block.layout } : {}),
       ...deliveredBlockData(block.ext, resolved.blockData),
@@ -214,7 +217,7 @@ function inline(
     locale: row.locale,
     tags: resolved.contentTags.get(row.localizationId) ?? [],
     ...(ctx.relatedFields && type
-      ? { fields: buildFields(type, row.fields, ctx, assetFields(type), resolved, 1) }
+      ? { fields: buildFields(type, row.fields, row.locale, ctx, assetFields(type), resolved, 1) }
       : {}),
   };
 }

@@ -13,10 +13,18 @@ const TARGET_ID = '33333333-3333-4333-8333-333333333333';
 const ITEM_ID = '44444444-4444-4444-8444-444444444444';
 const BLOCK_ID = '55555555-5555-4555-8555-555555555555';
 
+const standingQuery = {
+  type: 'content',
+  settings: { multiple: true, selection: 'filter' },
+} as const;
+
 const teaser = defineContentType({
   name: 'teaser',
   kind: 'block',
-  fields: [{ name: 'headline', type: 'string' }],
+  fields: [
+    { name: 'headline', type: 'string' },
+    { name: 'latest', ...standingQuery },
+  ],
 });
 
 let manablox: Manablox;
@@ -51,6 +59,7 @@ beforeAll(async () => {
       {
         name: 'landing_page',
         fields: [
+          { name: 'latest', ...standingQuery },
           { name: 'sections', type: 'blocks', settings: { types: [teaser.id] } },
           {
             name: 'feature_list',
@@ -58,6 +67,7 @@ beforeAll(async () => {
             settings: {
               fields: [
                 { name: 'title', type: 'string', required: true },
+                { name: 'latest', ...standingQuery },
                 { name: 'icon', type: 'asset' },
                 { name: 'more', type: 'content', settings: { types: [] } },
                 { name: 'promo', type: 'block', settings: { types: [teaser.id] } },
@@ -209,6 +219,40 @@ describe('plugin block data', () => {
     const blocks = (result.data?.content as { sections: { blocks: { tone: unknown }[] } }).sections
       .blocks;
     expect(blocks.map((entry) => entry.tone)).toEqual([null, null, null]);
+  });
+});
+
+describe('filter relations', () => {
+  it('list the locale of the document, also inside blocks and items', async () => {
+    const relation = vi.fn(async () => ({ target: 'content', items: [] }));
+    const result = await graphql({
+      schema,
+      source: `{ content(id: "${PAGE_ID}") { ... on LandingPage {
+        latest { id }
+        sections { blocks { ... on Teaser { latest { id } } } }
+        featureList { latest { id } }
+      } } }`,
+      contextValue: {
+        reader: {
+          get: async () => ({
+            id: PAGE_ID,
+            typeId: manablox.contentTypes.getByName('landing_page').id,
+            locale: 'de',
+            fields: {
+              sections: {
+                blocks: [{ blockId: BLOCK_ID, type: teaser.id, fields: { headline: 'x' } }],
+              },
+              feature_list: [{ itemId: ITEM_ID, fields: { title: 'x' } }],
+            },
+          }),
+          relation,
+        },
+        manablox,
+        spaceId: 's1',
+      } as unknown as GraphQLContext,
+    });
+    expect(result.errors).toBeUndefined();
+    expect(relation.mock.calls.map((call: unknown[]) => call[3])).toEqual(['de', 'de', 'de']);
   });
 });
 
